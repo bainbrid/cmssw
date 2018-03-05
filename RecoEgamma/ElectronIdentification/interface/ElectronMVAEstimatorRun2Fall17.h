@@ -42,7 +42,7 @@ class ElectronMVAEstimatorRun2Fall17 : public AnyMVAEstimatorRun2Base{
   // Calculation of the MVA value (VID accessor)
   float mvaValue( const edm::Ptr<reco::Candidate>& particle, const edm::Event&) const override;
   // Calculation of the MVA value (fwlite-compatible accessor)
-  float mvaValue( const reco::GsfElectron * particle, const edm::EventBase &) const ;
+  float mvaValue( const edm::Ptr<reco::GsfElectron>& particle, const edm::EventBase & iEvent) const ;
   // Calculation of the MVA value (bare version)
   float mvaValue( const int iCategory, const std::vector<float> & vars) const ;
 
@@ -54,9 +54,12 @@ class ElectronMVAEstimatorRun2Fall17 : public AnyMVAEstimatorRun2Base{
   // Functions that should work on both pat and reco electrons
   // (use the fact that pat::Electron inherits from reco::GsfElectron)
   std::vector<float> fillMVAVariables(const edm::Ptr<reco::Candidate>& particle, const edm::Event&) const override;
-  std::vector<float> fillMVAVariables( const reco::GsfElectron * particle, const edm::Handle<reco::ConversionCollection> conversions, const reco::BeamSpot *beamSpot, const edm::Handle<double> rho) const;
+
+  template<class EventType>
+  std::vector<float> fillMVAVariables(const edm::Ptr<reco::GsfElectron>& eleRecoPtr, const EventType& iEvent) const;
+
   int findCategory( const edm::Ptr<reco::Candidate>& particle) const override;
-  int findCategory( const reco::GsfElectron * particle) const ;
+  int findCategory( const edm::Ptr<reco::GsfElectron>& particle) const ;
   // The function below ensures that the variables passed to MVA are
   // within reasonable bounds
   void constrainMVAVariables(std::vector<float>&) const;
@@ -103,18 +106,6 @@ class ElectronMVAEstimatorRun2Fall17 : public AnyMVAEstimatorRun2Base{
   std::vector< std::unique_ptr<const GBRForest> > gbrForests_;
 
   const std::string methodName_;
-
-  //
-  // Declare all labels and tokens that will be needed to retrieve misc
-  // data from the event content required by this MVA
-  //
-  const edm::InputTag beamSpotLabel_;
-  const edm::InputTag conversionsLabelAOD_;
-  const edm::InputTag conversionsLabelMiniAOD_;
-  const edm::InputTag rhoLabel_;
-  const edm::InputTag convVtxFitProbLabel_;
-  const edm::InputTag kfhitsLabel_;
-  const edm::InputTag kfchi2Label_;
 
   //edm::EDGetTokenT<reco::BeamSpot> beamSpotToken_;
   //edm::EDGetTokenT<reco::ConversionCollection> conversionsTokenAOD_;

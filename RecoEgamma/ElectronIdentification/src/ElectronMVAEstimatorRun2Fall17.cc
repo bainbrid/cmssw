@@ -5,13 +5,6 @@ ElectronMVAEstimatorRun2Fall17::ElectronMVAEstimatorRun2Fall17(const edm::Parame
   tag_(conf.getParameter<std::string>("mvaTag")),
   name_(conf.getParameter<std::string>("mvaName")),
   methodName_("BDTG method"),
-  beamSpotLabel_          (conf.getParameter<edm::InputTag>           ("beamSpot")),
-  conversionsLabelAOD_    (conf.getParameter<edm::InputTag>           ("conversionsAOD")),
-  conversionsLabelMiniAOD_(conf.getParameter<edm::InputTag>           ("conversionsMiniAOD")),
-  rhoLabel_               (edm::InputTag                              ("fixedGridRhoFastjetAll")),
-  convVtxFitProbLabel_    (edm::InputTag                              ("electronMVAVariableHelper:convVtxFitProb")),
-  kfhitsLabel_            (edm::InputTag                              ("electronMVAVariableHelper:kfhits")),
-  kfchi2Label_            (edm::InputTag                              ("electronMVAVariableHelper:kfhits")),
   ptSplit_                (conf.getParameter<double>                  ("ptSplit")),
   ebSplit_                (conf.getParameter<double>                  ("ebSplit")),
   ebeeSplit_              (conf.getParameter<double>                  ("ebeeSplit")),
@@ -40,10 +33,6 @@ ElectronMVAEstimatorRun2Fall17::ElectronMVAEstimatorRun2Fall17(
   tag_                    (mvaTag),
   name_                   (mvaName),
   methodName_             ("BDTG method"),
-  beamSpotLabel_          (edm::InputTag(beamspotTag)),
-  conversionsLabelAOD_    (edm::InputTag(conversionsTag)),
-  conversionsLabelMiniAOD_(conversionsLabelAOD_),
-  rhoLabel_               (edm::InputTag("fixedGridRhoFastjetAll")),
   ptSplit_                (ptSplit),
   ebSplit_                (ebSplit),
   ebeeSplit_              (ebeeSplit)
@@ -116,26 +105,11 @@ void ElectronMVAEstimatorRun2Fall17::setConsumes(edm::ConsumesCollector&& cc) co
 
   // All tokens for event content needed by this MVA
 
-  // Beam spot (same for AOD and miniAOD)
-  cc.consumes<reco::BeamSpot>(beamSpotLabel_);
-  // Conversions collection (different names in AOD and miniAOD)
-  cc.mayConsume<reco::ConversionCollection>(conversionsLabelAOD_);
-  cc.mayConsume<reco::ConversionCollection>(conversionsLabelMiniAOD_);
-  // Event-by-event pileup estimate rho
-  cc.consumes<double>(rhoLabel_);
-  // Other tags from the variable helper
-  cc.consumes<edm::ValueMap<float>>(convVtxFitProbLabel_);
-  cc.consumes<edm::ValueMap<float>>(kfhitsLabel_);
-  cc.consumes<edm::ValueMap<float>>(kfchi2Label_);
-
-  //// Beam spot (same for AOD and miniAOD)
-  //beamSpotToken_           = cc.consumes<reco::BeamSpot>(beamSpotLabel_);
-  //// Conversions collection (different names in AOD and miniAOD)
-  //conversionsTokenAOD_     = cc.mayConsume<reco::ConversionCollection>(conversionsLabelAOD_);
-  //conversionsTokenMiniAOD_ = cc.mayConsume<reco::ConversionCollection>(conversionsLabelMiniAOD_);
-  //// Event-by-event pileup estimate rho
-  //rhoToken_                = cc.consumes<double>(rhoLabel_);
-
+  // Tags from the variable helper
+  cc.consumes<edm::ValueMap<float>>(edm::InputTag("electronMVAVariableHelper:convVtxFitProb"));
+  cc.consumes<edm::ValueMap<float>>(edm::InputTag("electronMVAVariableHelper:kfchi2"));
+  cc.consumes<edm::ValueMap<float>>(edm::InputTag("electronMVAVariableHelper:kfhits"));
+  cc.consumes<edm::ValueMap<float>>(edm::InputTag("electronMVAVariableHelper:rho"));
 }
 
 float ElectronMVAEstimatorRun2Fall17::
@@ -149,23 +123,16 @@ mvaValue( const edm::Ptr<reco::Candidate>& particle, const edm::Event& iEvent) c
       << " but appears to be neither" << std::endl;
   }
 
-  const int iCategory = findCategory( eleRecoPtr.get() );
+  const int iCategory = findCategory( eleRecoPtr );
   const std::vector<float> vars = fillMVAVariables( particle, iEvent );
   return mvaValue(iCategory, vars);
 }
 
 float ElectronMVAEstimatorRun2Fall17::
-mvaValue( const reco::GsfElectron * particle, const edm::EventBase & iEvent) const {
-  edm::Handle<reco::ConversionCollection> conversions;
-  edm::Handle<reco::BeamSpot> beamSpot;
-  edm::Handle<double> rho;
-
-  iEvent.getByLabel(conversionsLabelAOD_, conversions);
-  iEvent.getByLabel(beamSpotLabel_, beamSpot);
-  iEvent.getByLabel(rhoLabel_, rho);
+mvaValue( const edm::Ptr<reco::GsfElectron>& particle, const edm::EventBase & iEvent) const {
 
   const int iCategory = findCategory( particle );
-  const std::vector<float> vars = fillMVAVariables( particle, conversions, beamSpot.product(), rho );
+  const std::vector<float> vars = fillMVAVariables( particle, iEvent );
   return mvaValue(iCategory, vars);
 }
 
@@ -223,10 +190,10 @@ int ElectronMVAEstimatorRun2Fall17::findCategory( const edm::Ptr<reco::Candidate
       << " given particle is expected to be reco::GsfElectron or pat::Electron," << std::endl
       << " but appears to be neither" << std::endl;
   }
-  return findCategory(eleRecoPtr.get());
+  return findCategory(eleRecoPtr);
 }
 
-int ElectronMVAEstimatorRun2Fall17::findCategory( const reco::GsfElectron * eleRecoPtr ) const {
+int ElectronMVAEstimatorRun2Fall17::findCategory( const edm::Ptr<reco::GsfElectron>& eleRecoPtr ) const {
   float pt = eleRecoPtr->pt();
   float eta = eleRecoPtr->superCluster()->eta();
   float absEta = std::abs(eta);
@@ -267,46 +234,6 @@ int ElectronMVAEstimatorRun2Fall17::findCategory( const reco::GsfElectron * eleR
 std::vector<float> ElectronMVAEstimatorRun2Fall17::
 fillMVAVariables(const edm::Ptr<reco::Candidate>& particle, const edm::Event& iEvent) const {
 
-  //
-  // Declare all value maps corresponding to the products we defined earlier
-  //
-  edm::Handle<double> theRho;
-  edm::Handle<reco::BeamSpot> theBeamSpot;
-  edm::Handle<reco::ConversionCollection> conversions;
-
-  iEvent.getByLabel(rhoLabel_, theRho);
-
-  // Get the variables from the helper class
-  edm::Handle<edm::ValueMap<float>> kfhits;
-  iEvent.getByLabel(kfhitsLabel_, kfhits);
-  edm::Handle<edm::ValueMap<float>> kfchi2;
-  iEvent.getByLabel(kfchi2Label_, kfchi2);
-  edm::Handle<edm::ValueMap<float>> convVtxFitProb;
-  iEvent.getByLabel(convVtxFitProbLabel_, convVtxFitProb);
-  //float d = (*x)[0];
-  //std::cout << d << std::endl;
-
-  // Get data needed for conversion rejection
-  iEvent.getByLabel(beamSpotLabel_, theBeamSpot);
-
-  // Conversions in miniAOD and AOD have different names,
-  // but the same type, so we use the same handle with different tokens.
-  iEvent.getByLabel(conversionsLabelAOD_, conversions);
-  if( !conversions.isValid() ) {
-    iEvent.getByLabel(conversionsLabelMiniAOD_, conversions);
-  }
-
-  // Make sure everything is retrieved successfully
-  if(! (theBeamSpot.isValid()
-    && conversions.isValid() )
-     ) {
-    throw cms::Exception("MVA failure: ")
-      << "Failed to retrieve event content needed for this MVA"
-      << std::endl
-      << "Check python MVA configuration file."
-      << std::endl;
-  }
-
   // Try to cast the particle into a reco particle.
   // This should work for both reco and pat.
   const edm::Ptr<reco::GsfElectron> eleRecoPtr = ( edm::Ptr<reco::GsfElectron> )particle;
@@ -316,35 +243,28 @@ fillMVAVariables(const edm::Ptr<reco::Candidate>& particle, const edm::Event& iE
       << " but appears to be neither" << std::endl;
   }
 
-  return fillMVAVariables(eleRecoPtr.get(), conversions, theBeamSpot.product(), theRho);
+  return fillMVAVariables(eleRecoPtr, iEvent);
 }
 
 // A function that should work on both pat and reco objects
+template<class EventType>
 std::vector<float> ElectronMVAEstimatorRun2Fall17::
-fillMVAVariables(const reco::GsfElectron* eleRecoPtr, const edm::Handle<reco::ConversionCollection> conversions, const reco::BeamSpot *theBeamSpot, const edm::Handle<double> rho) const {
+fillMVAVariables(const edm::Ptr<reco::GsfElectron>& eleRecoPtr, const EventType& iEvent) const {
 
+  //
+  // Declare all value maps corresponding to the products we defined earlier
+  //
 
-  // Both pat and reco particles have exactly the same accessors, so we use a reco ptr
-  // throughout the code, with a single exception as of this writing, handled separately below.
+  // Get the variables from the helper class
+  edm::Handle<edm::ValueMap<float>> kfhits;
+  edm::Handle<edm::ValueMap<float>> kfchi2;
+  edm::Handle<edm::ValueMap<float>> convVtxFitProb;
+  edm::Handle<edm::ValueMap<float>> rho;
 
-  bool validKF= false;
-  reco::TrackRef myTrackRef = eleRecoPtr->closestCtfTrackRef();
-  validKF = (myTrackRef.isAvailable() && (myTrackRef.isNonnull()) );
-
-  //Pure tracking variables
-  float kfhits         = (validKF) ? myTrackRef->hitPattern().trackerLayersWithMeasurement() : -1. ;
-  float kfchi2          = (validKF) ? myTrackRef->normalizedChi2() : 0;
-
-  reco::ConversionRef convRef = ConversionTools::matchedConversion(*eleRecoPtr,
-                                    conversions,
-                                    theBeamSpot->position());
-  float convVtxFitProbability = -1.;
-  if(!convRef.isNull()) {
-    const reco::Vertex &vtx = convRef.get()->conversionVertex();
-    if (vtx.isValid()) {
-      convVtxFitProbability = (float)TMath::Prob( vtx.chi2(), vtx.ndof());
-    }
-  }
+  iEvent.getByLabel(edm::InputTag("electronMVAVariableHelper:kfhits"), kfhits);
+  iEvent.getByLabel(edm::InputTag("electronMVAVariableHelper:kfchi2"), kfchi2);
+  iEvent.getByLabel(edm::InputTag("electronMVAVariableHelper:convVtxFitProb"), convVtxFitProb);
+  iEvent.getByLabel(edm::InputTag("electronMVAVariableHelper:rho"), rho);
 
   if(withIso_)
   {
@@ -358,13 +278,13 @@ fillMVAVariables(const reco::GsfElectron* eleRecoPtr, const edm::Handle<reco::Co
                                   (float)gsfEleFunctions_[5](*eleRecoPtr),
                                   (float)gsfEleFunctions_[6](*eleRecoPtr),
                                   //Pure tracking variables
-                                  kfhits,
-                                  kfchi2,
+                                  (float)(*kfhits)[eleRecoPtr],
+                                  (float)(*kfchi2)[eleRecoPtr],
                                   (float)gsfEleFunctions_[7](*eleRecoPtr),
                                   (float)gsfEleFunctions_[8](*eleRecoPtr),
                                   (float)gsfEleFunctions_[9](*eleRecoPtr),
                                   (float)gsfEleFunctions_[10](*eleRecoPtr),
-                                  convVtxFitProbability,     // 13
+                                  (float)(*convVtxFitProb)[eleRecoPtr],
                                   (float)gsfEleFunctions_[11](*eleRecoPtr),
                                   (float)gsfEleFunctions_[12](*eleRecoPtr),
                                   (float)gsfEleFunctions_[13](*eleRecoPtr),
@@ -375,7 +295,7 @@ fillMVAVariables(const reco::GsfElectron* eleRecoPtr, const edm::Handle<reco::Co
                                   (float)gsfEleFunctions_[18](*eleRecoPtr),
                                   (float)gsfEleFunctions_[19](*eleRecoPtr),
                                   // Pileup
-                                  (float)*rho,
+                                  (float)(*rho)[eleRecoPtr],
 
                                   // Endcap only variables NOTE: we don't need
                                   // to check if we are actually in the endcap
@@ -404,20 +324,20 @@ fillMVAVariables(const reco::GsfElectron* eleRecoPtr, const edm::Handle<reco::Co
                                   (float)gsfEleFunctions_[4](*eleRecoPtr),
                                   (float)gsfEleFunctions_[5](*eleRecoPtr),
                                   (float)gsfEleFunctions_[6](*eleRecoPtr),
-                                  kfhits,
-                                  kfchi2,
+                                  (float)(*kfhits)[eleRecoPtr],
+                                  (float)(*kfchi2)[eleRecoPtr],
                                   (float)gsfEleFunctions_[7](*eleRecoPtr),
                                   (float)gsfEleFunctions_[8](*eleRecoPtr),
                                   (float)gsfEleFunctions_[9](*eleRecoPtr),
                                   (float)gsfEleFunctions_[10](*eleRecoPtr),
-                                  convVtxFitProbability,     // 13
+                                  (float)(*convVtxFitProb)[eleRecoPtr],
                                   (float)gsfEleFunctions_[11](*eleRecoPtr),
                                   (float)gsfEleFunctions_[12](*eleRecoPtr),
                                   (float)gsfEleFunctions_[13](*eleRecoPtr),
                                   (float)gsfEleFunctions_[14](*eleRecoPtr),
                                   (float)gsfEleFunctions_[15](*eleRecoPtr),
                                   (float)gsfEleFunctions_[16](*eleRecoPtr),
-                                  (float)*rho,
+                                  (float)(*rho)[eleRecoPtr],
                                   (float)gsfEleFunctions_[20](*eleRecoPtr)
                               );
 

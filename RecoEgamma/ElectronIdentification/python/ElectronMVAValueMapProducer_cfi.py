@@ -39,11 +39,13 @@ electronMVAVariableHelper = cms.EDProducer('GsfElectronMVAVariableHelper',
                                              vertexCollection = cms.InputTag("offlinePrimaryVertices"),
                                              beamSpot         = cms.InputTag("offlineBeamSpot"),
                                              conversions      = cms.InputTag("allConversions"),
+                                             rho              = cms.InputTag("fixedGridRhoFastjetAll"),
                                              # miniAOD case
                                              srcMiniAOD              = cms.InputTag('slimmedElectrons',processName=cms.InputTag.skipCurrentProcess()),
                                              vertexCollectionMiniAOD = cms.InputTag("offlineSlimmedPrimaryVertices"),
                                              beamSpotMiniAOD         = cms.InputTag("offlineBeamSpot"),
-                                             conversionsMiniAOD      = cms.InputTag("reducedEgamma:reducedConversions")
+                                             conversionsMiniAOD      = cms.InputTag("reducedEgamma:reducedConversions"),
+                                             rhoMiniAOD              = cms.InputTag("fixedGridRhoFastjetAll"),
                                              )
 
 electronMVAValueMapProducer = cms.EDProducer('ElectronMVAValueMapProducer',

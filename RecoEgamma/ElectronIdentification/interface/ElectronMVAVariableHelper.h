@@ -34,6 +34,7 @@ typedef edm::View<reco::Candidate> CandView;
 template <class ParticleType>
 class ElectronMVAVariableHelper : public edm::EDProducer {
  public:
+
   explicit ElectronMVAVariableHelper(const edm::ParameterSet & iConfig);
   virtual ~ElectronMVAVariableHelper() ;
 
@@ -51,12 +52,14 @@ private:
   edm::EDGetTokenT<reco::VertexCollection> vtxToken_;
   edm::EDGetTokenT<reco::ConversionCollection> conversionsToken_;
   edm::EDGetTokenT<reco::BeamSpot> beamSpotToken_;
+  edm::EDGetTokenT<double> rhoToken_;
 
   // for miniAOD case
   edm::EDGetTokenT<edm::View<ParticleType> > electronsTokenMiniAOD_;
   edm::EDGetTokenT<reco::VertexCollection> vtxTokenMiniAOD_;
   edm::EDGetTokenT<reco::ConversionCollection> conversionsTokenMiniAOD_;
   edm::EDGetTokenT<reco::BeamSpot> beamSpotTokenMiniAOD_;
+  edm::EDGetTokenT<double> rhoTokenMiniAOD_;
 };
 
 template<class ParticleType>
@@ -65,14 +68,17 @@ ElectronMVAVariableHelper<ParticleType>::ElectronMVAVariableHelper(const edm::Pa
   vtxToken_(consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertexCollection"))),
   conversionsToken_(consumes<reco::ConversionCollection>(iConfig.getParameter<edm::InputTag>("conversions"))),
   beamSpotToken_(consumes<reco::BeamSpot>(iConfig.getParameter<edm::InputTag>("beamSpot"))),
+  rhoToken_(consumes<double>(iConfig.getParameter<edm::InputTag>("rho"))),
   electronsTokenMiniAOD_(consumes<edm::View<ParticleType> >(iConfig.getParameter<edm::InputTag>("srcMiniAOD"))),
   vtxTokenMiniAOD_(consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertexCollectionMiniAOD"))),
   conversionsTokenMiniAOD_(consumes<reco::ConversionCollection>(iConfig.getParameter<edm::InputTag>("conversionsMiniAOD"))),
-  beamSpotTokenMiniAOD_(consumes<reco::BeamSpot>(iConfig.getParameter<edm::InputTag>("beamSpotMiniAOD"))) {
+  beamSpotTokenMiniAOD_(consumes<reco::BeamSpot>(iConfig.getParameter<edm::InputTag>("beamSpotMiniAOD"))),
+  rhoTokenMiniAOD_(consumes<double>(iConfig.getParameter<edm::InputTag>("rhoMiniAOD"))) {
 
   produces<edm::ValueMap<float>>("convVtxFitProb");
   produces<edm::ValueMap<float>>("kfhits");
   produces<edm::ValueMap<float>>("kfchi2");
+  produces<edm::ValueMap<float>>("rho");
 }
 
 template<class ParticleType>
@@ -87,6 +93,7 @@ void ElectronMVAVariableHelper<ParticleType>::produce(edm::Event & iEvent, const
   edm::Handle<reco::VertexCollection> vtxH;
   edm::Handle<reco::ConversionCollection> conversions;
   edm::Handle<reco::BeamSpot> beamSpotHandle;
+  edm::Handle<double> rhoHandle;
 
   bool isAOD = true;
   // Retrieve the collection of particles from the event.
@@ -105,11 +112,13 @@ void ElectronMVAVariableHelper<ParticleType>::produce(edm::Event & iEvent, const
       iEvent.getByToken(vtxToken_, vtxH);
       iEvent.getByToken(conversionsToken_, conversions);
       iEvent.getByToken(beamSpotToken_, beamSpotHandle);
+      iEvent.getByToken(rhoToken_, rhoHandle);
   } else {
       iEvent.getByToken(electronsTokenMiniAOD_, electrons);
       iEvent.getByToken(vtxTokenMiniAOD_, vtxH);
       iEvent.getByToken(conversionsTokenMiniAOD_, conversions);
       iEvent.getByToken(beamSpotTokenMiniAOD_, beamSpotHandle);
+      iEvent.getByToken(rhoTokenMiniAOD_, rhoHandle);
   }
 
   // Make sure everything is retrieved successfully
@@ -130,6 +139,7 @@ void ElectronMVAVariableHelper<ParticleType>::produce(edm::Event & iEvent, const
   std::vector<float> convVtxFitProbVals;
   std::vector<float> kfhitsVals;
   std::vector<float> kfchi2Vals;
+  std::vector<float> rhoVals;
 
   for (size_t i = 0; i < electrons->size(); ++i){
       auto iCand = electrons->ptrAt(i);
@@ -157,12 +167,17 @@ void ElectronMVAVariableHelper<ParticleType>::produce(edm::Event & iEvent, const
 
       kfchi2Vals.push_back(kfchi2);
       kfhitsVals.push_back(kfhits);
+
+      // rho
+      rhoVals.push_back(*rhoHandle);
   }
+
 
   // convert into ValueMap and store
   writeValueMap(iEvent, electrons, kfchi2Vals, "kfchi2" );
   writeValueMap(iEvent, electrons, kfhitsVals, "kfhits" );
   writeValueMap(iEvent, electrons, convVtxFitProbVals, "convVtxFitProb" );
+  writeValueMap(iEvent, electrons, rhoVals, "rho" );
 }
 
 template<class ParticleType> template<typename T>
