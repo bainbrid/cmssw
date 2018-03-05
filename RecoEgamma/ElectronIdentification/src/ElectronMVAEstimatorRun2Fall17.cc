@@ -9,6 +9,9 @@ ElectronMVAEstimatorRun2Fall17::ElectronMVAEstimatorRun2Fall17(const edm::Parame
   conversionsLabelAOD_    (conf.getParameter<edm::InputTag>           ("conversionsAOD")),
   conversionsLabelMiniAOD_(conf.getParameter<edm::InputTag>           ("conversionsMiniAOD")),
   rhoLabel_               (edm::InputTag                              ("fixedGridRhoFastjetAll")),
+  convVtxFitProbLabel_    (edm::InputTag                              ("electronMVAVariableHelper:convVtxFitProb")),
+  kfhitsLabel_            (edm::InputTag                              ("electronMVAVariableHelper:kfhits")),
+  kfchi2Label_            (edm::InputTag                              ("electronMVAVariableHelper:kfhits")),
   ptSplit_                (conf.getParameter<double>                  ("ptSplit")),
   ebSplit_                (conf.getParameter<double>                  ("ebSplit")),
   ebeeSplit_              (conf.getParameter<double>                  ("ebeeSplit")),
@@ -73,6 +76,13 @@ void ElectronMVAEstimatorRun2Fall17::init(const std::vector<std::string> &weight
 
   }
 
+  // Initialize the functions
+  gsfEleFunctions_.clear();
+  for (int i = 0; i < 21; ++i) {
+      StringObjectFunction<reco::GsfElectron> f(gsfEleFuncStrings_[i]);
+      gsfEleFunctions_.push_back(f);
+  }
+
 }
 
 void ElectronMVAEstimatorRun2Fall17::setClips(const std::vector<double> &clipsLowerValues, const std::vector<double> &clipsUpperValues) {
@@ -113,6 +123,10 @@ void ElectronMVAEstimatorRun2Fall17::setConsumes(edm::ConsumesCollector&& cc) co
   cc.mayConsume<reco::ConversionCollection>(conversionsLabelMiniAOD_);
   // Event-by-event pileup estimate rho
   cc.consumes<double>(rhoLabel_);
+  // Other tags from the variable helper
+  cc.consumes<edm::ValueMap<float>>(convVtxFitProbLabel_);
+  cc.consumes<edm::ValueMap<float>>(kfhitsLabel_);
+  cc.consumes<edm::ValueMap<float>>(kfchi2Label_);
 
   //// Beam spot (same for AOD and miniAOD)
   //beamSpotToken_           = cc.consumes<reco::BeamSpot>(beamSpotLabel_);
@@ -145,9 +159,11 @@ mvaValue( const reco::GsfElectron * particle, const edm::EventBase & iEvent) con
   edm::Handle<reco::ConversionCollection> conversions;
   edm::Handle<reco::BeamSpot> beamSpot;
   edm::Handle<double> rho;
+
   iEvent.getByLabel(conversionsLabelAOD_, conversions);
   iEvent.getByLabel(beamSpotLabel_, beamSpot);
   iEvent.getByLabel(rhoLabel_, rho);
+
   const int iCategory = findCategory( particle );
   const std::vector<float> vars = fillMVAVariables( particle, conversions, beamSpot.product(), rho );
   return mvaValue(iCategory, vars);
@@ -260,6 +276,16 @@ fillMVAVariables(const edm::Ptr<reco::Candidate>& particle, const edm::Event& iE
 
   iEvent.getByLabel(rhoLabel_, theRho);
 
+  // Get the variables from the helper class
+  edm::Handle<edm::ValueMap<float>> kfhits;
+  iEvent.getByLabel(kfhitsLabel_, kfhits);
+  edm::Handle<edm::ValueMap<float>> kfchi2;
+  iEvent.getByLabel(kfchi2Label_, kfchi2);
+  edm::Handle<edm::ValueMap<float>> convVtxFitProb;
+  iEvent.getByLabel(convVtxFitProbLabel_, convVtxFitProb);
+  //float d = (*x)[0];
+  //std::cout << d << std::endl;
+
   // Get data needed for conversion rejection
   iEvent.getByLabel(beamSpotLabel_, theBeamSpot);
 
@@ -300,43 +326,14 @@ fillMVAVariables(const reco::GsfElectron* eleRecoPtr, const edm::Handle<reco::Co
 
   // Both pat and reco particles have exactly the same accessors, so we use a reco ptr
   // throughout the code, with a single exception as of this writing, handled separately below.
-  auto superCluster = eleRecoPtr->superCluster();
 
-  // Pure ECAL -> shower shapes
-  float see            = eleRecoPtr->full5x5_sigmaIetaIeta();
-  float spp            = eleRecoPtr->full5x5_sigmaIphiIphi();
-  float circularity = 1. - eleRecoPtr->full5x5_e1x5() / eleRecoPtr->full5x5_e5x5();
-  float r9             = eleRecoPtr->full5x5_r9();
-  float etawidth       = superCluster->etaWidth();
-  float phiwidth       = superCluster->phiWidth();
-  float hoe            = eleRecoPtr->full5x5_hcalOverEcal(); //hadronicOverEm();
-  // Endcap only variables
-  float preShowerOverRaw  = superCluster->preshowerEnergy() / superCluster->rawEnergy();
-
-  // To get to CTF track information in pat::Electron, we have to have the pointer
-  // to pat::Electron, it is not accessible from the pointer to reco::GsfElectron.
-  // This behavior is reported and is expected to change in the future (post-7.4.5 some time).
   bool validKF= false;
   reco::TrackRef myTrackRef = eleRecoPtr->closestCtfTrackRef();
-  const pat::Electron * elePatPtr = dynamic_cast<const pat::Electron *>(eleRecoPtr);
-  // Check if this is really a pat::Electron, and if yes, get the track ref from this new
-  // pointer instead
-  if( elePatPtr != nullptr ) {
-    myTrackRef = elePatPtr->closestCtfTrackRef();
-  }
   validKF = (myTrackRef.isAvailable() && (myTrackRef.isNonnull()) );
 
   //Pure tracking variables
   float kfhits         = (validKF) ? myTrackRef->hitPattern().trackerLayersWithMeasurement() : -1. ;
   float kfchi2          = (validKF) ? myTrackRef->normalizedChi2() : 0;
-  float gsfchi2         = eleRecoPtr->gsfTrack()->normalizedChi2();
-
-  // Energy matching
-  float fbrem           = eleRecoPtr->fbrem();
-
-  float gsfhits         = eleRecoPtr->gsfTrack()->hitPattern().trackerLayersWithMeasurement();
-  float expectedMissingInnerHits = eleRecoPtr->gsfTrack()
-    ->hitPattern().numberOfLostHits(reco::HitPattern::MISSING_INNER_HITS);
 
   reco::ConversionRef convRef = ConversionTools::matchedConversion(*eleRecoPtr,
                                     conversions,
@@ -349,57 +346,34 @@ fillMVAVariables(const reco::GsfElectron* eleRecoPtr, const edm::Handle<reco::Co
     }
   }
 
-  float eop             = eleRecoPtr->eSuperClusterOverP();
-  float eleeopout       = eleRecoPtr->eEleClusterOverPout();
-  float pAtVertex            = eleRecoPtr->trackMomentumAtVtx().R();
-  float oneOverEminusOneOverP         = (1.0/eleRecoPtr->ecalEnergy()) - (1.0 / pAtVertex );
-
-  // Geometrical matchings
-  float deta            = eleRecoPtr->deltaEtaSuperClusterTrackAtVtx();
-  float dphi            = eleRecoPtr->deltaPhiSuperClusterTrackAtVtx();
-  float detacalo        = eleRecoPtr->deltaEtaSeedClusterTrackAtCalo();
-
   if(withIso_)
   {
 
-    // Isolation variables
-    float pfChargedHadIso   = (eleRecoPtr->pfIsolationVariables()).sumChargedHadronPt ; //chargedHadronIso();
-    float pfNeutralHadIso   = (eleRecoPtr->pfIsolationVariables()).sumNeutralHadronEt ; //neutralHadronIso();
-    float pfPhotonIso       = (eleRecoPtr->pfIsolationVariables()).sumPhotonEt; //photonIso();
-
-    /*
-     * Packing variables for the MVA evaluation.
-     * CAREFUL: It is critical that all the variables that are packed into “vars” are
-     * exactly in the order they are found in the weight files
-     */
     std::vector<float> vars = packMVAVariables(
-                                  see,                      // 0
-                                  spp,                      // 1
-                                  circularity,
-                                  r9,
-                                  etawidth,
-                                  phiwidth,                 // 5
-                                  hoe,
+                                  (float)gsfEleFunctions_[0](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[1](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[2](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[3](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[4](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[5](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[6](*eleRecoPtr),
                                   //Pure tracking variables
                                   kfhits,
                                   kfchi2,
-                                  gsfchi2,                  // 9
-                                  // Energy matching
-                                  fbrem,
-                                  gsfhits,
-                                  expectedMissingInnerHits,
+                                  (float)gsfEleFunctions_[7](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[8](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[9](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[10](*eleRecoPtr),
                                   convVtxFitProbability,     // 13
-                                  eop,
-                                  eleeopout,                // 15
-                                  oneOverEminusOneOverP,
-                                  // Geometrical matchings
-                                  deta,                     // 17
-                                  dphi,
-                                  detacalo,
-                                  // Isolation variables
-                                  pfPhotonIso,
-                                  pfChargedHadIso,
-                                  pfNeutralHadIso,
+                                  (float)gsfEleFunctions_[11](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[12](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[13](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[14](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[15](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[16](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[17](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[18](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[19](*eleRecoPtr),
                                   // Pileup
                                   (float)*rho,
 
@@ -413,7 +387,7 @@ fillMVAVariables(const reco::GsfElectron* eleRecoPtr, const edm::Handle<reco::Co
                                   // array with the input variables in the
                                   // right order, what comes after doesn't
                                   // matter.
-                                  preShowerOverRaw          // 24
+                                  (float)gsfEleFunctions_[20](*eleRecoPtr)
                               );
 
     constrainMVAVariables(vars);
@@ -423,34 +397,35 @@ fillMVAVariables(const reco::GsfElectron* eleRecoPtr, const edm::Handle<reco::Co
   else
   {
     std::vector<float> vars = packMVAVariables(
-                                  see,                      // 0
-                                  spp,                      // 1
-                                  circularity,
-                                  r9,
-                                  etawidth,
-                                  phiwidth,                 // 5
-                                  hoe,
+                                  (float)gsfEleFunctions_[0](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[1](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[2](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[3](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[4](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[5](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[6](*eleRecoPtr),
                                   kfhits,
                                   kfchi2,
-                                  gsfchi2,                  // 9
-                                  fbrem,
-                                  gsfhits,
-                                  expectedMissingInnerHits,
+                                  (float)gsfEleFunctions_[7](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[8](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[9](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[10](*eleRecoPtr),
                                   convVtxFitProbability,     // 13
-                                  eop,
-                                  eleeopout,                // 15
-                                  oneOverEminusOneOverP,
-                                  deta,                     // 17
-                                  dphi,
-                                  detacalo,
+                                  (float)gsfEleFunctions_[11](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[12](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[13](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[14](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[15](*eleRecoPtr),
+                                  (float)gsfEleFunctions_[16](*eleRecoPtr),
                                   (float)*rho,
-                                  preShowerOverRaw          // 21
+                                  (float)gsfEleFunctions_[20](*eleRecoPtr)
                               );
 
     constrainMVAVariables(vars);
 
     return vars;
   }
+
 }
 
 void ElectronMVAEstimatorRun2Fall17::constrainMVAVariables(std::vector<float>& vars) const {

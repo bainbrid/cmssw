@@ -15,6 +15,9 @@
 #include "RecoEgamma/EgammaTools/interface/GBRForestTools.h"
 #include "FWCore/Utilities/interface/isFinite.h"
 
+#include "CommonTools/Utils/interface/StringObjectFunction.h"
+#include "CommonTools/Utils/interface/StringCutObjectSelector.h"
+
 class ElectronMVAEstimatorRun2Fall17 : public AnyMVAEstimatorRun2Base{
 
  public:
@@ -109,6 +112,9 @@ class ElectronMVAEstimatorRun2Fall17 : public AnyMVAEstimatorRun2Base{
   const edm::InputTag conversionsLabelAOD_;
   const edm::InputTag conversionsLabelMiniAOD_;
   const edm::InputTag rhoLabel_;
+  const edm::InputTag convVtxFitProbLabel_;
+  const edm::InputTag kfhitsLabel_;
+  const edm::InputTag kfchi2Label_;
 
   //edm::EDGetTokenT<reco::BeamSpot> beamSpotToken_;
   //edm::EDGetTokenT<reco::ConversionCollection> conversionsTokenAOD_;
@@ -128,6 +134,45 @@ class ElectronMVAEstimatorRun2Fall17 : public AnyMVAEstimatorRun2Base{
   bool withIso_;
 
   bool debug_;
+
+  // The functions to obtain the input variables
+
+  /*
+   * Defining variables for the MVA evaluation.
+   * CAREFUL: It is critical that all the variables that are packed into “vars” are
+   * exactly in the order they are found in the weight files
+   */
+  const std::string gsfEleFuncStrings_ [21] = {
+      // Pure ECAL -> shower shapes
+      "full5x5_sigmaIetaIeta",
+      "full5x5_sigmaIphiIphi",
+      "1. - full5x5_e1x5 / full5x5_e5x5",
+      "full5x5_r9",
+      "superCluster.etaWidth",
+      "superCluster.phiWidth",
+      "full5x5_hcalOverEcal", //hadronicOverEm
+      //Pure tracking variables
+      "gsfTrack.normalizedChi2",
+      // Energy matching
+      "fbrem",
+      "gsfTrack.hitPattern.trackerLayersWithMeasurement",
+      "gsfTrack.hitPattern.numberOfLostHits('MISSING_INNER_HITS')",
+      // Energy matching
+      "eSuperClusterOverP",
+      "eEleClusterOverPout",
+      "1.0 / ecalEnergy - 1.0 / trackMomentumAtVtx.R",
+      // Geometrical matchings
+      "deltaEtaSuperClusterTrackAtVtx",
+      "deltaPhiSuperClusterTrackAtVtx",
+      "deltaEtaSeedClusterTrackAtCalo",
+      // Isolation variables
+      "pfIsolationVariables.sumChargedHadronPt", //chargedHadronIso
+      "pfIsolationVariables.sumNeutralHadronEt", //neutralHadronIso
+      "pfIsolationVariables.sumPhotonEt", //photonIso
+      // Endcap only
+      "superCluster.preshowerEnergy / superCluster.rawEnergy"
+  };
+  std::vector<StringObjectFunction<reco::GsfElectron>> gsfEleFunctions_;
 };
 
 #endif
