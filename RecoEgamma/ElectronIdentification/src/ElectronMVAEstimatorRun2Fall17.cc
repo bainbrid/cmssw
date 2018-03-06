@@ -4,22 +4,19 @@ ElectronMVAEstimatorRun2Fall17::ElectronMVAEstimatorRun2Fall17(const edm::Parame
   AnyMVAEstimatorRun2Base(conf),
   tag_(conf.getParameter<std::string>("mvaTag")),
   name_(conf.getParameter<std::string>("mvaName")),
-  methodName_("BDTG method"),
+  nCategories_            (conf.getParameter<int>                     ("nCategories")),
+  methodName_             ("BDTG method"),
   ptSplit_                (conf.getParameter<double>                  ("ptSplit")),
   ebSplit_                (conf.getParameter<double>                  ("ebSplit")),
   ebeeSplit_              (conf.getParameter<double>                  ("ebeeSplit")),
-  varNames_               (conf.getParameter<std::vector<std::string>>("varNames"))
+  variableDefinitionFileName_(conf.getParameter<std::string>("variableDefinition"))
 {
 
   const std::vector <std::string> weightFileNames
     = conf.getParameter<std::vector<std::string> >("weightFileNames");
 
-  std::vector<double> clipsLowerValues = conf.getParameter<std::vector<double>>("clipLower");
-  std::vector<double> clipsUpperValues = conf.getParameter<std::vector<double>>("clipUpper");
-
-  // Initialize GBRForests and and clipping instructions
+  // Initialize GBRForests from weight files
   init(weightFileNames);
-  setClips(clipsLowerValues, clipsUpperValues);
 
   withIso_ = withIso;
   debug_ = conf.getUntrackedParameter<bool>("debug", false);
@@ -27,8 +24,7 @@ ElectronMVAEstimatorRun2Fall17::ElectronMVAEstimatorRun2Fall17(const edm::Parame
 }
 
 ElectronMVAEstimatorRun2Fall17::ElectronMVAEstimatorRun2Fall17(
-        const std::string &mvaTag, const std::string &mvaName, bool withIso, const std::string &conversionsTag, const std::string &beamspotTag,
-        const double ptSplit, const double ebSplit, const double ebeeSplit, const bool debug):
+        const std::string &mvaTag, const std::string &mvaName, bool withIso, const double ptSplit, const double ebSplit, const double ebeeSplit, const bool debug):
   AnyMVAEstimatorRun2Base( edm::ParameterSet() ),
   tag_                    (mvaTag),
   name_                   (mvaName),
@@ -48,6 +44,8 @@ ElectronMVAEstimatorRun2Fall17::ElectronMVAEstimatorRun2Fall17(
 
 void ElectronMVAEstimatorRun2Fall17::init(const std::vector<std::string> &weightFileNames) {
 
+  edm::FileInPath variableDefinitionFileEdm(variableDefinitionFileName_);
+
   // Initialize GBRForests
   if( (int)(weightFileNames.size()) != nCategories_ )
     throw cms::Exception("MVA config failure: ")
@@ -57,44 +55,73 @@ void ElectronMVAEstimatorRun2Fall17::init(const std::vector<std::string> &weight
   // Create a TMVA reader object for each category
   for(int i=0; i<nCategories_; i++){
 
+    std::vector<std::string> variableNamesInCategory;
+    std::vector<Variable> variablesInCategory;
+
     // Use unique_ptr so that all readers are properly cleaned up
     // when the vector clear() is called in the destructor
 
     edm::FileInPath weightFile( weightFileNames[i] );
-    gbrForests_.push_back( GBRForestTools::createGBRForest( weightFile ) );
+    gbrForests_.push_back( GBRForestTools::createGBRForest( weightFile, variableNamesInCategory ) );
 
+    nVariables_.push_back(variableNamesInCategory.size());
+
+    variables_.push_back(variablesInCategory);
+
+    for (int j=0; j<nVariables_[i];++j) {
+        std::string formula;
+        bool hasLowerClip = false;
+        bool hasUpperClip = false;
+        float lowerClipValue = 0.;
+        float upperClipValue = 0.;
+        bool fromVariableHelper = false;
+
+        std::ifstream file(variableDefinitionFileEdm.fullPath());
+        std::string line;
+        int lineNumberFromVarName = 0;
+        bool variableFound = false;
+        while (std::getline(file, line))
+        {
+            if (line.find("#") != std::string::npos) {
+                continue;
+            }
+            if (line.find(variableNamesInCategory[j]) != std::string::npos) {
+                variableFound = true;
+            }
+            if (lineNumberFromVarName == 1) {
+                if (line.find("electronMVAVariableHelper") != std::string::npos) {
+                    fromVariableHelper = true;
+                }
+                formula = line;
+            }
+            if (lineNumberFromVarName == 2) {
+                if (line.find("None") == std::string::npos) {
+                    hasLowerClip = true;
+                    lowerClipValue = ::atof(line.c_str());
+                }
+            }
+            if (lineNumberFromVarName == 3) {
+                if (line.find("None") == std::string::npos) {
+                    hasUpperClip = true;
+                    upperClipValue = ::atof(line.c_str());
+                }
+                break;
+            }
+            if (variableFound) {
+                ++lineNumberFromVarName;
+            }
+        }
+
+        if(!variableFound) {
+            throw cms::Exception("MVA config failure: ")
+               << "Variable " << variableNamesInCategory[j]
+               << " not found in variable definition file!" << std::endl << "Check "
+               << variableDefinitionFileName_ << std::endl;
+        }
+
+        variables_[i].push_back(Variable(variableNamesInCategory[j], formula, hasLowerClip, hasUpperClip, lowerClipValue, upperClipValue, fromVariableHelper));
+    }
   }
-
-  // Initialize the functions
-  gsfEleFunctions_.clear();
-  for (int i = 0; i < 21; ++i) {
-      StringObjectFunction<reco::GsfElectron> f(gsfEleFuncStrings_[i]);
-      gsfEleFunctions_.push_back(f);
-  }
-
-}
-
-void ElectronMVAEstimatorRun2Fall17::setClips(const std::vector<double> &clipsLowerValues, const std::vector<double> &clipsUpperValues) {
-
-  // Set up the variable clipping intructions
-  unsigned int i = 0;
-  for(auto const& value: clipsLowerValues) {
-      if (edm::isFinite(value)) {
-          Clip clip = {i, false, (float)value};
-          clipsLower_.push_back(clip);
-      }
-      ++i;
-  }
-
-  i = 0;
-  for(auto const& value: clipsUpperValues) {
-      if (edm::isFinite(value)) {
-          Clip clip = {i, true, (float)value};
-          clipsUpper_.push_back(clip);
-      }
-      ++i;
-  }
-
 }
 
 ElectronMVAEstimatorRun2Fall17::
@@ -124,7 +151,7 @@ mvaValue( const edm::Ptr<reco::Candidate>& particle, const edm::Event& iEvent) c
   }
 
   const int iCategory = findCategory( eleRecoPtr );
-  const std::vector<float> vars = fillMVAVariables( particle, iEvent );
+  const std::vector<float> vars = fillMVAVariables( particle, iEvent, iCategory );
   return mvaValue(iCategory, vars);
 }
 
@@ -132,7 +159,7 @@ float ElectronMVAEstimatorRun2Fall17::
 mvaValue( const edm::Ptr<reco::GsfElectron>& particle, const edm::EventBase & iEvent) const {
 
   const int iCategory = findCategory( particle );
-  const std::vector<float> vars = fillMVAVariables( particle, iEvent );
+  const std::vector<float> vars = fillMVAVariables( particle, iEvent, iCategory );
   return mvaValue(iCategory, vars);
 }
 
@@ -140,39 +167,12 @@ float ElectronMVAEstimatorRun2Fall17::
 mvaValue( const int iCategory, const std::vector<float> & vars) const  {
   const float result = gbrForests_.at(iCategory)->GetClassifier(vars.data());
 
-  if(debug_) {
-    std::cout << " *** Inside the class methodName_ " << methodName_ << std::endl;
-    std::cout << " bin "                      << iCategory << std::endl
-              << " see "                      << vars[0] << std::endl
-              << " spp "                      << vars[1] << std::endl
-              << " circularity "              << vars[2] << std::endl
-              << " r9 "                       << vars[3] << std::endl
-              << " etawidth "                 << vars[4] << std::endl
-              << " phiwidth "                 << vars[5] << std::endl
-              << " hoe "                      << vars[6] << std::endl
-              << " kfhits "                   << vars[7] << std::endl
-              << " kfchi2 "                   << vars[8] << std::endl
-              << " gsfchi2 "                  << vars[9] << std::endl
-              << " fbrem "                    << vars[10] << std::endl
-              << " gsfhits "                  << vars[11] << std::endl
-              << " expectedMissingInnerHits " << vars[12] << std::endl
-              << " convVtxFitProbability "    << vars[13] << std::endl
-              << " eop "                      << vars[14] << std::endl
-              << " eleeopout "                << vars[15] << std::endl
-              << " oneOverEminusOneOverP "    << vars[16] << std::endl
-              << " deta "                     << vars[17] << std::endl
-              << " dphi "                     << vars[18] << std::endl
-              << " detacalo "                 << vars[19] << std::endl;
-    if (withIso_) {
-      std::cout << " ele_pfPhotonIso "          << vars[20] << std::endl
-                << " ele_pfChargedHadIso "      << vars[21] << std::endl
-                << " ele_pfNeutralHadIso "      << vars[22] << std::endl
-                << " rho "                      << vars[23] << std::endl
-                << " preShowerOverRaw "         << vars[24] << std::endl;
-    }
-    else {
-      std::cout << " rho "                      << vars[20] << std::endl
-                << " preShowerOverRaw "         << vars[21] << std::endl;
+  //if(debug_) {
+  if(true) {
+    std::cout << " *** Inside " << name_ << tag_ << std::endl;
+    std::cout << " category " << iCategory << std::endl;
+    for (int i = 0; i < nVariables_[iCategory]; ++i) {
+        std::cout << " " << variables_[iCategory][i].getName() << " " << vars[i] << std::endl;
     }
     std::cout << " ### MVA " << result << std::endl << std::endl;
   }
@@ -230,9 +230,16 @@ int ElectronMVAEstimatorRun2Fall17::findCategory( const edm::Ptr<reco::GsfElectr
   return iCategory;
 }
 
-// A function that should work on both pat and reco objects
+// Dummy fonction just to make the template happy
 std::vector<float> ElectronMVAEstimatorRun2Fall17::
 fillMVAVariables(const edm::Ptr<reco::Candidate>& particle, const edm::Event& iEvent) const {
+  std::vector<float> vars;
+  return vars;
+}
+
+// A function that should work on both pat and reco objects
+std::vector<float> ElectronMVAEstimatorRun2Fall17::
+fillMVAVariables(const edm::Ptr<reco::Candidate>& particle, const edm::Event& iEvent, const int iCategory) const {
 
   // Try to cast the particle into a reco particle.
   // This should work for both reco and pat.
@@ -243,125 +250,21 @@ fillMVAVariables(const edm::Ptr<reco::Candidate>& particle, const edm::Event& iE
       << " but appears to be neither" << std::endl;
   }
 
-  return fillMVAVariables(eleRecoPtr, iEvent);
+  return fillMVAVariables(eleRecoPtr, iEvent, iCategory);
 }
 
 // A function that should work on both pat and reco objects
+// The EventType will be edm::Event for the VID accessor and edm::EventBase for for the fwlite accessor
 template<class EventType>
 std::vector<float> ElectronMVAEstimatorRun2Fall17::
-fillMVAVariables(const edm::Ptr<reco::GsfElectron>& eleRecoPtr, const EventType& iEvent) const {
+fillMVAVariables(const edm::Ptr<reco::GsfElectron>& eleRecoPtr, const EventType& iEvent, const int iCategory) const {
 
-  //
-  // Declare all value maps corresponding to the products we defined earlier
-  //
+  std::vector<float> vars;
 
-  // Get the variables from the helper class
-  edm::Handle<edm::ValueMap<float>> kfhits;
-  edm::Handle<edm::ValueMap<float>> kfchi2;
-  edm::Handle<edm::ValueMap<float>> convVtxFitProb;
-  edm::Handle<edm::ValueMap<float>> rho;
-
-  iEvent.getByLabel(edm::InputTag("electronMVAVariableHelper:kfhits"), kfhits);
-  iEvent.getByLabel(edm::InputTag("electronMVAVariableHelper:kfchi2"), kfchi2);
-  iEvent.getByLabel(edm::InputTag("electronMVAVariableHelper:convVtxFitProb"), convVtxFitProb);
-  iEvent.getByLabel(edm::InputTag("electronMVAVariableHelper:rho"), rho);
-
-  if(withIso_)
-  {
-
-    std::vector<float> vars = packMVAVariables(
-                                  (float)gsfEleFunctions_[0](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[1](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[2](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[3](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[4](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[5](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[6](*eleRecoPtr),
-                                  //Pure tracking variables
-                                  (float)(*kfhits)[eleRecoPtr],
-                                  (float)(*kfchi2)[eleRecoPtr],
-                                  (float)gsfEleFunctions_[7](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[8](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[9](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[10](*eleRecoPtr),
-                                  (float)(*convVtxFitProb)[eleRecoPtr],
-                                  (float)gsfEleFunctions_[11](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[12](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[13](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[14](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[15](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[16](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[17](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[18](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[19](*eleRecoPtr),
-                                  // Pileup
-                                  (float)(*rho)[eleRecoPtr],
-
-                                  // Endcap only variables NOTE: we don't need
-                                  // to check if we are actually in the endcap
-                                  // or not, as it is the last variable in the
-                                  // vector and it will be ignored by the
-                                  // GBRForest for the barrel.
-                                  //
-                                  // The GBRForest classification just needs an
-                                  // array with the input variables in the
-                                  // right order, what comes after doesn't
-                                  // matter.
-                                  (float)gsfEleFunctions_[20](*eleRecoPtr)
-                              );
-
-    constrainMVAVariables(vars);
-
-    return vars;
-  }
-  else
-  {
-    std::vector<float> vars = packMVAVariables(
-                                  (float)gsfEleFunctions_[0](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[1](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[2](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[3](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[4](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[5](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[6](*eleRecoPtr),
-                                  (float)(*kfhits)[eleRecoPtr],
-                                  (float)(*kfchi2)[eleRecoPtr],
-                                  (float)gsfEleFunctions_[7](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[8](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[9](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[10](*eleRecoPtr),
-                                  (float)(*convVtxFitProb)[eleRecoPtr],
-                                  (float)gsfEleFunctions_[11](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[12](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[13](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[14](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[15](*eleRecoPtr),
-                                  (float)gsfEleFunctions_[16](*eleRecoPtr),
-                                  (float)(*rho)[eleRecoPtr],
-                                  (float)gsfEleFunctions_[20](*eleRecoPtr)
-                              );
-
-    constrainMVAVariables(vars);
-
-    return vars;
+  for (int i = 0; i < nVariables_[iCategory]; ++i) {
+      vars.push_back(variables_[iCategory][i].getValue(eleRecoPtr, iEvent));
   }
 
-}
-
-void ElectronMVAEstimatorRun2Fall17::constrainMVAVariables(std::vector<float>& vars) const {
-
-  // Check that variables do not have crazy values
-
-  for(auto const& clip: clipsLower_) {
-      if ( vars[clip.varIdx] < clip.value  ) {
-          vars[clip.varIdx] =   clip.value;
-      }
-  }
-
-  for(auto const& clip: clipsUpper_) {
-      if ( vars[clip.varIdx] > clip.value  ) {
-          vars[clip.varIdx] =   clip.value;
-      }
-  }
+  return vars;
 
 }

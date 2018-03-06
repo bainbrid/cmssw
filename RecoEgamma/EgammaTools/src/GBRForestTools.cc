@@ -27,13 +27,13 @@ namespace {
 
 };
 
-std::unique_ptr<const GBRForest> GBRForestTools::createGBRForest(const std::string &weightFile){
+std::unique_ptr<const GBRForest> GBRForestTools::createGBRForest(const std::string &weightFile, std::vector<std::string> &varNames){
   edm::FileInPath weightFileEdm(weightFile);
-  return GBRForestTools::createGBRForest(weightFileEdm);
+  return GBRForestTools::createGBRForest(weightFileEdm, varNames);
 }
 
 // Creates a pointer to new GBRForest corresponding to a TMVA weights file
-std::unique_ptr<const GBRForest> GBRForestTools::createGBRForest(const edm::FileInPath &weightFile){
+std::unique_ptr<const GBRForest> GBRForestTools::createGBRForest(const edm::FileInPath &weightFile, std::vector<std::string> &varNames){
 
   std::string method;
 
@@ -43,7 +43,7 @@ std::unique_ptr<const GBRForest> GBRForestTools::createGBRForest(const edm::File
   std::vector<float> dumbVars;
   std::vector<float> dumbSpecs;
 
-  std::vector<std::string> varNames;
+  varNames.clear();
   std::vector<std::string> specNames;
 
   std::string line;
@@ -134,4 +134,14 @@ std::unique_ptr<const GBRForest> GBRForestTools::createGBRForest(const edm::File
   delete mvaReader;
 
   return gbrForest;
+}
+
+std::unique_ptr<const GBRForest> GBRForestTools::createGBRForest(const std::string &weightFile){
+  edm::FileInPath weightFileEdm(weightFile);
+  return GBRForestTools::createGBRForest(weightFileEdm);
+}
+
+std::unique_ptr<const GBRForest> GBRForestTools::createGBRForest(const edm::FileInPath &weightFile){
+    std::vector<std::string> varNames;
+    return GBRForestTools::createGBRForest(weightFile, varNames);
 }

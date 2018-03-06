@@ -171,22 +171,25 @@ for i, x in enumerate(clipUpper):
 
 # Create the PSet that will be fed to the MVA value map producer
 mvaEleID_Fall17_iso_V1_producer_config = cms.PSet(
-    mvaName            = cms.string(mvaFall17ClassName),
-    mvaTag             = cms.string(mvaTag),
+    mvaName             = cms.string(mvaFall17ClassName),
+    mvaTag              = cms.string(mvaTag),
     # This MVA uses conversion info, so configure several data items on that
-    beamSpot           = cms.InputTag('offlineBeamSpot'),
-    conversionsAOD     = cms.InputTag('allConversions'),
-    conversionsMiniAOD = cms.InputTag('reducedEgamma:reducedConversions'),
+    beamSpot            = cms.InputTag('offlineBeamSpot'),
+    conversionsAOD      = cms.InputTag('allConversions'),
+    conversionsMiniAOD  = cms.InputTag('reducedEgamma:reducedConversions'),
     # Category split parameters
-    ptSplit            = cms.double(ptSplit),
-    ebSplit            = cms.double(ebSplit),
-    ebeeSplit          = cms.double(ebeeSplit),
+    ptSplit             = cms.double(ptSplit),
+    ebSplit             = cms.double(ebSplit),
+    ebeeSplit           = cms.double(ebeeSplit),
     # Variable clipping parameters
-    varNames           = cms.vstring(*varNames),
-    clipLower          = cms.vdouble(*clipLower),
-    clipUpper          = cms.vdouble(*clipUpper),
+    varNames            = cms.vstring(*varNames),
+    clipLower           = cms.vdouble(*clipLower),
+    clipUpper           = cms.vdouble(*clipUpper),
     #
-    weightFileNames    = mvaFall17WeightFiles_V1
+    nCategories         = cms.int32(6),
+    #
+    weightFileNames     = mvaFall17WeightFiles_V1,
+    variableDefinition  = cms.string("RecoEgamma/ElectronIdentification/data/ElectronMVAEstimatorRun2Variables.txt")
     )
 # Create the VPset's for VID cuts
 mvaEleID_Fall17_V1_wpLoose = configureVIDMVAEleID_V1( MVA_WPLoose )

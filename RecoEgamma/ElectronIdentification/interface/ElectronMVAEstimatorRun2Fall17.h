@@ -29,8 +29,6 @@ class ElectronMVAEstimatorRun2Fall17 : public AnyMVAEstimatorRun2Base{
   ElectronMVAEstimatorRun2Fall17(const std::string &mvaTag,
                                  const std::string &mvaName,
                                  bool withIso,
-                                 const std::string &conversionsTag = "reducedEgamma:reducedConversions",
-                                 const std::string &beamspotTag = "offlineBeamSpot",
                                  const double ptSplit = 10., // The category split parameters are taken over from the python configuration file
                                  const double ebSplit = 0.800,
                                  const double ebeeSplit = 1.479,
@@ -54,15 +52,13 @@ class ElectronMVAEstimatorRun2Fall17 : public AnyMVAEstimatorRun2Base{
   // Functions that should work on both pat and reco electrons
   // (use the fact that pat::Electron inherits from reco::GsfElectron)
   std::vector<float> fillMVAVariables(const edm::Ptr<reco::Candidate>& particle, const edm::Event&) const override;
+  std::vector<float> fillMVAVariables(const edm::Ptr<reco::Candidate>& particle, const edm::Event&, const int iCategory) const;
 
   template<class EventType>
-  std::vector<float> fillMVAVariables(const edm::Ptr<reco::GsfElectron>& eleRecoPtr, const EventType& iEvent) const;
+  std::vector<float> fillMVAVariables(const edm::Ptr<reco::GsfElectron>& eleRecoPtr, const EventType& iEvent, const int iCategory) const;
 
   int findCategory( const edm::Ptr<reco::Candidate>& particle) const override;
   int findCategory( const edm::Ptr<reco::GsfElectron>& particle) const ;
-  // The function below ensures that the variables passed to MVA are
-  // within reasonable bounds
-  void constrainMVAVariables(std::vector<float>&) const;
 
   // Call this function once after the constructor to declare
   // the needed event content pieces to the framework
@@ -70,16 +66,60 @@ class ElectronMVAEstimatorRun2Fall17 : public AnyMVAEstimatorRun2Base{
 
  protected:
 
-  // This is a stuct to store an instruction of clipping one of the input variables with a lower or an upper limit
-  struct Clip {
-      unsigned int varIdx;
-      bool upper;
-      float value;
+  // This class stores all the information that is needed about a variable
+  class Variable {
+    public:
+      Variable(std::string &name, std::string &formula, bool hasLowerClip, bool hasUpperClip, float lowerClipValue, float upperClipValue, bool fromVariableHelper) {
+          name_ =  name;
+          formula_ = formula;
+          hasLowerClip_ = hasLowerClip;
+          hasUpperClip_ = hasUpperClip;
+          lowerClipValue_ = lowerClipValue;
+          upperClipValue_ = upperClipValue;
+          fromVariableHelper_ = fromVariableHelper;
+
+          if (!fromVariableHelper) {
+              function_ = std::make_shared<StringObjectFunction<reco::GsfElectron>>(formula);
+          }
+      };
+
+      std::string getName() const {
+          return name_;
+      };
+
+      template<class EventType>
+      float getValue(const edm::Ptr<reco::GsfElectron>& eleRecoPtr, const EventType& iEvent) const {
+          float value;
+          if (fromVariableHelper_) {
+              edm::Handle<edm::ValueMap<float>> vMap;
+              iEvent.getByLabel(edm::InputTag(formula_), vMap);
+              value = (*vMap)[eleRecoPtr];
+          } else {
+              value = (*function_)(*eleRecoPtr);
+          }
+          if (hasLowerClip_ && value < lowerClipValue_) {
+              value = lowerClipValue_;
+          }
+          if (hasUpperClip_ && value > upperClipValue_) {
+              value = upperClipValue_;
+          }
+          return value;
+      };
+
+    private:
+      std::string name_;
+      std::string formula_;
+      bool hasLowerClip_;
+      bool hasUpperClip_;
+      float lowerClipValue_;
+      float upperClipValue_;
+      bool fromVariableHelper_;
+      std::shared_ptr<StringObjectFunction<reco::GsfElectron>> function_;
   };
 
   // Define here the number and the meaning of the categories
   // for this specific MVA
-  const int nCategories_ = 6;
+  //const int nCategories_ = 6;
   const int nVar_ = 22;
   enum MVACategories_ {
     UNDEFINED = -1,
@@ -102,68 +142,28 @@ class ElectronMVAEstimatorRun2Fall17 : public AnyMVAEstimatorRun2Base{
 
   const std::string name_;
 
+  // The number of categories and number of variables per category
+  int nCategories_;
+  std::vector<int> nVariables_;
+
   // Data members
   std::vector< std::unique_ptr<const GBRForest> > gbrForests_;
 
   const std::string methodName_;
 
-  //edm::EDGetTokenT<reco::BeamSpot> beamSpotToken_;
-  //edm::EDGetTokenT<reco::ConversionCollection> conversionsTokenAOD_;
-  //edm::EDGetTokenT<reco::ConversionCollection> conversionsTokenMiniAOD_;
-  //edm::EDGetTokenT<double> rhoToken_;
-
   double ptSplit_;   // we have high and low pt categories
   double ebSplit_;    // barrel is split into two regions
   double ebeeSplit_; // division between barrel and endcap
 
-  std::vector<std::string> varNames_;
-
-  // To store the variable clipping operations
-  std::vector<Clip> clipsLower_;
-  std::vector<Clip> clipsUpper_;
+  // There might be different variables for each category, so the variables
+  // names vector is itself a vector of length nCategories
+  std::vector<std::vector<Variable>> variables_;
 
   bool withIso_;
 
   bool debug_;
 
-  // The functions to obtain the input variables
-
-  /*
-   * Defining variables for the MVA evaluation.
-   * CAREFUL: It is critical that all the variables that are packed into “vars” are
-   * exactly in the order they are found in the weight files
-   */
-  const std::string gsfEleFuncStrings_ [21] = {
-      // Pure ECAL -> shower shapes
-      "full5x5_sigmaIetaIeta",
-      "full5x5_sigmaIphiIphi",
-      "1. - full5x5_e1x5 / full5x5_e5x5",
-      "full5x5_r9",
-      "superCluster.etaWidth",
-      "superCluster.phiWidth",
-      "full5x5_hcalOverEcal", //hadronicOverEm
-      //Pure tracking variables
-      "gsfTrack.normalizedChi2",
-      // Energy matching
-      "fbrem",
-      "gsfTrack.hitPattern.trackerLayersWithMeasurement",
-      "gsfTrack.hitPattern.numberOfLostHits('MISSING_INNER_HITS')",
-      // Energy matching
-      "eSuperClusterOverP",
-      "eEleClusterOverPout",
-      "1.0 / ecalEnergy - 1.0 / trackMomentumAtVtx.R",
-      // Geometrical matchings
-      "deltaEtaSuperClusterTrackAtVtx",
-      "deltaPhiSuperClusterTrackAtVtx",
-      "deltaEtaSeedClusterTrackAtCalo",
-      // Isolation variables
-      "pfIsolationVariables.sumChargedHadronPt", //chargedHadronIso
-      "pfIsolationVariables.sumNeutralHadronEt", //neutralHadronIso
-      "pfIsolationVariables.sumPhotonEt", //photonIso
-      // Endcap only
-      "superCluster.preshowerEnergy / superCluster.rawEnergy"
-  };
-  std::vector<StringObjectFunction<reco::GsfElectron>> gsfEleFunctions_;
+  const std::string variableDefinitionFileName_;
 };
 
 #endif
