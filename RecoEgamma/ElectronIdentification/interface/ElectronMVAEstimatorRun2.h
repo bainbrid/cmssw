@@ -1,5 +1,5 @@
-#ifndef RecoEgamma_ElectronIdentification_ElectronMVAEstimatorRun2Fall17_H
-#define RecoEgamma_ElectronIdentification_ElectronMVAEstimatorRun2Fall17_H
+#ifndef RecoEgamma_ElectronIdentification_ElectronMVAEstimatorRun2_H
+#define RecoEgamma_ElectronIdentification_ElectronMVAEstimatorRun2_H
 
 #include <vector>
 #include <string>
@@ -18,21 +18,21 @@
 #include "CommonTools/Utils/interface/StringObjectFunction.h"
 #include "CommonTools/Utils/interface/StringCutObjectSelector.h"
 
-class ElectronMVAEstimatorRun2Fall17 : public AnyMVAEstimatorRun2Base{
+class ElectronMVAEstimatorRun2 : public AnyMVAEstimatorRun2Base{
 
  public:
 
   // Constructor and destructor
-  ElectronMVAEstimatorRun2Fall17(const edm::ParameterSet& conf, bool withIso);
-  ~ElectronMVAEstimatorRun2Fall17() override;
+  ElectronMVAEstimatorRun2(const edm::ParameterSet& conf);
+  ~ElectronMVAEstimatorRun2() override;
   // For use with FWLite/Python
-  ElectronMVAEstimatorRun2Fall17(const std::string &mvaTag,
-                                 const std::string &mvaName,
-                                 bool withIso,
-                                 const double ptSplit = 10., // The category split parameters are taken over from the python configuration file
-                                 const double ebSplit = 0.800,
-                                 const double ebeeSplit = 1.479,
-                                 const bool debug = false);
+  ElectronMVAEstimatorRun2(const std::string &mvaTag,
+                           const std::string &mvaName,
+                           bool withIso,
+                           const double ptSplit = 10., // The category split parameters are taken over from the python configuration file
+                           const double ebSplit = 0.800,
+                           const double ebeeSplit = 1.479,
+                           const bool debug = false);
 
   void init(const std::vector<std::string> &weightFileNames);
   void setClips(const std::vector<double> &clipsLowerValues, const std::vector<double> &clipsUpperValues);

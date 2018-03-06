@@ -10,11 +10,11 @@ import FWCore.ParameterSet.Config as cms
 #
 
 # This MVA implementation class name
-mvaFall17ClassName = "ElectronMVAEstimatorRun2Fall17Iso"
+mvaClassName = "ElectronMVAEstimatorRun2"
 # The tag is an extra string attached to the names of the products
 # such as ValueMaps that needs to distinguish cases when the same MVA estimator
 # class is used with different tuning/weights
-mvaTag = "V1"
+mvaTag = "Fall17IsoV1"
 
 # The parameters according to which the training bins are split:
 ptSplit = 10.      # we have above and below 10 GeV categories
@@ -40,6 +40,10 @@ mvaFall17WeightFiles_V1 = cms.vstring(
     "RecoEgamma/ElectronIdentification/data/Fall17/EIDmva_EE_10_2017_puinfo_iso_BDT.weights.xml"
     )
 
+categoryCuts = cms.vstring(
+    "",
+    )
+
 # Load some common definitions for MVA machinery
 from RecoEgamma.ElectronIdentification.Identification.mvaElectronID_tools \
     import (EleMVA_WP,
@@ -50,8 +54,8 @@ from RecoEgamma.ElectronIdentification.Identification.mvaElectronID_tools \
 # The names for the maps are "<module name>:<MVA class name>Values"
 # and "<module name>:<MVA class name>Categories"
 mvaProducerModuleLabel = "electronMVAValueMapProducer"
-mvaValueMapName        = mvaProducerModuleLabel + ":" + mvaFall17ClassName + mvaTag + "Values"
-mvaCategoriesMapName   = mvaProducerModuleLabel + ":" + mvaFall17ClassName + mvaTag + "Categories"
+mvaValueMapName        = mvaProducerModuleLabel + ":" + mvaClassName + mvaTag + "Values"
+mvaCategoriesMapName   = mvaProducerModuleLabel + ":" + mvaClassName + mvaTag + "Categories"
 
 ## The working point for this MVA that is expected to have about 90% signal
 # WP tuned to give about 90 and 80% signal efficiecny for electrons from Drell-Yan with pT > 25 GeV
@@ -124,54 +128,12 @@ MVA_WPLoose = EleMVA_WP(
     )
 
 #
-# Configure variable names and the values they are clipped to.
-# They have to appear in the same order as in the weights xml file
-#
-
-#                Name  |  Lower clip value  | upper clip value
-variablesInfo = [
-                 ("ele_oldsigmaietaieta"              ,  None, None),
-                 ("ele_oldsigmaiphiiphi"              ,  None, None),
-                 ("ele_oldcircularity"                ,   -1.,   2.),
-                 ("ele_oldr9"                         ,  None,   5.),
-                 ("ele_scletawidth"                   ,  None, None),
-                 ("ele_sclphiwidth"                   ,  None, None),
-                 ("ele_oldhe"                         ,  None, None),
-                 ("ele_kfhits"                        ,  None, None),
-                 ("ele_kfchi2"                        ,  None,  10.),
-                 ("ele_gsfchi2"                       ,  None, 200.),
-                 ("ele_fbrem"                         ,   -1., None),
-                 ("ele_gsfhits"                       ,  None, None),
-                 ("ele_expected_inner_hits"           ,  None, None),
-                 ("ele_conversionVertexFitProbability",  None, None),
-                 ("ele_ep"                            ,  None,  20.),
-                 ("ele_eelepout"                      ,  None,  20.),
-                 ("ele_IoEmIop"                       ,  None, None),
-                 ("ele_deltaetain"                    , -0.06, 0.06),
-                 ("ele_deltaphiin"                    ,  -0.6,  0.6),
-                 ("ele_deltaetaseed"                  ,  -0.2,  0.2),
-                 ("ele_pfPhotonIso"                   ,  None, None), #
-                 ("ele_pfChargedHadIso"               ,  None, None), # PF isolations
-                 ("ele_pfNeutralHadIso"               ,  None, None), #
-                 ("rho"                               ,  None, None),
-                 ("ele_psEoverEraw"                   ,  None, None), # EE only
-                ]
-
-varNames, clipLower, clipUpper = [list(l) for l in zip(*variablesInfo)]
-for i, x in enumerate(clipLower):
-    if x == None:
-        clipLower[i] = -float('Inf')
-for i, x in enumerate(clipUpper):
-    if x == None:
-        clipUpper[i] =  float('Inf')
-
-#
 # Finally, set up VID configuration for all cuts
 #
 
 # Create the PSet that will be fed to the MVA value map producer
 mvaEleID_Fall17_iso_V1_producer_config = cms.PSet(
-    mvaName             = cms.string(mvaFall17ClassName),
+    mvaName             = cms.string(mvaClassName),
     mvaTag              = cms.string(mvaTag),
     # This MVA uses conversion info, so configure several data items on that
     beamSpot            = cms.InputTag('offlineBeamSpot'),
@@ -181,10 +143,6 @@ mvaEleID_Fall17_iso_V1_producer_config = cms.PSet(
     ptSplit             = cms.double(ptSplit),
     ebSplit             = cms.double(ebSplit),
     ebeeSplit           = cms.double(ebeeSplit),
-    # Variable clipping parameters
-    varNames            = cms.vstring(*varNames),
-    clipLower           = cms.vdouble(*clipLower),
-    clipUpper           = cms.vdouble(*clipUpper),
     #
     nCategories         = cms.int32(6),
     #

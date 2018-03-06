@@ -1,6 +1,6 @@
-#include "RecoEgamma/ElectronIdentification/interface/ElectronMVAEstimatorRun2Fall17.h"
+#include "RecoEgamma/ElectronIdentification/interface/ElectronMVAEstimatorRun2.h"
 
-ElectronMVAEstimatorRun2Fall17::ElectronMVAEstimatorRun2Fall17(const edm::ParameterSet& conf, bool withIso):
+ElectronMVAEstimatorRun2::ElectronMVAEstimatorRun2(const edm::ParameterSet& conf):
   AnyMVAEstimatorRun2Base(conf),
   tag_(conf.getParameter<std::string>("mvaTag")),
   name_(conf.getParameter<std::string>("mvaName")),
@@ -18,12 +18,11 @@ ElectronMVAEstimatorRun2Fall17::ElectronMVAEstimatorRun2Fall17(const edm::Parame
   // Initialize GBRForests from weight files
   init(weightFileNames);
 
-  withIso_ = withIso;
   debug_ = conf.getUntrackedParameter<bool>("debug", false);
 
 }
 
-ElectronMVAEstimatorRun2Fall17::ElectronMVAEstimatorRun2Fall17(
+ElectronMVAEstimatorRun2::ElectronMVAEstimatorRun2(
         const std::string &mvaTag, const std::string &mvaName, bool withIso, const double ptSplit, const double ebSplit, const double ebeeSplit, const bool debug):
   AnyMVAEstimatorRun2Base( edm::ParameterSet() ),
   tag_                    (mvaTag),
@@ -34,15 +33,12 @@ ElectronMVAEstimatorRun2Fall17::ElectronMVAEstimatorRun2Fall17(
   ebeeSplit_              (ebeeSplit)
 {
 
-  // Set if this is the ID with or without PF isolations
-  withIso_ = withIso;
-
   // Set debug flag
   debug_ = debug;
 
 }
 
-void ElectronMVAEstimatorRun2Fall17::init(const std::vector<std::string> &weightFileNames) {
+void ElectronMVAEstimatorRun2::init(const std::vector<std::string> &weightFileNames) {
 
   edm::FileInPath variableDefinitionFileEdm(variableDefinitionFileName_);
 
@@ -124,11 +120,11 @@ void ElectronMVAEstimatorRun2Fall17::init(const std::vector<std::string> &weight
   }
 }
 
-ElectronMVAEstimatorRun2Fall17::
-~ElectronMVAEstimatorRun2Fall17(){
+ElectronMVAEstimatorRun2::
+~ElectronMVAEstimatorRun2(){
 }
 
-void ElectronMVAEstimatorRun2Fall17::setConsumes(edm::ConsumesCollector&& cc) const {
+void ElectronMVAEstimatorRun2::setConsumes(edm::ConsumesCollector&& cc) const {
 
   // All tokens for event content needed by this MVA
 
@@ -139,7 +135,7 @@ void ElectronMVAEstimatorRun2Fall17::setConsumes(edm::ConsumesCollector&& cc) co
   cc.consumes<edm::ValueMap<float>>(edm::InputTag("electronMVAVariableHelper:rho"));
 }
 
-float ElectronMVAEstimatorRun2Fall17::
+float ElectronMVAEstimatorRun2::
 mvaValue( const edm::Ptr<reco::Candidate>& particle, const edm::Event& iEvent) const {
   // Try to cast the particle into a reco particle.
   // This should work for both reco and pat.
@@ -155,7 +151,7 @@ mvaValue( const edm::Ptr<reco::Candidate>& particle, const edm::Event& iEvent) c
   return mvaValue(iCategory, vars);
 }
 
-float ElectronMVAEstimatorRun2Fall17::
+float ElectronMVAEstimatorRun2::
 mvaValue( const edm::Ptr<reco::GsfElectron>& particle, const edm::EventBase & iEvent) const {
 
   const int iCategory = findCategory( particle );
@@ -163,12 +159,11 @@ mvaValue( const edm::Ptr<reco::GsfElectron>& particle, const edm::EventBase & iE
   return mvaValue(iCategory, vars);
 }
 
-float ElectronMVAEstimatorRun2Fall17::
+float ElectronMVAEstimatorRun2::
 mvaValue( const int iCategory, const std::vector<float> & vars) const  {
   const float result = gbrForests_.at(iCategory)->GetClassifier(vars.data());
 
-  //if(debug_) {
-  if(true) {
+  if(debug_) {
     std::cout << " *** Inside " << name_ << tag_ << std::endl;
     std::cout << " category " << iCategory << std::endl;
     for (int i = 0; i < nVariables_[iCategory]; ++i) {
@@ -180,7 +175,7 @@ mvaValue( const int iCategory, const std::vector<float> & vars) const  {
   return result;
 }
 
-int ElectronMVAEstimatorRun2Fall17::findCategory( const edm::Ptr<reco::Candidate>& particle) const {
+int ElectronMVAEstimatorRun2::findCategory( const edm::Ptr<reco::Candidate>& particle) const {
 
   // Try to cast the particle into a reco particle.
   // This should work for both reco and pat.
@@ -193,7 +188,7 @@ int ElectronMVAEstimatorRun2Fall17::findCategory( const edm::Ptr<reco::Candidate
   return findCategory(eleRecoPtr);
 }
 
-int ElectronMVAEstimatorRun2Fall17::findCategory( const edm::Ptr<reco::GsfElectron>& eleRecoPtr ) const {
+int ElectronMVAEstimatorRun2::findCategory( const edm::Ptr<reco::GsfElectron>& eleRecoPtr ) const {
   float pt = eleRecoPtr->pt();
   float eta = eleRecoPtr->superCluster()->eta();
   float absEta = std::abs(eta);
@@ -231,14 +226,14 @@ int ElectronMVAEstimatorRun2Fall17::findCategory( const edm::Ptr<reco::GsfElectr
 }
 
 // Dummy fonction just to make the template happy
-std::vector<float> ElectronMVAEstimatorRun2Fall17::
+std::vector<float> ElectronMVAEstimatorRun2::
 fillMVAVariables(const edm::Ptr<reco::Candidate>& particle, const edm::Event& iEvent) const {
   std::vector<float> vars;
   return vars;
 }
 
 // A function that should work on both pat and reco objects
-std::vector<float> ElectronMVAEstimatorRun2Fall17::
+std::vector<float> ElectronMVAEstimatorRun2::
 fillMVAVariables(const edm::Ptr<reco::Candidate>& particle, const edm::Event& iEvent, const int iCategory) const {
 
   // Try to cast the particle into a reco particle.
@@ -256,7 +251,7 @@ fillMVAVariables(const edm::Ptr<reco::Candidate>& particle, const edm::Event& iE
 // A function that should work on both pat and reco objects
 // The EventType will be edm::Event for the VID accessor and edm::EventBase for for the fwlite accessor
 template<class EventType>
-std::vector<float> ElectronMVAEstimatorRun2Fall17::
+std::vector<float> ElectronMVAEstimatorRun2::
 fillMVAVariables(const edm::Ptr<reco::GsfElectron>& eleRecoPtr, const EventType& iEvent, const int iCategory) const {
 
   std::vector<float> vars;
