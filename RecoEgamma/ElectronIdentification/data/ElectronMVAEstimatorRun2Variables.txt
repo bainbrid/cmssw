@@ -11,6 +11,16 @@
 #     3. The upper clip value.
 #
 
+scl_eta
+superCluster.eta
+None
+None
+
+ele_pt
+pt
+None
+None
+
 ele_oldsigmaietaieta
 full5x5_sigmaIetaIeta
 None

@@ -17,11 +17,25 @@ import FWCore.ParameterSet.Config as cms
 #
 
 # This MVA implementation class name
-mvaSpring16ClassName = "ElectronMVAEstimatorRun2Spring16HZZ"
+mvaSpring16ClassName = "ElectronMVAEstimatorRun2"
 # The tag is an extra string attached to the names of the products
 # such as ValueMaps that needs to distinguish cases when the same MVA estimator
 # class is used with different tuning/weights
-mvaTag = "V1"
+mvaTag = "Spring16HZZV1"
+
+# The parameters according to which the training bins are split:
+ptSplit = 10.      # we have above and below 10 GeV categories
+ebSplit = 0.800    # barrel is split into two regions
+ebeeSplit = 1.479  # division between barrel and endcap
+
+categoryCuts = cms.vstring(
+    "pt < {0} && abs(superCluster.eta) < {1}".format(ptSplit, ebSplit),
+    "pt < {0} && abs(superCluster.eta) >= {1} && abs(superCluster.eta) < {2}".format(ptSplit, ebSplit, ebeeSplit),
+    "pt < {0} && abs(superCluster.eta) >= {1}".format(ptSplit, ebeeSplit),
+    "pt >= {0} && abs(superCluster.eta) < {1}".format(ptSplit, ebSplit),
+    "pt >= {0} && abs(superCluster.eta) >= {1} && abs(superCluster.eta) < {2}".format(ptSplit, ebSplit, ebeeSplit),
+    "pt >= {0} && abs(superCluster.eta) >= {1}".format(ptSplit, ebeeSplit)
+    )
 
 # There are 6 categories in this MVA. They have to be configured in this strict order
 # (cuts and weight files order):
@@ -77,12 +91,12 @@ MVA_WPLoose = EleMVA_6Categories_WP(
 mvaEleID_Spring16_HZZ_V1_producer_config = cms.PSet( 
     mvaName            = cms.string(mvaSpring16ClassName),
     mvaTag             = cms.string(mvaTag),
-    # This MVA uses conversion info, so configure several data items on that
-    beamSpot           = cms.InputTag('offlineBeamSpot'),
-    conversionsAOD     = cms.InputTag('allConversions'),
-    conversionsMiniAOD = cms.InputTag('reducedEgamma:reducedConversions'),
-    #
-    weightFileNames    = mvaSpring16WeightFiles_V1
+    # Category parameters
+    nCategories         = cms.int32(6),
+    categoryCuts        = categoryCuts,
+    # Weight files and variable definitions
+    weightFileNames    = mvaSpring16WeightFiles_V1,
+    variableDefinition  = cms.string("RecoEgamma/ElectronIdentification/data/ElectronMVAEstimatorRun2Variables.txt")
     )
 # Create the VPset's for VID cuts
 mvaEleID_Spring16_HZZ_V1_wpLoose = configureVIDMVAEleID_V1( MVA_WPLoose )

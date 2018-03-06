@@ -6,14 +6,23 @@ ElectronMVAEstimatorRun2::ElectronMVAEstimatorRun2(const edm::ParameterSet& conf
   name_(conf.getParameter<std::string>("mvaName")),
   nCategories_            (conf.getParameter<int>                     ("nCategories")),
   methodName_             ("BDTG method"),
-  ptSplit_                (conf.getParameter<double>                  ("ptSplit")),
-  ebSplit_                (conf.getParameter<double>                  ("ebSplit")),
-  ebeeSplit_              (conf.getParameter<double>                  ("ebeeSplit")),
   variableDefinitionFileName_(conf.getParameter<std::string>("variableDefinition"))
 {
 
   const std::vector <std::string> weightFileNames
     = conf.getParameter<std::vector<std::string> >("weightFileNames");
+
+  const std::vector <std::string> categoryCutStrings
+    = conf.getParameter<std::vector<std::string> >("categoryCuts");
+
+  if( (int)(categoryCutStrings.size()) != nCategories_ )
+    throw cms::Exception("MVA config failure: ")
+      << "wrong number of category cuts" << std::endl;
+
+  for (int i = 0; i < nCategories_; ++i) {
+      StringCutObjectSelector<reco::GsfElectron> select(categoryCutStrings[i]);
+      categoryFunctions_.push_back(select);
+  }
 
   // Initialize GBRForests from weight files
   init(weightFileNames);
@@ -23,20 +32,12 @@ ElectronMVAEstimatorRun2::ElectronMVAEstimatorRun2(const edm::ParameterSet& conf
 }
 
 ElectronMVAEstimatorRun2::ElectronMVAEstimatorRun2(
-        const std::string &mvaTag, const std::string &mvaName, bool withIso, const double ptSplit, const double ebSplit, const double ebeeSplit, const bool debug):
+        const std::string &mvaTag, const std::string &mvaName, const bool debug):
   AnyMVAEstimatorRun2Base( edm::ParameterSet() ),
   tag_                    (mvaTag),
   name_                   (mvaName),
   methodName_             ("BDTG method"),
-  ptSplit_                (ptSplit),
-  ebSplit_                (ebSplit),
-  ebeeSplit_              (ebeeSplit)
-{
-
-  // Set debug flag
-  debug_ = debug;
-
-}
+  debug_                  (debug) { }
 
 void ElectronMVAEstimatorRun2::init(const std::vector<std::string> &weightFileNames) {
 
@@ -189,40 +190,10 @@ int ElectronMVAEstimatorRun2::findCategory( const edm::Ptr<reco::Candidate>& par
 }
 
 int ElectronMVAEstimatorRun2::findCategory( const edm::Ptr<reco::GsfElectron>& eleRecoPtr ) const {
-  float pt = eleRecoPtr->pt();
-  float eta = eleRecoPtr->superCluster()->eta();
-  float absEta = std::abs(eta);
-
-  //
-  // Determine the category
-  //
-  int  iCategory = UNDEFINED;
-
-  if (pt < ptSplit_ && absEta < ebSplit_) {
-    iCategory = CAT_EB1_PTLow;
+  for (int i = 0; i < nCategories_; ++i) {
+      if (categoryFunctions_[i](*eleRecoPtr)) return i;
   }
-
-  else if (pt < ptSplit_ && absEta >= ebSplit_ && absEta < ebeeSplit_) {
-    iCategory = CAT_EB2_PTLow;
-  }
-
-  else if (pt < ptSplit_ && absEta >= ebeeSplit_) {
-    iCategory = CAT_EE_PTLow;
-  }
-
-  else if (pt >= ptSplit_ && absEta < ebSplit_) {
-    iCategory = CAT_EB1_PTHig;
-  }
-
-  else if (pt >= ptSplit_ && absEta >= ebSplit_ && absEta < ebeeSplit_) {
-    iCategory = CAT_EB2_PTHig;
-  }
-
-  else if (pt >= ptSplit_ && absEta >= ebeeSplit_) {
-    iCategory = CAT_EE_PTHig;
-  }
-
-  return iCategory;
+  return -1;
 }
 
 // Dummy fonction just to make the template happy

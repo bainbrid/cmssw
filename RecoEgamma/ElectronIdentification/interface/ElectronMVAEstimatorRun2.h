@@ -28,14 +28,9 @@ class ElectronMVAEstimatorRun2 : public AnyMVAEstimatorRun2Base{
   // For use with FWLite/Python
   ElectronMVAEstimatorRun2(const std::string &mvaTag,
                            const std::string &mvaName,
-                           bool withIso,
-                           const double ptSplit = 10., // The category split parameters are taken over from the python configuration file
-                           const double ebSplit = 0.800,
-                           const double ebeeSplit = 1.479,
                            const bool debug = false);
 
   void init(const std::vector<std::string> &weightFileNames);
-  void setClips(const std::vector<double> &clipsLowerValues, const std::vector<double> &clipsUpperValues);
 
   // Calculation of the MVA value (VID accessor)
   float mvaValue( const edm::Ptr<reco::Candidate>& particle, const edm::Event&) const override;
@@ -117,20 +112,6 @@ class ElectronMVAEstimatorRun2 : public AnyMVAEstimatorRun2Base{
       std::shared_ptr<StringObjectFunction<reco::GsfElectron>> function_;
   };
 
-  // Define here the number and the meaning of the categories
-  // for this specific MVA
-  //const int nCategories_ = 6;
-  const int nVar_ = 22;
-  enum MVACategories_ {
-    UNDEFINED = -1,
-    CAT_EB1_PTLow = 0,
-    CAT_EB2_PTLow = 1,
-    CAT_EE_PTLow  = 2,
-    CAT_EB1_PTHig = 3,
-    CAT_EB2_PTHig = 4,
-    CAT_EE_PTHig  = 5
-  };
-
   // MVA tag. This is an additional string variable to distinguish
   // instances of the estimator of this class configured with different
   // weight files.
@@ -144,6 +125,7 @@ class ElectronMVAEstimatorRun2 : public AnyMVAEstimatorRun2Base{
 
   // The number of categories and number of variables per category
   int nCategories_;
+  std::vector<StringCutObjectSelector<reco::GsfElectron>> categoryFunctions_;
   std::vector<int> nVariables_;
 
   // Data members
@@ -151,15 +133,9 @@ class ElectronMVAEstimatorRun2 : public AnyMVAEstimatorRun2Base{
 
   const std::string methodName_;
 
-  double ptSplit_;   // we have high and low pt categories
-  double ebSplit_;    // barrel is split into two regions
-  double ebeeSplit_; // division between barrel and endcap
-
   // There might be different variables for each category, so the variables
   // names vector is itself a vector of length nCategories
   std::vector<std::vector<Variable>> variables_;
-
-  bool withIso_;
 
   bool debug_;
 

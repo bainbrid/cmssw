@@ -21,6 +21,15 @@ ptSplit = 10.      # we have above and below 10 GeV categories
 ebSplit = 0.800    # barrel is split into two regions
 ebeeSplit = 1.479  # division between barrel and endcap
 
+categoryCuts = cms.vstring(
+    "pt < {0} && abs(superCluster.eta) < {1}".format(ptSplit, ebSplit),
+    "pt < {0} && abs(superCluster.eta) >= {1} && abs(superCluster.eta) < {2}".format(ptSplit, ebSplit, ebeeSplit),
+    "pt < {0} && abs(superCluster.eta) >= {1}".format(ptSplit, ebeeSplit),
+    "pt >= {0} && abs(superCluster.eta) < {1}".format(ptSplit, ebSplit),
+    "pt >= {0} && abs(superCluster.eta) >= {1} && abs(superCluster.eta) < {2}".format(ptSplit, ebSplit, ebeeSplit),
+    "pt >= {0} && abs(superCluster.eta) >= {1}".format(ptSplit, ebeeSplit)
+    )
+
 # There are 6 categories in this MVA. They have to be configured in this strict order
 # (cuts and weight files order):
 #   0   EB1 (eta<0.8)  pt 5-10 GeV     |   pt < ptSplit && |eta| < ebSplit
@@ -38,10 +47,6 @@ mvaFall17WeightFiles_V1 = cms.vstring(
     "RecoEgamma/ElectronIdentification/data/Fall17/EIDmva_EB1_10_2017_puinfo_iso_BDT.weights.xml",
     "RecoEgamma/ElectronIdentification/data/Fall17/EIDmva_EB2_10_2017_puinfo_iso_BDT.weights.xml",
     "RecoEgamma/ElectronIdentification/data/Fall17/EIDmva_EE_10_2017_puinfo_iso_BDT.weights.xml"
-    )
-
-categoryCuts = cms.vstring(
-    "",
     )
 
 # Load some common definitions for MVA machinery
@@ -135,17 +140,10 @@ MVA_WPLoose = EleMVA_WP(
 mvaEleID_Fall17_iso_V1_producer_config = cms.PSet(
     mvaName             = cms.string(mvaClassName),
     mvaTag              = cms.string(mvaTag),
-    # This MVA uses conversion info, so configure several data items on that
-    beamSpot            = cms.InputTag('offlineBeamSpot'),
-    conversionsAOD      = cms.InputTag('allConversions'),
-    conversionsMiniAOD  = cms.InputTag('reducedEgamma:reducedConversions'),
-    # Category split parameters
-    ptSplit             = cms.double(ptSplit),
-    ebSplit             = cms.double(ebSplit),
-    ebeeSplit           = cms.double(ebeeSplit),
-    #
+    # Category parameters
     nCategories         = cms.int32(6),
-    #
+    categoryCuts        = categoryCuts,
+    # Weight files and variable definitions
     weightFileNames     = mvaFall17WeightFiles_V1,
     variableDefinition  = cms.string("RecoEgamma/ElectronIdentification/data/ElectronMVAEstimatorRun2Variables.txt")
     )

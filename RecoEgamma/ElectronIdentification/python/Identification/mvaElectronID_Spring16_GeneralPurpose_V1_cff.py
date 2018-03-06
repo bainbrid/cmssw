@@ -14,17 +14,23 @@ import FWCore.ParameterSet.Config as cms
 #
 
 # This MVA implementation class name
-mvaSpring16ClassName = "ElectronMVAEstimatorRun2Spring16GeneralPurpose"
+mvaSpring16ClassName = "ElectronMVAEstimatorRun2"
 # The tag is an extra string attached to the names of the products
 # such as ValueMaps that needs to distinguish cases when the same MVA estimator
 # class is used with different tuning/weights
-mvaTag = "V1"
+mvaTag = "Spring16GeneralPurposeV1"
 
 # There are 3 categories in this MVA. They have to be configured in this strict order
 # (cuts and weight files order):
 #   0   EB1 (eta<0.8)  pt 10-inf GeV
 #   1   EB2 (eta>=0.8) pt 10-inf GeV
 #   2   EE             pt 10-inf GeV
+
+categoryCuts = cms.vstring(
+    "abs(superCluster.eta) < 0.800",
+    "abs(superCluster.eta) >= 0.800 && abs(superCluster.eta) < 1.479",
+    "abs(superCluster.eta) >= 1.479"
+    )
 
 mvaSpring16WeightFiles_V1 = cms.vstring(
     "RecoEgamma/ElectronIdentification/data/Spring16_GeneralPurpose_V1/electronID_mva_Spring16_GeneralPurpose_V1_EB1_10.weights.xml",
@@ -74,12 +80,12 @@ MVA_WP80 = EleMVA_3Categories_WP(
 mvaEleID_Spring16_GeneralPurpose_V1_producer_config = cms.PSet( 
     mvaName            = cms.string(mvaSpring16ClassName),
     mvaTag             = cms.string(mvaTag),
-    # This MVA uses conversion info, so configure several data items on that
-    beamSpot           = cms.InputTag('offlineBeamSpot'),
-    conversionsAOD     = cms.InputTag('allConversions'),
-    conversionsMiniAOD = cms.InputTag('reducedEgamma:reducedConversions'),
-    #
-    weightFileNames    = mvaSpring16WeightFiles_V1
+    # Category parameters
+    nCategories         = cms.int32(3),
+    categoryCuts        = categoryCuts,
+    # Weight files and variable definitions
+    weightFileNames     = mvaSpring16WeightFiles_V1,
+    variableDefinition  = cms.string("RecoEgamma/ElectronIdentification/data/ElectronMVAEstimatorRun2Variables.txt")
     )
 # Create the VPset's for VID cuts
 mvaEleID_Spring16_GeneralPurpose_V1_wp90 = configureVIDMVAEleID_V1( MVA_WP90 )
