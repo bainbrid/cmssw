@@ -20,20 +20,15 @@ mvaClassName = "ElectronMVAEstimatorRun2"
 # class is used with different tuning/weights
 mvaTag = "Phys14NonTrig25nsV1"
 
-mvaVariablesFile = "RecoEgamma/ElectronIdentification/data/ElectronMVAEstimatorRun2Variables.txt"
-
-# The parameters according to which the training bins are split:
-ptSplit = 10.      # we have above and below 10 GeV categories
-ebSplit = 0.800    # barrel is split into two regions
-ebeeSplit = 1.479  # division between barrel and endcap
+mvaVariablesFile = "RecoEgamma/ElectronIdentification/data/ElectronMVAEstimatorRun2VariablesClassic.txt"
 
 categoryCuts = cms.vstring(
-    "pt < {0} && abs(superCluster.eta) < {1}".format(ptSplit, ebSplit),
-    "pt < {0} && abs(superCluster.eta) >= {1} && abs(superCluster.eta) < {2}".format(ptSplit, ebSplit, ebeeSplit),
-    "pt < {0} && abs(superCluster.eta) >= {1}".format(ptSplit, ebeeSplit),
-    "pt >= {0} && abs(superCluster.eta) < {1}".format(ptSplit, ebSplit),
-    "pt >= {0} && abs(superCluster.eta) >= {1} && abs(superCluster.eta) < {2}".format(ptSplit, ebSplit, ebeeSplit),
-    "pt >= {0} && abs(superCluster.eta) >= {1}".format(ptSplit, ebeeSplit)
+    "pt < 10. && abs(superCluster.eta) < 0.800",
+    "pt < 10. && abs(superCluster.eta) >= 0.800 && abs(superCluster.eta) < 1.479",
+    "pt < 10. && abs(superCluster.eta) >= 1.479",
+    "pt >= 10. && abs(superCluster.eta) < 0.800",
+    "pt >= 10. && abs(superCluster.eta) >= 0.800 && abs(superCluster.eta) < 1.479",
+    "pt >= 10. && abs(superCluster.eta) >= 1.479",
     )
 
 # There are 6 categories in this MVA. They have to be configured in this strict order

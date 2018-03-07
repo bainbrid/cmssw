@@ -1,6 +1,6 @@
 #
-# File: ElectronMVAEstimatorRun2Variables.txt
-#
+# File: ElectronMVAEstimatorRun2VariablesClassic.txt
+# 
 # This file is to be read by the ElectronMVAEstimatorRun2 class. Lists all the
 # variables with appear in the xml files for the MVA based Electron IDS for Run2.
 # Varibles are separated by an empty line. The lines of each entry correspond to:
@@ -53,6 +53,11 @@ superCluster.phiWidth
 None
 None
 
+ele_he
+hadronicOverEm
+None
+None
+
 ele_oldhe
 full5x5_hcalOverEcal
 None
@@ -68,7 +73,7 @@ electronMVAVariableHelper:kfchi2
 None
 10.
 
-ele_gsfchi2
+ele_gsfchi2 ele_chi2_hits
 gsfTrack.normalizedChi2
 None
 200.
@@ -83,16 +88,6 @@ gsfTrack.hitPattern.trackerLayersWithMeasurement
 None
 None
 
-ele_expected_inner_hits
-gsfTrack.hitPattern.numberOfLostHits('MISSING_INNER_HITS')
-None
-None
-
-ele_conversionVertexFitProbability
-electronMVAVariableHelper:convVtxFitProb
-None
-None
-
 ele_ep
 eSuperClusterOverP
 None
@@ -104,46 +99,26 @@ None
 20.
 
 ele_IoEmIop
-1.0 / ecalEnergy - 1.0 / trackMomentumAtVtx.R
+1.0 / ecalEnergy - 1.0 / p
 None
 None
 
 ele_deltaetain
-deltaEtaSuperClusterTrackAtVtx
+abs(deltaEtaSuperClusterTrackAtVtx)
 -0.06
 0.06
 
 ele_deltaphiin
-deltaPhiSuperClusterTrackAtVtx
+abs(deltaPhiSuperClusterTrackAtVtx)
 -0.6
 0.6
 
 ele_deltaetaseed
-deltaEtaSeedClusterTrackAtCalo
+abs(deltaEtaSeedClusterTrackAtCalo)
 -0.2
 0.2
 
-ele_pfPhotonIso
-pfIsolationVariables.sumPhotonEt
-None
-None
-
-ele_pfChargedHadIso
-pfIsolationVariables.sumChargedHadronPt
-None
-None
-
-ele_pfNeutralHadIso
-pfIsolationVariables.sumNeutralHadronEt
-None
-None
-
 ele_psEoverEraw
 superCluster.preshowerEnergy / superCluster.rawEnergy
-None
-None
-
-rho
-electronMVAVariableHelper:rho
 None
 None

@@ -53,7 +53,12 @@ superCluster.phiWidth
 None
 None
 
-ele_oldhe ele_he
+ele_he
+hadronicOverEm
+None
+None
+
+ele_oldhe
 full5x5_hcalOverEcal
 None
 None
@@ -125,5 +130,25 @@ abs(deltaEtaSeedClusterTrackAtCalo)
 
 ele_psEoverEraw
 superCluster.preshowerEnergy / superCluster.rawEnergy
+None
+None
+
+ele_pfPhotonIso
+pfIsolationVariables.sumPhotonEt
+None
+None
+
+ele_pfChargedHadIso
+pfIsolationVariables.sumChargedHadronPt
+None
+None
+
+ele_pfNeutralHadIso
+pfIsolationVariables.sumNeutralHadronEt
+None
+None
+
+rho
+electronMVAVariableHelper:rho
 None
 None
