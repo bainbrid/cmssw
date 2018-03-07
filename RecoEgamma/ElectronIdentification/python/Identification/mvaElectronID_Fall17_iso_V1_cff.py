@@ -147,8 +147,7 @@ mvaEleID_Fall17_iso_V1_producer_config = cms.PSet(
     categoryCuts        = categoryCuts,
     # Weight files and variable definitions
     weightFileNames     = mvaFall17WeightFiles_V1,
-    variableDefinition  = cms.string(mvaVariablesFile),
-    debug               = cms.untracked.bool(True)
+    variableDefinition  = cms.string(mvaVariablesFile)
     )
 # Create the VPset's for VID cuts
 mvaEleID_Fall17_V1_wpLoose = configureVIDMVAEleID_V1( MVA_WPLoose )

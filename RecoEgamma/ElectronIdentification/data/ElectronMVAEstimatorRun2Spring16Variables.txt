@@ -121,27 +121,7 @@ abs(deltaEtaSeedClusterTrackAtCalo)
 -0.2
 0.2
 
-ele_pfPhotonIso
-pfIsolationVariables.sumChargedHadronPt
-None
-None
-
-ele_pfChargedHadIso
-pfIsolationVariables.sumNeutralHadronEt
-None
-None
-
-ele_pfNeutralHadIso
-pfIsolationVariables.sumPhotonEt
-None
-None
-
 ele_psEoverEraw
 superCluster.preshowerEnergy / superCluster.rawEnergy
-None
-None
-
-rho
-electronMVAVariableHelper:rho
 None
 None

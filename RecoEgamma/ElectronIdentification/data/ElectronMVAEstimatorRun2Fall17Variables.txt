@@ -122,17 +122,17 @@ deltaEtaSeedClusterTrackAtCalo
 0.2
 
 ele_pfPhotonIso
-pfIsolationVariables.sumChargedHadronPt
+pfIsolationVariables.sumPhotonEt
 None
 None
 
 ele_pfChargedHadIso
-pfIsolationVariables.sumNeutralHadronEt
+pfIsolationVariables.sumChargedHadronPt
 None
 None
 
 ele_pfNeutralHadIso
-pfIsolationVariables.sumPhotonEt
+pfIsolationVariables.sumNeutralHadronEt
 None
 None
 
