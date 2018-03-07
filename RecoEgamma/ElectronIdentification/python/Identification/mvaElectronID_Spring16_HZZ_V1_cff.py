@@ -1,5 +1,5 @@
 from PhysicsTools.SelectorUtils.centralIDRegistry import central_id_registry
-
+from RecoEgamma.ElectronIdentification.Identification.mvaElectronID_tools import *
 import FWCore.ParameterSet.Config as cms
 
 #
@@ -16,23 +16,10 @@ import FWCore.ParameterSet.Config as cms
 #     https://indico.cern.ch/event/482674/contributions/2206032/attachments/1292177/1931287/20160621_EGM_cms_week_v5.pdf
 #
 
-# This MVA implementation class name
-mvaClassName = "ElectronMVAEstimatorRun2"
 # The tag is an extra string attached to the names of the products
 # such as ValueMaps that needs to distinguish cases when the same MVA estimator
 # class is used with different tuning/weights
 mvaTag = "Spring16HZZV1"
-
-mvaVariablesFile = "RecoEgamma/ElectronIdentification/data/ElectronMVAEstimatorRun2Variables.txt"
-
-categoryCuts = cms.vstring(
-    "pt < 10. && abs(superCluster.eta) < 0.800",
-    "pt < 10. && abs(superCluster.eta) >= 0.800 && abs(superCluster.eta) < 1.479",
-    "pt < 10. && abs(superCluster.eta) >= 1.479",
-    "pt >= 10. && abs(superCluster.eta) < 0.800",
-    "pt >= 10. && abs(superCluster.eta) >= 0.800 && abs(superCluster.eta) < 1.479",
-    "pt >= 10. && abs(superCluster.eta) >= 1.479",
-    )
 
 # There are 6 categories in this MVA. They have to be configured in this strict order
 # (cuts and weight files order):
@@ -52,25 +39,10 @@ mvaSpring16WeightFiles_V1 = cms.vstring(
     "RecoEgamma/ElectronIdentification/data/Spring16_HZZ_V1/electronID_mva_Spring16_HZZ_V1_EE_10.weights.xml"
     )
 
-# Load some common definitions for MVA machinery
-from RecoEgamma.ElectronIdentification.Identification.mvaElectronID_tools \
-    import (EleMVA_6Categories_WP,
-            configureVIDMVAEleID_V1)
-
-# The locatoins of value maps with the actual MVA values and categories
-# for all particles.
-# The names for the maps are "<module name>:<MVA class name>Values" 
-# and "<module name>:<MVA class name>Categories"
-mvaProducerModuleLabel = "electronMVAValueMapProducer"
-mvaValueMapName        = mvaProducerModuleLabel + ":" + mvaClassName + mvaTag + "Values"
-mvaCategoriesMapName   = mvaProducerModuleLabel + ":" + mvaClassName + mvaTag + "Categories"
-
 ### WP tuned for HZZ analysis with very high efficiency (about 98%)
 idNameLoose = "mvaEleID-Spring16-HZZ-V1-wpLoose"
-MVA_WPLoose = EleMVA_6Categories_WP(
-    idName = idNameLoose,
-    mvaValueMapName = mvaValueMapName,           # map with MVA values for all particles
-    mvaCategoriesMapName = mvaCategoriesMapName, # map with category index for all particles
+MVA_WPLoose = EleMVA_WP(
+    idNameLoose, mvaTag,
     cutCategory0 =  -0.211, # EB1 low pt
     cutCategory1 =  -0.396, # EB2 low pt
     cutCategory2 =  -0.215, # EE low pt
@@ -85,14 +57,14 @@ MVA_WPLoose = EleMVA_6Categories_WP(
 #
 
 # Create the PSet that will be fed to the MVA value map producer
-mvaEleID_Spring16_HZZ_V1_producer_config = cms.PSet( 
+mvaEleID_Spring16_HZZ_V1_producer_config = cms.PSet(
     mvaName            = cms.string(mvaClassName),
     mvaTag             = cms.string(mvaTag),
     # Category parameters
     nCategories         = cms.int32(6),
-    categoryCuts        = categoryCuts,
+    categoryCuts        = EleMVA_6CategoriesCuts,
     # Weight files and variable definitions
-    weightFileNames    = mvaSpring16WeightFiles_V1,
+    weightFileNames     = mvaSpring16WeightFiles_V1,
     variableDefinition  = cms.string(mvaVariablesFile)
     )
 # Create the VPset's for VID cuts

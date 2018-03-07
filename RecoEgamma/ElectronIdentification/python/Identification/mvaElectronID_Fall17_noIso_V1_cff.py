@@ -1,4 +1,5 @@
 import FWCore.ParameterSet.Config as cms
+from RecoEgamma.ElectronIdentification.Identification.mvaElectronID_tools import *
 
 # Documentation of the MVA
 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/MultivariateElectronIdentificationRun2
@@ -9,24 +10,10 @@ import FWCore.ParameterSet.Config as cms
 # for specific working points, and configure those cuts in VID
 #
 
-# This MVA implementation class name
-mvaClassName = "ElectronMVAEstimatorRun2"
 # The tag is an extra string attached to the names of the products
 # such as ValueMaps that needs to distinguish cases when the same MVA estimator
 # class is used with different tuning/weights
 mvaTag = "Fall17NoIsoV1"
-
-mvaVariablesFile = "RecoEgamma/ElectronIdentification/data/ElectronMVAEstimatorRun2Variables.txt"
-
-categoryCuts = cms.vstring(
-    "pt < 10. && abs(superCluster.eta) < 0.800",
-    "pt < 10. && abs(superCluster.eta) >= 0.800 && abs(superCluster.eta) < 1.479",
-    "pt < 10. && abs(superCluster.eta) >= 1.479",
-    "pt >= 10. && abs(superCluster.eta) < 0.800",
-    "pt >= 10. && abs(superCluster.eta) >= 0.800 && abs(superCluster.eta) < 1.479",
-    "pt >= 10. && abs(superCluster.eta) >= 1.479",
-    )
-
 
 # There are 6 categories in this MVA. They have to be configured in this strict order
 # (cuts and weight files order):
@@ -47,27 +34,12 @@ mvaFall17WeightFiles_V1 = cms.vstring(
     "RecoEgamma/ElectronIdentification/data/Fall17/EIDmva_EE_10_2017_puinfo_BDT.weights.xml"
     )
 
-# Load some common definitions for MVA machinery
-from RecoEgamma.ElectronIdentification.Identification.mvaElectronID_tools \
-    import (EleMVA_WP,
-            configureVIDMVAEleID_V1)
-
-# The locatoins of value maps with the actual MVA values and categories
-# for all particles.
-# The names for the maps are "<module name>:<MVA class name>Values"
-# and "<module name>:<MVA class name>Categories"
-mvaProducerModuleLabel = "electronMVAValueMapProducer"
-mvaValueMapName        = mvaProducerModuleLabel + ":" + mvaClassName + mvaTag + "Values"
-mvaCategoriesMapName   = mvaProducerModuleLabel + ":" + mvaClassName + mvaTag + "Categories"
-
 ## The working point for this MVA that is expected to have about 90% signal
 # WP tuned to give about 90 and 80% signal efficiecny for electrons from Drell-Yan with pT > 25 GeV
 # The working point for the low pt categories is just taken over from the high pt
 idName90 = "mvaEleID-Fall17-noIso-V1-wp90"
 MVA_WP90 = EleMVA_WP(
-    idName = idName90,
-    mvaValueMapName = mvaValueMapName,           # map with MVA values for all particles
-    mvaCategoriesMapName = mvaCategoriesMapName, # map with category index for all particles
+    idName = idName90, mvaTag = mvaTag,
     cutCategory0_C0 = 0.9165112826974601, # EB1 low pt
     cutCategory0_C1 = 2.7381703555094217,
     cutCategory0_C2 = 1.03549199648109,
@@ -90,9 +62,7 @@ MVA_WP90 = EleMVA_WP(
 
 idName80 = "mvaEleID-Fall17-noIso-V1-wp80"
 MVA_WP80 = EleMVA_WP(
-    idName = idName80,
-    mvaValueMapName = mvaValueMapName,           # map with MVA values for all particles
-    mvaCategoriesMapName = mvaCategoriesMapName, # map with category index for all particles
+    idName = idName80, mvaTag = mvaTag,
     cutCategory0_C0 = 0.9530240956555949, # EB1 low pt
     cutCategory0_C1 = 2.7591425841003647,
     cutCategory0_C2 = 0.4669644718545271,
@@ -119,9 +89,7 @@ MVA_WP80 = EleMVA_WP(
 # (see RecoEgamma/ElectronIdentification/python/Identification/mvaElectronID_Spring16_HZZ_V1_cff.py)
 idNamewpLoose = "mvaEleID-Fall17-noIso-V1-wpLoose"
 MVA_WPLoose = EleMVA_WP(
-    idName = idNamewpLoose,
-    mvaValueMapName = mvaValueMapName,           # map with MVA values for all particles
-    mvaCategoriesMapName = mvaCategoriesMapName, # map with category index for all particles
+    idName = idNamewpLoose, mvaTag = mvaTag,
     cutCategory0 =  -0.13285867293779202, # EB1 low pt
     cutCategory1 =  -0.31765300958836074, # EB2 low pt
     cutCategory2 =  -0.0799205914718861 , # EE low pt
@@ -140,7 +108,7 @@ mvaEleID_Fall17_noIso_V1_producer_config = cms.PSet(
     mvaTag              = cms.string(mvaTag),
     # Category parameters
     nCategories         = cms.int32(6),
-    categoryCuts        = categoryCuts,
+    categoryCuts        = EleMVA_6CategoriesCuts,
     # Weight files and variable definitions
     weightFileNames     = mvaFall17WeightFiles_V1,
     variableDefinition  = cms.string(mvaVariablesFile)

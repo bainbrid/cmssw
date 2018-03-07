@@ -1,5 +1,5 @@
 from PhysicsTools.SelectorUtils.centralIDRegistry import central_id_registry
-
+from RecoEgamma.ElectronIdentification.Identification.mvaElectronID_tools import *
 import FWCore.ParameterSet.Config as cms
 
 #
@@ -13,23 +13,10 @@ import FWCore.ParameterSet.Config as cms
 #     https://indico.cern.ch/event/370506/contribution/1/attachments/1135340/1624370/20150726_EID_POG_circulating_vAsPresentedC.pdf
 #
 
-# This MVA implementation class name
-mvaClassName = "ElectronMVAEstimatorRun2"
 # The tag is an extra string attached to the names of the products
 # such as ValueMaps that needs to distinguish cases when the same MVA estimator
 # class is used with different tuning/weights
 mvaTag = "Spring15NonTrig25nsV1"
-
-mvaVariablesFile = "RecoEgamma/ElectronIdentification/data/ElectronMVAEstimatorRun2Variables.txt"
-
-categoryCuts = cms.vstring(
-    "pt < 10. && abs(superCluster.eta) < 0.800",
-    "pt < 10. && abs(superCluster.eta) >= 0.800 && abs(superCluster.eta) < 1.479",
-    "pt < 10. && abs(superCluster.eta) >= 1.479",
-    "pt >= 10. && abs(superCluster.eta) < 0.800",
-    "pt >= 10. && abs(superCluster.eta) >= 0.800 && abs(superCluster.eta) < 1.479",
-    "pt >= 10. && abs(superCluster.eta) >= 1.479",
-    )
 
 # There are 6 categories in this MVA. They have to be configured in this strict order
 # (cuts and weight files order):
@@ -49,24 +36,11 @@ mvaSpring15NonTrigWeightFiles_V1 = cms.vstring(
     "RecoEgamma/ElectronIdentification/data/Spring15/EIDmva_EE_10_oldNonTrigSpring15_ConvVarCwoBoolean_TMVA412_FullStatLowPt_PairNegWeightsGlobal_BDT.weights.xml"
     )
 
-# Load some common definitions for MVA machinery
-from RecoEgamma.ElectronIdentification.Identification.mvaElectronID_tools import *
-
-# The locatoins of value maps with the actual MVA values and categories
-# for all particles.
-# The names for the maps are "<module name>:<MVA class name>Values" 
-# and "<module name>:<MVA class name>Categories"
-mvaProducerModuleLabel = "electronMVAValueMapProducer"
-mvaValueMapName        = mvaProducerModuleLabel + ":" + mvaClassName + mvaTag + "Values"
-mvaCategoriesMapName   = mvaProducerModuleLabel + ":" + mvaClassName + mvaTag + "Categories"
-
 # The working point for this MVA that is expected to have about 90% signal
 # efficiency in each category
 idName90 = "mvaEleID-Spring15-25ns-nonTrig-V1-wp90"
-MVA_WP90 = EleMVA_6Categories_WP(
-    idName = idName90,
-    mvaValueMapName = mvaValueMapName,           # map with MVA values for all particles
-    mvaCategoriesMapName = mvaCategoriesMapName, # map with category index for all particles
+MVA_WP90 = EleMVA_WP(
+    idName = idName90, mvaTag = mvaTag,
     cutCategory0 = -0.083313, # EB1 low pt
     cutCategory1 = -0.235222, # EB2 low pt
     cutCategory2 = -0.67099, # EE low pt 
@@ -76,10 +50,8 @@ MVA_WP90 = EleMVA_6Categories_WP(
     )
 
 idName80 = "mvaEleID-Spring15-25ns-nonTrig-V1-wp80"
-MVA_WP80 = EleMVA_6Categories_WP(
-    idName = idName80,
-    mvaValueMapName = mvaValueMapName,           # map with MVA values for all particles
-    mvaCategoriesMapName = mvaCategoriesMapName, # map with category index for all particles
+MVA_WP80 = EleMVA_WP(
+    idName = idName80, mvaTag = mvaTag,
     cutCategory0 =  0.287435, # EB1 low pt
     cutCategory1 =  0.221846, # EB2 low pt
     cutCategory2 = -0.303263, # EE low pt 
@@ -90,10 +62,8 @@ MVA_WP80 = EleMVA_6Categories_WP(
 
 ### WP tuned for HZZ analysis with very high efficiency (about 98%)
 idNameLoose = "mvaEleID-Spring15-25ns-nonTrig-V1-wpLoose"
-MVA_WPLoose = EleMVA_6Categories_WP(
-    idName = idNameLoose,
-    mvaValueMapName = mvaValueMapName,           # map with MVA values for all particles
-    mvaCategoriesMapName = mvaCategoriesMapName, # map with category index for all particles
+MVA_WPLoose = EleMVA_WP(
+    idName = idNameLoose, mvaTag = mvaTag,
     cutCategory0 =  -0.265, # EB1 low pt
     cutCategory1 =  -0.556, # EB2 low pt
     cutCategory2 =  -0.551, # EE low pt
@@ -114,7 +84,7 @@ mvaEleID_Spring15_25ns_nonTrig_V1_producer_config = cms.PSet(
     #
     # Category parameters
     nCategories         = cms.int32(6),
-    categoryCuts        = categoryCuts,
+    categoryCuts        = EleMVA_6CategoriesCuts,
     # Weight files and variable definitions
     weightFileNames    = mvaSpring15NonTrigWeightFiles_V1,
     variableDefinition  = cms.string(mvaVariablesFile)

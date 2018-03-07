@@ -1,5 +1,41 @@
 import FWCore.ParameterSet.Config as cms
 
+# =========================
+# Various commom parameters
+# =========================
+
+# This MVA implementation class name
+mvaClassName = "ElectronMVAEstimatorRun2"
+
+# The locatoins of value maps with the actual MVA values and categories
+# for all particles.
+# The names for the maps are "<module name>:<MVA class name>Values"
+# and "<module name>:<MVA class name>Categories"
+mvaProducerModuleLabel = "electronMVAValueMapProducer"
+
+# The files with the variable definitions
+mvaVariablesFile        = "RecoEgamma/ElectronIdentification/data/ElectronMVAEstimatorRun2Variables.txt"
+mvaVariablesFileClassic = "RecoEgamma/ElectronIdentification/data/ElectronMVAEstimatorRun2VariablesClassic.txt"
+
+# =======================================
+# Define some commonly used category cuts
+# =======================================
+
+EleMVA_3CategoriesCuts = cms.vstring(
+    "abs(superCluster.eta) < 0.800",
+    "abs(superCluster.eta) >= 0.800 && abs(superCluster.eta) < 1.479",
+    "abs(superCluster.eta) >= 1.479"
+    )
+
+EleMVA_6CategoriesCuts = cms.vstring(
+    "pt < 10. && abs(superCluster.eta) < 0.800",
+    "pt < 10. && abs(superCluster.eta) >= 0.800 && abs(superCluster.eta) < 1.479",
+    "pt < 10. && abs(superCluster.eta) >= 1.479",
+    "pt >= 10. && abs(superCluster.eta) < 0.800",
+    "pt >= 10. && abs(superCluster.eta) >= 0.800 && abs(superCluster.eta) < 1.479",
+    "pt >= 10. && abs(superCluster.eta) >= 1.479",
+    )
+
 # =======================================================
 # Define simple containers for MVA cut values and related
 # =======================================================
@@ -15,13 +51,14 @@ class EleMVA_WP:
     """
     def __init__(self,
                  idName,
-                 mvaValueMapName,
-                 mvaCategoriesMapName,
+                 mvaTag,
                  **cuts
                  ):
-        self.idName       = idName
-        self.mvaValueMapName      = mvaValueMapName
-        self.mvaCategoriesMapName = mvaCategoriesMapName
+        self.idName               = idName
+        # map with MVA values for all particles
+        self.mvaValueMapName      = mvaProducerModuleLabel + ":" + mvaClassName + mvaTag + "Values"
+        # map with category index for all particles
+        self.mvaCategoriesMapName = mvaProducerModuleLabel + ":" + mvaClassName + mvaTag + "Categories"
         self.cuts = cuts
 
     def getCutValues(self):
@@ -29,32 +66,28 @@ class EleMVA_WP:
         keylist.sort()
         return [self.cuts[key] for key in keylist]
 
-# This is for backwards compatibility with IDs <= 2016
-EleMVA_3Categories_WP = EleMVA_WP
-EleMVA_6Categories_WP = EleMVA_WP
-
-# ==============================================================
+# ================================
 # Define the complete MVA cut sets
-# ==============================================================
-    
+# ================================
+
 def configureVIDMVAEleID_V1(mvaWP, cutName="GsfEleMVACut"):
     """
     This function configures the full cms.PSet for a VID ID and returns it.
     The inputs: an object of the class EleMVA_WP or similar
     that contains all necessary parameters for this MVA.
     """
-    parameterSet =  cms.PSet(
+    pSet = cms.PSet(
         #
-        idName = cms.string( mvaWP.idName ), 
-        cutFlow = cms.VPSet( 
+        idName = cms.string( mvaWP.idName ),
+        cutFlow = cms.VPSet(
             cms.PSet( cutName = cms.string(cutName),
                       mvaCuts = cms.vdouble( mvaWP.getCutValues() ),
                       mvaValueMapName = cms.InputTag( mvaWP.mvaValueMapName ),
-                      mvaCategoriesMapName =cms.InputTag( mvaWP.mvaCategoriesMapName ),
+                      mvaCategoriesMapName = cms.InputTag( mvaWP.mvaCategoriesMapName ),
                       needsAdditionalProducts = cms.bool(True),
                       isIgnored = cms.bool(False)
                       )
             )
         )
     #
-    return parameterSet
+    return pSet
