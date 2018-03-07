@@ -17,13 +17,13 @@ import FWCore.ParameterSet.Config as cms
 #
 
 # This MVA implementation class name
-mvaSpring16ClassName = "ElectronMVAEstimatorRun2"
+mvaClassName = "ElectronMVAEstimatorRun2"
 # The tag is an extra string attached to the names of the products
 # such as ValueMaps that needs to distinguish cases when the same MVA estimator
 # class is used with different tuning/weights
 mvaTag = "Spring16HZZV1"
 
-mvaVariablesFile = "RecoEgamma/ElectronIdentification/data/ElectronMVAEstimatorRun2Spring16Variables.txt"
+mvaVariablesFile = "RecoEgamma/ElectronIdentification/data/ElectronMVAEstimatorRun2Variables.txt"
 
 # The parameters according to which the training bins are split:
 ptSplit = 10.      # we have above and below 10 GeV categories
@@ -67,8 +67,8 @@ from RecoEgamma.ElectronIdentification.Identification.mvaElectronID_tools \
 # The names for the maps are "<module name>:<MVA class name>Values" 
 # and "<module name>:<MVA class name>Categories"
 mvaProducerModuleLabel = "electronMVAValueMapProducer"
-mvaValueMapName        = mvaProducerModuleLabel + ":" + mvaSpring16ClassName + mvaTag + "Values"
-mvaCategoriesMapName   = mvaProducerModuleLabel + ":" + mvaSpring16ClassName + mvaTag + "Categories"
+mvaValueMapName        = mvaProducerModuleLabel + ":" + mvaClassName + mvaTag + "Values"
+mvaCategoriesMapName   = mvaProducerModuleLabel + ":" + mvaClassName + mvaTag + "Categories"
 
 ### WP tuned for HZZ analysis with very high efficiency (about 98%)
 idNameLoose = "mvaEleID-Spring16-HZZ-V1-wpLoose"
@@ -91,7 +91,7 @@ MVA_WPLoose = EleMVA_6Categories_WP(
 
 # Create the PSet that will be fed to the MVA value map producer
 mvaEleID_Spring16_HZZ_V1_producer_config = cms.PSet( 
-    mvaName            = cms.string(mvaSpring16ClassName),
+    mvaName            = cms.string(mvaClassName),
     mvaTag             = cms.string(mvaTag),
     # Category parameters
     nCategories         = cms.int32(6),

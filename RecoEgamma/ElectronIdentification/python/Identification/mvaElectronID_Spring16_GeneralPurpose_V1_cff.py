@@ -14,13 +14,13 @@ import FWCore.ParameterSet.Config as cms
 #
 
 # This MVA implementation class name
-mvaSpring16ClassName = "ElectronMVAEstimatorRun2"
+mvaClassName = "ElectronMVAEstimatorRun2"
 # The tag is an extra string attached to the names of the products
 # such as ValueMaps that needs to distinguish cases when the same MVA estimator
 # class is used with different tuning/weights
 mvaTag = "Spring16GeneralPurposeV1"
 
-mvaVariablesFile = "RecoEgamma/ElectronIdentification/data/ElectronMVAEstimatorRun2Spring16Variables.txt"
+mvaVariablesFile = "RecoEgamma/ElectronIdentification/data/ElectronMVAEstimatorRun2Variables.txt"
 
 # There are 3 categories in this MVA. They have to be configured in this strict order
 # (cuts and weight files order):
@@ -50,8 +50,8 @@ from RecoEgamma.ElectronIdentification.Identification.mvaElectronID_tools \
 # The names for the maps are "<module name>:<MVA class name>Values" 
 # and "<module name>:<MVA class name>Categories"
 mvaProducerModuleLabel = "electronMVAValueMapProducer"
-mvaValueMapName        = mvaProducerModuleLabel + ":" + mvaSpring16ClassName + mvaTag + "Values"
-mvaCategoriesMapName   = mvaProducerModuleLabel + ":" + mvaSpring16ClassName + mvaTag + "Categories"
+mvaValueMapName        = mvaProducerModuleLabel + ":" + mvaClassName + mvaTag + "Values"
+mvaCategoriesMapName   = mvaProducerModuleLabel + ":" + mvaClassName + mvaTag + "Categories"
 
 ### WP to give about 90 and 80% signal efficiecny for electrons from Drell-Yan with pT > 25 GeV
 ### For turn-on and details see documentation linked above
@@ -80,7 +80,7 @@ MVA_WP80 = EleMVA_3Categories_WP(
 
 # Create the PSet that will be fed to the MVA value map producer
 mvaEleID_Spring16_GeneralPurpose_V1_producer_config = cms.PSet( 
-    mvaName            = cms.string(mvaSpring16ClassName),
+    mvaName            = cms.string(mvaClassName),
     mvaTag             = cms.string(mvaTag),
     # Category parameters
     nCategories         = cms.int32(3),

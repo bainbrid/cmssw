@@ -14,17 +14,25 @@ import FWCore.ParameterSet.Config as cms
 #
 
 # This MVA implementation class name
-mvaSpring15TrigClassName = "ElectronMVAEstimatorRun2Spring15Trig"
+mvaClassName = "ElectronMVAEstimatorRun2"
 # The tag is an extra string attached to the names of the products
 # such as ValueMaps that needs to distinguish cases when the same MVA estimator
 # class is used with different tuning/weights
-mvaTag = "50nsV1"
+mvaTag = "Spring15Trig50nsV1"
+
+mvaVariablesFile = "RecoEgamma/ElectronIdentification/data/ElectronMVAEstimatorRun2Variables.txt"
 
 # There are 3 categories in this MVA. They have to be configured in this strict order
 # (cuts and weight files order):
 #   0   EB1 (eta<0.8)  
 #   1   EB2 (eta>=0.8) 
-#   2   EE             
+#   2   EE
+
+categoryCuts = cms.vstring(
+    "abs(superCluster.eta) < 0.800",
+    "abs(superCluster.eta) >= 0.800 && abs(superCluster.eta) < 1.479",
+    "abs(superCluster.eta) >= 1.479"
+    )
 
 mvaSpring15TrigWeightFiles_V1 = cms.vstring(
     "RecoEgamma/ElectronIdentification/data/Spring15/EIDmva_EB1_10_oldTrigSpring15_50ns_data_1_VarD_TMVA412_Sig6BkgAll_MG_noSpec_BDT.weights.xml",
@@ -40,8 +48,8 @@ from RecoEgamma.ElectronIdentification.Identification.mvaElectronID_tools import
 # The names for the maps are "<module name>:<MVA class name>Values" 
 # and "<module name>:<MVA class name>Categories"
 mvaProducerModuleLabel = "electronMVAValueMapProducer"
-mvaValueMapName        = mvaProducerModuleLabel + ":" + mvaSpring15TrigClassName + mvaTag + "Values"
-mvaCategoriesMapName   = mvaProducerModuleLabel + ":" + mvaSpring15TrigClassName + mvaTag + "Categories"
+mvaValueMapName        = mvaProducerModuleLabel + ":" + mvaClassName + mvaTag + "Values"
+mvaCategoriesMapName   = mvaProducerModuleLabel + ":" + mvaClassName + mvaTag + "Categories"
 
 # The working point for this MVA that is expected to have about 90% signal
 # efficiency in each category
@@ -71,14 +79,14 @@ MVA_WP80 = EleMVA_3Categories_WP(
 
 # Create the PSet that will be fed to the MVA value map producer
 mvaEleID_Spring15_50ns_Trig_V1_producer_config = cms.PSet( 
-    mvaName            = cms.string(mvaSpring15TrigClassName),
+    mvaName            = cms.string(mvaClassName),
     mvaTag             = cms.string(mvaTag),
-    # This MVA uses conversion info, so configure several data items on that
-    beamSpot           = cms.InputTag('offlineBeamSpot'),
-    conversionsAOD     = cms.InputTag('allConversions'),
-    conversionsMiniAOD = cms.InputTag('reducedEgamma:reducedConversions'),
-    #
-    weightFileNames    = mvaSpring15TrigWeightFiles_V1
+    # Category parameters
+    nCategories         = cms.int32(3),
+    categoryCuts        = categoryCuts,
+    # Weight files and variable definitions
+    weightFileNames     = mvaSpring15TrigWeightFiles_V1,
+    variableDefinition  = cms.string(mvaVariablesFile)
     )
 # Create the VPset's for VID cuts
 mvaEleID_Spring15_50ns_Trig_V1_wp90 = configureVIDMVAEleID_V1( MVA_WP90 )

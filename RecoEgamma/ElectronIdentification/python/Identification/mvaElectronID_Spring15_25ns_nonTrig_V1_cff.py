@@ -14,11 +14,27 @@ import FWCore.ParameterSet.Config as cms
 #
 
 # This MVA implementation class name
-mvaSpring15NonTrigClassName = "ElectronMVAEstimatorRun2Spring15NonTrig"
+mvaClassName = "ElectronMVAEstimatorRun2"
 # The tag is an extra string attached to the names of the products
 # such as ValueMaps that needs to distinguish cases when the same MVA estimator
 # class is used with different tuning/weights
-mvaTag = "25nsV1"
+mvaTag = "Spring15NonTrig25nsV1"
+
+mvaVariablesFile = "RecoEgamma/ElectronIdentification/data/ElectronMVAEstimatorRun2Variables.txt"
+
+# The parameters according to which the training bins are split:
+ptSplit = 10.      # we have above and below 10 GeV categories
+ebSplit = 0.800    # barrel is split into two regions
+ebeeSplit = 1.479  # division between barrel and endcap
+
+categoryCuts = cms.vstring(
+    "pt < {0} && abs(superCluster.eta) < {1}".format(ptSplit, ebSplit),
+    "pt < {0} && abs(superCluster.eta) >= {1} && abs(superCluster.eta) < {2}".format(ptSplit, ebSplit, ebeeSplit),
+    "pt < {0} && abs(superCluster.eta) >= {1}".format(ptSplit, ebeeSplit),
+    "pt >= {0} && abs(superCluster.eta) < {1}".format(ptSplit, ebSplit),
+    "pt >= {0} && abs(superCluster.eta) >= {1} && abs(superCluster.eta) < {2}".format(ptSplit, ebSplit, ebeeSplit),
+    "pt >= {0} && abs(superCluster.eta) >= {1}".format(ptSplit, ebeeSplit)
+    )
 
 # There are 6 categories in this MVA. They have to be configured in this strict order
 # (cuts and weight files order):
@@ -46,8 +62,8 @@ from RecoEgamma.ElectronIdentification.Identification.mvaElectronID_tools import
 # The names for the maps are "<module name>:<MVA class name>Values" 
 # and "<module name>:<MVA class name>Categories"
 mvaProducerModuleLabel = "electronMVAValueMapProducer"
-mvaValueMapName        = mvaProducerModuleLabel + ":" + mvaSpring15NonTrigClassName + mvaTag + "Values"
-mvaCategoriesMapName   = mvaProducerModuleLabel + ":" + mvaSpring15NonTrigClassName + mvaTag + "Categories"
+mvaValueMapName        = mvaProducerModuleLabel + ":" + mvaClassName + mvaTag + "Values"
+mvaCategoriesMapName   = mvaProducerModuleLabel + ":" + mvaClassName + mvaTag + "Categories"
 
 # The working point for this MVA that is expected to have about 90% signal
 # efficiency in each category
@@ -98,14 +114,15 @@ MVA_WPLoose = EleMVA_6Categories_WP(
 
 # Create the PSet that will be fed to the MVA value map producer
 mvaEleID_Spring15_25ns_nonTrig_V1_producer_config = cms.PSet( 
-    mvaName            = cms.string(mvaSpring15NonTrigClassName),
+    mvaName            = cms.string(mvaClassName),
     mvaTag             = cms.string(mvaTag),
-    # This MVA uses conversion info, so configure several data items on that
-    beamSpot           = cms.InputTag('offlineBeamSpot'),
-    conversionsAOD     = cms.InputTag('allConversions'),
-    conversionsMiniAOD = cms.InputTag('reducedEgamma:reducedConversions'),
     #
-    weightFileNames    = mvaSpring15NonTrigWeightFiles_V1
+    # Category parameters
+    nCategories         = cms.int32(6),
+    categoryCuts        = categoryCuts,
+    # Weight files and variable definitions
+    weightFileNames    = mvaSpring15NonTrigWeightFiles_V1,
+    variableDefinition  = cms.string(mvaVariablesFile)
     )
 # Create the VPset's for VID cuts
 mvaEleID_Spring15_25ns_nonTrig_V1_wpLoose = configureVIDMVAEleID_V1( MVA_WPLoose )
@@ -114,8 +131,8 @@ mvaEleID_Spring15_25ns_nonTrig_V1_wp80    = configureVIDMVAEleID_V1( MVA_WP80 )
 
 
 # The MD5 sum numbers below reflect the exact set of cut variables
-# and values above. If anything changes, one has to 
-# 1) comment out the lines below about the registry, 
+# and values above. If anything changes, one has to
+# 1) comment out the lines below about the registry,
 # 2) run "calculateMD5 <this file name> <one of the VID config names just above>
 # 3) update the MD5 sum strings below and uncomment the lines again.
 #
