@@ -6,7 +6,9 @@
 # Varibles are separated by an empty line. The lines of each entry correspond to:
 #
 #     1. The name under which the variable appears in the weight files.
-#     2. How to get this variable from the electron with the cut parser or if not available, how the get it from the ValueMaps produced by the ElectronMVAVariableHelper plugin.
+#        Multiple possible names can be listed, separated by a space.
+#     2. How to get this variable from the electron with the cut parser or if not available,
+#        how the get it from the ValueMaps produced by the ElectronMVAVariableHelper plugin.
 #     3. The lower clip value for the variable to avoid crazy values. "None" if no clip.
 #     3. The upper clip value.
 #

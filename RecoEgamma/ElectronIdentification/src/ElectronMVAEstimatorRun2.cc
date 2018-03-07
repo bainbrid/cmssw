@@ -111,6 +111,7 @@ void ElectronMVAEstimatorRun2::init(const std::vector<std::string> &weightFileNa
 
         if(!variableFound) {
             throw cms::Exception("MVA config failure: ")
+               << "Concerning " << name_ << tag_ << std::endl
                << "Variable " << variableNamesInCategory[j]
                << " not found in variable definition file!" << std::endl << "Check "
                << variableDefinitionFileName_ << std::endl;
