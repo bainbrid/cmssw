@@ -16,6 +16,8 @@ mvaClassName = "ElectronMVAEstimatorRun2"
 # class is used with different tuning/weights
 mvaTag = "Fall17NoIsoV1"
 
+mvaVariablesFile = "RecoEgamma/ElectronIdentification/data/ElectronMVAEstimatorRun2Fall17Variables.txt"
+
 # The parameters according to which the training bins are split:
 ptSplit = 10.      # we have above and below 10 GeV categories
 ebSplit = 0.800    # barrel is split into two regions
@@ -146,7 +148,7 @@ mvaEleID_Fall17_noIso_V1_producer_config = cms.PSet(
     categoryCuts        = categoryCuts,
     # Weight files and variable definitions
     weightFileNames     = mvaFall17WeightFiles_V1,
-    variableDefinition  = cms.string("RecoEgamma/ElectronIdentification/data/ElectronMVAEstimatorRun2Variables.txt")
+    variableDefinition  = cms.string(mvaVariablesFile)
     )
 # Create the VPset's for VID cuts
 mvaEleID_Fall17_V1_wpLoose = configureVIDMVAEleID_V1( MVA_WPLoose )

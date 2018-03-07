@@ -20,6 +20,8 @@ mvaSpring16ClassName = "ElectronMVAEstimatorRun2"
 # class is used with different tuning/weights
 mvaTag = "Spring16GeneralPurposeV1"
 
+mvaVariablesFile = "RecoEgamma/ElectronIdentification/data/ElectronMVAEstimatorRun2Spring16Variables.txt"
+
 # There are 3 categories in this MVA. They have to be configured in this strict order
 # (cuts and weight files order):
 #   0   EB1 (eta<0.8)  pt 10-inf GeV
@@ -85,7 +87,7 @@ mvaEleID_Spring16_GeneralPurpose_V1_producer_config = cms.PSet(
     categoryCuts        = categoryCuts,
     # Weight files and variable definitions
     weightFileNames     = mvaSpring16WeightFiles_V1,
-    variableDefinition  = cms.string("RecoEgamma/ElectronIdentification/data/ElectronMVAEstimatorRun2Variables.txt")
+    variableDefinition  = cms.string(mvaVariablesFile)
     )
 # Create the VPset's for VID cuts
 mvaEleID_Spring16_GeneralPurpose_V1_wp90 = configureVIDMVAEleID_V1( MVA_WP90 )
