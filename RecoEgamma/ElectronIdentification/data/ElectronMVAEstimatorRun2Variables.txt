@@ -2,7 +2,7 @@
 # File: ElectronMVAEstimatorRun2Variables.txt
 #
 # This file is to be read by the ElectronMVAEstimatorRun2 class. Lists all the
-# variables with appear in the xml files for the MVA based Electron IDS for Run2.
+# variables with appear in the xml files for the MVA based Electron IDs for Run2.
 # Varibles are given line by line. The columns of each entry correspond to:
 #
 #     1. The name under which the variable appears in the weight files.

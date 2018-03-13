@@ -117,8 +117,7 @@ float ElectronMVAEstimatorRun2::
 mvaValue( const int iCategory, const std::vector<float> & vars) const  {
   const float result = gbrForests_.at(iCategory)->GetClassifier(vars.data());
 
-  //if(debug_) {
-  if(true) {
+  if(debug_) {
     std::cout << " *** Inside " << name_ << tag_ << std::endl;
     std::cout << " category " << iCategory << std::endl;
     for (int i = 0; i < nVariables_[iCategory]; ++i) {
@@ -182,8 +181,6 @@ fillMVAVariables(const edm::Ptr<reco::GsfElectron>& eleRecoPtr, const EventType&
   std::vector<float> vars;
 
   for (int i = 0; i < nVariables_[iCategory]; ++i) {
-      StringObjectFunction<reco::GsfElectron> function = StringObjectFunction<reco::GsfElectron>("pt");
-      std::cout << function(*eleRecoPtr) << endl;
       vars.push_back(mvaVarMngr_.getValue(variables_[iCategory][i], eleRecoPtr, iEvent));
   }
 
