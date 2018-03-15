@@ -26,6 +26,7 @@ class MVAVariableManager {
         formulas_.clear();
         names_.clear();
         helperInputTags_.clear();
+        globalInputTags_.clear();
 
         edm::FileInPath variableDefinitionFileEdm(variableDefinitionFileName);
         ifstream file(variableDefinitionFileEdm.fullPath());
@@ -63,6 +64,10 @@ class MVAVariableManager {
         return helperInputTags_;
     }
 
+    vector<edm::InputTag> getGlobalInputTags() const {
+        return globalInputTags_;
+    }
+
     template <class EventType>
     float getValue(int index, const edm::Ptr<ParticleType>& ptclPtr, const EventType& iEvent) const {
         float value;
@@ -71,6 +76,10 @@ class MVAVariableManager {
             edm::Handle<edm::ValueMap<float>> vMap;
             iEvent.getByLabel(edm::InputTag(formulas_[index]), vMap);
             value = (*vMap)[ptclPtr];
+        } else if (varInfo.isGlobalVariable) {
+            edm::Handle<double> valueHandle;
+            iEvent.getByLabel(edm::InputTag(formulas_[index]), valueHandle);
+            value = *valueHandle;
         } else {
             value = functions_[index](*ptclPtr);
         }
@@ -91,25 +100,36 @@ class MVAVariableManager {
         float lowerClipValue;
         float upperClipValue;
         bool fromVariableHelper;
+        bool isGlobalVariable;
     };
 
     void addVariable_(string &name, string &formula, string &lowerClip, string &upperClip) {
         bool hasLowerClip = lowerClip.find("None") == string::npos;
         bool hasUpperClip = upperClip.find("None") == string::npos;
-        bool fromVariableHelper = formula.find("MVAVariableHelper") != string::npos;
+        bool fromVariableHelper = formula.find("MVAVariableHelper") != string::npos ||
+                                  formula.find("IDValueMapProducer") != string::npos ||
+                                  formula.find("egmPhotonIsolation") != string::npos;
         float lowerClipValue = hasLowerClip ? (float)::atof(lowerClip.c_str()) : 0.;
         float upperClipValue = hasUpperClip ? (float)::atof(upperClip.c_str()) : 0.;
-        functions_.push_back(!fromVariableHelper ? StringObjectFunction<ParticleType>(formula) : StringObjectFunction<ParticleType>("pt"));
+
+        // fixedGridRhoFastjetAll is the only global variable used ever, so its hardcoded...
+        bool isGlobalVariable = formula.find("Rho") != string::npos;
+
+        functions_.push_back(!(fromVariableHelper || isGlobalVariable) ? StringObjectFunction<ParticleType>(formula) : StringObjectFunction<ParticleType>("pt"));
         formulas_.push_back(formula);
         if (fromVariableHelper) {
             helperInputTags_.push_back(edm::InputTag(formula));
+        }
+        if (isGlobalVariable) {
+            globalInputTags_.push_back(edm::InputTag(formula));
         }
         MVAVariableInfo varInfo = {
             .hasLowerClip       = hasLowerClip,
             .hasUpperClip       = hasUpperClip,
             .lowerClipValue     = lowerClipValue,
             .upperClipValue     = upperClipValue,
-            .fromVariableHelper = fromVariableHelper};
+            .fromVariableHelper = fromVariableHelper,
+            .isGlobalVariable   = isGlobalVariable};
         variableInfos_.push_back(varInfo);
         names_.push_back(name);
         indexMap_[name] = nVars;
@@ -126,6 +146,8 @@ class MVAVariableManager {
 
     // To store the MVAVariableHelper input tags needed for the variables in this container
     vector<edm::InputTag> helperInputTags_;
+
+    vector<edm::InputTag> globalInputTags_;
 };
 
 #endif

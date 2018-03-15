@@ -34,9 +34,7 @@ mvaSpring16NonTrigWeightFiles_V1 = cms.vstring(
 effAreasPath_pho = "RecoEgamma/PhotonIdentification/data/Spring16/effAreaPhotons_cone03_pfPhotons_90percentBased_3bins.txt"
 
 # Load some common definitions for MVA machinery
-from RecoEgamma.PhotonIdentification.Identification.mvaPhotonID_tools \
-    import ( PhoMVA_2Categories_WP,
-             configureVIDMVAPhoID_V1 )
+from RecoEgamma.PhotonIdentification.Identification.mvaPhotonID_tools import *
 
 # The locatoins of value maps with the actual MVA values and categories
 # for all particles.
@@ -103,7 +101,8 @@ mvaPhoID_Spring16_nonTrig_V1_producer_config = cms.PSet(
     # For EB, the uncorrected raw photon isolation is used instead.
     phoIsoPtScalingCoeff = cms.vdouble(0.0053,0.0034),
     # The cutoff for the formula above
-    phoIsoCutoff = cms.double(2.5)
+    phoIsoCutoff = cms.double(2.5),
+    variableDefinition  = cms.string(mvaVariablesFile)
     )
 # Create the VPset's for VID cuts
 mvaPhoID_Spring16_nonTrig_V1_wp90 = configureVIDMVAPhoID_V1( MVA_WP90 )

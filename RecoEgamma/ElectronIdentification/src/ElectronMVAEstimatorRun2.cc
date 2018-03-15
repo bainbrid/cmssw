@@ -56,8 +56,7 @@ void ElectronMVAEstimatorRun2::init(const std::vector<std::string> &weightFileNa
     // Use unique_ptr so that all readers are properly cleaned up
     // when the vector clear() is called in the destructor
 
-    edm::FileInPath weightFile( weightFileNames[i] );
-    gbrForests_.push_back( GBRForestTools::createGBRForest( weightFile, variableNamesInCategory ) );
+    gbrForests_.push_back( GBRForestTools::createGBRForest( weightFileNames[i], variableNamesInCategory ) );
 
     nVariables_.push_back(variableNamesInCategory.size());
 
@@ -86,6 +85,9 @@ void ElectronMVAEstimatorRun2::setConsumes(edm::ConsumesCollector&& cc) const {
   // Tags from the variable helper
   for (auto &tag : mvaVarMngr_.getHelperInputTags()) {
       cc.consumes<edm::ValueMap<float>>(tag);
+  }
+  for (auto &tag : mvaVarMngr_.getGlobalInputTags()) {
+      cc.consumes<double>(tag);
   }
 }
 

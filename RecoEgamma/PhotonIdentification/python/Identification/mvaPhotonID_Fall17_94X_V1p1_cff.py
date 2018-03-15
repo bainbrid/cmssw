@@ -33,9 +33,7 @@ mvaRunIIFall17WeightFiles_V1p1 = cms.vstring(
 effAreasPath_pho = "RecoEgamma/PhotonIdentification/data/Fall17/effAreaPhotons_cone03_pfPhotons_90percentBased_TrueVtx.txt"
 
 # Load some common definitions for MVA machinery
-from RecoEgamma.PhotonIdentification.Identification.mvaPhotonID_tools \
-    import ( PhoMVA_2Categories_WP,
-             configureVIDMVAPhoID_V1 )
+from RecoEgamma.PhotonIdentification.Identification.mvaPhotonID_tools import *
     
 # The locatoins of value maps with the actual MVA values and categories
 # for all particles.
@@ -100,9 +98,10 @@ mvaPhoID_RunIIFall17_v1p1_producer_config = cms.PSet(
     # the first value is for EB, the second is for EE
     # NOTE: even though the EB coefficient is provided, it is not presently used in the MVA.
     # For EB, the uncorrected raw photon isolation is used instead.
-    phoIsoPtScalingCoeff = cms.vdouble(0.0035,0.0040)
+    phoIsoPtScalingCoeff = cms.vdouble(0.0035,0.0040),
     # The cutoff for the formula above
     # phoIsoCutoff = cms.double(2.5)
+    variableDefinition  = cms.string(mvaVariablesFile)
     )
 
 # Create the VPset's for VID cuts

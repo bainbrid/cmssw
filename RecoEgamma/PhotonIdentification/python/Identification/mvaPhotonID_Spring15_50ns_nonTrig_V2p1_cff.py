@@ -18,11 +18,11 @@ import FWCore.ParameterSet.Config as cms
 #    https://indico.cern.ch/event/369241/contribution/1/attachments/1140148/1632879/egamma-Aug14-2015.pdf
 
 # This MVA implementation class name
-mvaSpring15NonTrigClassName = "PhotonMVAEstimatorRun2Spring15NonTrig"
+mvaSpring15NonTrigClassName = "PhotonMVAEstimatorRun2"
 # The tag is an extra string attached to the names of the products
 # such as ValueMaps that needs to distinguish cases when the same MVA estimator
 # class is used with different tuning/weights
-mvaTag = "50nsV2p1"
+mvaTag = "Spring15NonTrig50nsV2p1"
 
 # There are 2 categories in this MVA. They have to be configured in this strict order
 # (cuts and weight files order):
@@ -86,7 +86,8 @@ mvaPhoID_Spring15_50ns_nonTrig_V2p1_producer_config = cms.PSet(
     #
     # Original event content: pileup in this case
     # 
-    rho                       = cms.InputTag("fixedGridRhoFastjetAll") 
+    rho                       = cms.InputTag("fixedGridRhoFastjetAll"),
+    variableDefinition  = cms.string(mvaVariablesFile)
     )
 # Create the VPset's for VID cuts
 mvaPhoID_Spring15_50ns_nonTrig_V2p1_wp90 = configureVIDMVAPhoID_V1( MVA_WP90 )

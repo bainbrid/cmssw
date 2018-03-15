@@ -1,5 +1,8 @@
 import FWCore.ParameterSet.Config as cms
 
+# The files with the variable definitions
+mvaVariablesFile        = "RecoEgamma/PhotonIdentification/data/PhotonMVAEstimatorRun2Variables.txt"
+
 # =======================================================
 # Define simple containers for MVA cut values and related
 # =======================================================
