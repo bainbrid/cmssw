@@ -115,7 +115,7 @@ mvaValue( const edm::Ptr<reco::GsfElectron>& particle, const edm::EventBase & iE
 
 float ElectronMVAEstimatorRun2::
 mvaValue( const int iCategory, const std::vector<float> & vars) const  {
-  const float result = gbrForests_.at(iCategory)->GetClassifier(vars.data());
+  const float response = gbrForests_.at(iCategory)->GetResponse(vars.data()); // The BDT score
 
   if(debug_) {
     std::cout << " *** Inside " << name_ << tag_ << std::endl;
@@ -123,10 +123,10 @@ mvaValue( const int iCategory, const std::vector<float> & vars) const  {
     for (int i = 0; i < nVariables_[iCategory]; ++i) {
         std::cout << " " << mvaVarMngr_.getName(variables_[iCategory][i]) << " " << vars[i] << std::endl;
     }
-    std::cout << " ### MVA " << result << std::endl << std::endl;
+    std::cout << " ### MVA " << response << std::endl << std::endl;
   }
 
-  return result;
+  return response;
 }
 
 int ElectronMVAEstimatorRun2::findCategory( const edm::Ptr<reco::Candidate>& particle) const {

@@ -47,6 +47,14 @@ from RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_iso_V
     import mvaEleID_Fall17_iso_V2XGB_producer_config
 mvaConfigsForEleProducer.append( mvaEleID_Fall17_iso_V2XGB_producer_config )
 
+from RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_noIso_V2noPx_cff \
+    import mvaEleID_Fall17_noIso_V2noPx_producer_config
+mvaConfigsForEleProducer.append( mvaEleID_Fall17_noIso_V2noPx_producer_config )
+
+from RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_iso_V2noPx_cff \
+    import mvaEleID_Fall17_iso_V2noPx_producer_config
+mvaConfigsForEleProducer.append( mvaEleID_Fall17_iso_V2noPx_producer_config )
+
 # The producer to compute the MVA input variables which are not accessible with the cut parser
 electronMVAVariableHelper = cms.EDProducer('GsfElectronMVAVariableHelper',
                                              # The module automatically detects AOD vs miniAOD, so we configure both
