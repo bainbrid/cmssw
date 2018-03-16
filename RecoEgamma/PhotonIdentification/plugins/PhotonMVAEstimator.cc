@@ -1,6 +1,6 @@
-#include "RecoEgamma/PhotonIdentification/plugins/PhotonMVAEstimatorRun2.h"
+#include "RecoEgamma/PhotonIdentification/plugins/PhotonMVAEstimator.h"
 
-PhotonMVAEstimatorRun2::PhotonMVAEstimatorRun2(const edm::ParameterSet& conf):
+PhotonMVAEstimator::PhotonMVAEstimator(const edm::ParameterSet& conf):
   AnyMVAEstimatorRun2Base(conf),
   name_(conf.getParameter<std::string>("mvaName")),
   tag_(conf.getParameter<std::string>("mvaTag")),
@@ -55,11 +55,11 @@ PhotonMVAEstimatorRun2::PhotonMVAEstimatorRun2(const edm::ParameterSet& conf):
   }
 }
 
-PhotonMVAEstimatorRun2::
-~PhotonMVAEstimatorRun2(){
+PhotonMVAEstimator::
+~PhotonMVAEstimator(){
 }
 
-float PhotonMVAEstimatorRun2::
+float PhotonMVAEstimator::
 mvaValue(const edm::Ptr<reco::Candidate>& particle, const edm::Event& iEvent) const {
 
   const int iCategory = findCategory( particle );
@@ -102,7 +102,7 @@ mvaValue(const edm::Ptr<reco::Candidate>& particle, const edm::Event& iEvent) co
   return response;
 }
 
-int PhotonMVAEstimatorRun2::findCategory( const edm::Ptr<reco::Candidate>& particle) const {
+int PhotonMVAEstimator::findCategory( const edm::Ptr<reco::Candidate>& particle) const {
 
   // Try to cast the particle into a reco particle.
   // This should work for both reco and pat.
@@ -129,7 +129,7 @@ int PhotonMVAEstimatorRun2::findCategory( const edm::Ptr<reco::Candidate>& parti
   return iCategory;
 }
 
-void PhotonMVAEstimatorRun2::setConsumes(edm::ConsumesCollector&& cc) const {
+void PhotonMVAEstimator::setConsumes(edm::ConsumesCollector&& cc) const {
   // All tokens for event content needed by this MVA
   // Tags from the variable helper
   for (auto &tag : mvaVarMngr_.getHelperInputTags()) {
@@ -141,13 +141,13 @@ void PhotonMVAEstimatorRun2::setConsumes(edm::ConsumesCollector&& cc) const {
 }
 
 // Dummy fonction just to make the template happy
-std::vector<float> PhotonMVAEstimatorRun2::
+std::vector<float> PhotonMVAEstimator::
 fillMVAVariables(const edm::Ptr<reco::Candidate>& particle, const edm::Event& iEvent) const {
   std::vector<float> vars;
   return vars;
 }
 
-bool PhotonMVAEstimatorRun2::
+bool PhotonMVAEstimator::
 isEndcapCategory(int category) const {
 
   // For this specific MVA the function is trivial, but kept for possible
@@ -160,5 +160,5 @@ isEndcapCategory(int category) const {
 }
 
 DEFINE_EDM_PLUGIN(AnyMVAEstimatorRun2Factory,
-          PhotonMVAEstimatorRun2,
-          "PhotonMVAEstimatorRun2");
+          PhotonMVAEstimator,
+          "PhotonMVAEstimator");

@@ -1,5 +1,5 @@
-#ifndef RecoEgamma_PhotonIdentification_PhotonMVAEstimatorRun2_H
-#define RecoEgamma_PhotonIdentification_PhotonMVAEstimatorRun2_H
+#ifndef RecoEgamma_PhotonIdentification_PhotonMVAEstimator_H
+#define RecoEgamma_PhotonIdentification_PhotonMVAEstimator_H
 
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 
@@ -19,7 +19,7 @@
 #include <vector>
 #include <string>
 
-class PhotonMVAEstimatorRun2 : public AnyMVAEstimatorRun2Base{
+class PhotonMVAEstimator : public AnyMVAEstimatorRun2Base{
   
  public:
 
@@ -33,8 +33,8 @@ class PhotonMVAEstimatorRun2 : public AnyMVAEstimatorRun2Base{
   };
 
   // Constructor and destructor
-  PhotonMVAEstimatorRun2(const edm::ParameterSet& conf);
-  ~PhotonMVAEstimatorRun2() override;
+  PhotonMVAEstimator(const edm::ParameterSet& conf);
+  ~PhotonMVAEstimator() override;
 
   // Calculation of the MVA value
   float mvaValue( const edm::Ptr<reco::Candidate>& particle, const edm::Event&) const override;

@@ -17,11 +17,11 @@ mvaVariablesFile        = "RecoEgamma/PhotonIdentification/data/PhotonMVAEstimat
 #
 
 # This MVA implementation class name
-mvaSpring16NonTrigClassName = "PhotonMVAEstimatorRun2"
+mvaSpring16NonTrigClassName = "PhotonMVAEstimator"
 # The tag is an extra string attached to the names of the products
 # such as ValueMaps that needs to distinguish cases when the same MVA estimator
 # class is used with different tuning/weights
-mvaTag = "Spring16NonTrigV1"
+mvaTag = "Run2Spring16NonTrigV1"
 
 # There are 2 categories in this MVA. They have to be configured in this strict order
 # (cuts and weight files order):
@@ -79,19 +79,7 @@ mvaPhoID_Spring16_nonTrig_V1_producer_config = cms.PSet(
     mvaName            = cms.string(mvaSpring16NonTrigClassName),
     mvaTag             = cms.string(mvaTag),
     weightFileNames    = mvaSpring16NonTrigWeightFiles_V1,
-    #
-    # All the event content needed for this MVA implementation follows
-    #
-    # All the value maps: these are expected to be produced by the
-    # PhotonIDValueMapProducer running upstream
-    #
-    phoChargedIsolation = cms.InputTag("egmPhotonIsolation:h+-DR030-"),
-    phoPhotonIsolation  = cms.InputTag("egmPhotonIsolation:gamma-DR030-"),
-    phoWorstChargedIsolation = cms.InputTag("photonIDValueMapProducer:phoWorstChargedIsolationWithConeVeto"),
-    #
-    # Original event content: pileup in this case
-    # 
-    rho                       = cms.InputTag("fixedGridRhoAll"), # As used by Hgg and by developer of this ID
+    variableDefinition  = cms.string(mvaVariablesFile),
     # In this MVA for endcap the corrected photon isolation is defined as
     # iso = max( photon_isolation_raw - rho*effArea - coeff*pt, cutoff)
     # as discussed in the indico presentations listed in the beginning of this file.
@@ -103,8 +91,7 @@ mvaPhoID_Spring16_nonTrig_V1_producer_config = cms.PSet(
     # For EB, the uncorrected raw photon isolation is used instead.
     phoIsoPtScalingCoeff = cms.vdouble(0.0053,0.0034),
     # The cutoff for the formula above
-    phoIsoCutoff = cms.double(2.5),
-    variableDefinition  = cms.string(mvaVariablesFile)
+    phoIsoCutoff = cms.double(2.5)
     )
 # Create the VPset's for VID cuts
 mvaPhoID_Spring16_nonTrig_V1_wp90 = configureVIDMVAPhoID_V1( MVA_WP90 )

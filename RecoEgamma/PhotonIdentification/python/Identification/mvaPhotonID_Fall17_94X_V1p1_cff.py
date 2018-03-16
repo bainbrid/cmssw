@@ -16,11 +16,11 @@ mvaVariablesFile        = "RecoEgamma/PhotonIdentification/data/PhotonMVAEstimat
 #
 
 # This MVA implementation class name
-mvaFall17v1p1ClassName = "PhotonMVAEstimatorRun2"
+mvaFall17v1p1ClassName = "PhotonMVAEstimator"
 # The tag is an extra string attached to the names of the products
 # such as ValueMaps that needs to distinguish cases when the same MVA estimator
 # class is used with different tuning/weights
-mvaTag = "Fall17v1p1"
+mvaTag = "RunIIFall17v1p1"
 
 # There are 2 categories in this MVA. They have to be configured in this strict order
 # (cuts and weight files order):
@@ -78,31 +78,6 @@ mvaPhoID_RunIIFall17_v1p1_producer_config = cms.PSet(
     mvaName            = cms.string(mvaFall17v1p1ClassName),
     mvaTag             = cms.string(mvaTag),
     weightFileNames    = mvaRunIIFall17WeightFiles_V1p1,
-    #
-    # All the event content needed for this MVA implementation follows
-    #
-    # All the value maps: these are expected to be produced by the
-    # PhotonIDValueMapProducer running upstream
-    #
-    phoChargedIsolation = cms.InputTag("photonIDValueMapProducer:phoChargedIsolation"),
-    phoPhotonIsolation  = cms.InputTag("photonIDValueMapProducer:phoPhotonIsolation"),
-    phoWorstChargedIsolation = cms.InputTag("photonIDValueMapProducer:phoWorstChargedIsolation"),
-    #
-    # Original event content: pileup in this case
-    # 
-    rho                       = cms.InputTag("fixedGridRhoAll"), # As used by Hgg and by developer of this ID
-    # In this MVA for endcap the corrected photon isolation is defined as
-    # iso = max( photon_isolation_raw - rho*effArea - coeff*pt, cutoff)
-    # as discussed in the indico presentations listed in the beginning of this file.
-    #
-    effAreasConfigFile = cms.FileInPath(effAreasPath_pho),
-    # The coefficients "coeff" for the formula above for linear pt scaling correction
-    # the first value is for EB, the second is for EE
-    # NOTE: even though the EB coefficient is provided, it is not presently used in the MVA.
-    # For EB, the uncorrected raw photon isolation is used instead.
-    phoIsoPtScalingCoeff = cms.vdouble(0.0035,0.0040),
-    # The cutoff for the formula above
-    # phoIsoCutoff = cms.double(2.5)
     variableDefinition  = cms.string(mvaVariablesFile)
     )
 
