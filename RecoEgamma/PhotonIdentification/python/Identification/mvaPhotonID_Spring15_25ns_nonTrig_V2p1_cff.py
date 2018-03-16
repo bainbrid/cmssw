@@ -2,6 +2,8 @@ from PhysicsTools.SelectorUtils.centralIDRegistry import central_id_registry
 
 import FWCore.ParameterSet.Config as cms
 
+mvaVariablesFile        = "RecoEgamma/PhotonIdentification/data/PhotonMVAEstimatorRun2VariablesSpring15.txt"
+
 # This MVA ID is the same as 25ns V2 except it uses quantities embedded 
 # in the objects rather than value maps.
 #

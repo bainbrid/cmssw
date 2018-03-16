@@ -16,11 +16,11 @@ import FWCore.ParameterSet.Config as cms
 #    https://indico.cern.ch/event/369241/contribution/1/attachments/1140148/1632879/egamma-Aug14-2015.pdf
 
 # This MVA implementation class name
-mvaSpring15NonTrigClassName = "PhotonMVAEstimatorRun2Spring15NonTrig"
+mvaSpring15NonTrigClassName = "PhotonMVAEstimatorRun2Spring15"
 # The tag is an extra string attached to the names of the products
 # such as ValueMaps that needs to distinguish cases when the same MVA estimator
 # class is used with different tuning/weights
-mvaTag = "50nsV2"
+mvaTag = "NonTrig50nsV2"
 
 # There are 2 categories in this MVA. They have to be configured in this strict order
 # (cuts and weight files order):

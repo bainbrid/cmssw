@@ -14,11 +14,11 @@ import FWCore.ParameterSet.Config as cms
 #
 
 # This MVA implementation class name
-mvaSpring15NonTrigClassName = "PhotonMVAEstimatorRun2Spring15NonTrig"
+mvaSpring15NonTrigClassName = "PhotonMVAEstimatorRun2Spring15"
 # The tag is an extra string attached to the names of the products
 # such as ValueMaps that needs to distinguish cases when the same MVA estimator
 # class is used with different tuning/weights
-mvaTag = "50nsV0"
+mvaTag = "NonTrig50nsV0"
 
 # There are 2 categories in this MVA. They have to be configured in this strict order
 # (cuts and weight files order):

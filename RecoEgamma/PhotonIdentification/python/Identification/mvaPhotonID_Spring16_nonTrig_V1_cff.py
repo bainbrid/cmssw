@@ -2,6 +2,8 @@ from PhysicsTools.SelectorUtils.centralIDRegistry import central_id_registry
 
 import FWCore.ParameterSet.Config as cms
 
+mvaVariablesFile        = "RecoEgamma/PhotonIdentification/data/PhotonMVAEstimatorRun2VariablesSpring16.txt"
+
 #
 # In this file we define the locations of the MVA weights, cuts on the MVA values
 # for specific working points, and configure those cuts in VID
@@ -15,11 +17,11 @@ import FWCore.ParameterSet.Config as cms
 #
 
 # This MVA implementation class name
-mvaSpring16NonTrigClassName = "PhotonMVAEstimatorRun2Spring16NonTrig"
+mvaSpring16NonTrigClassName = "PhotonMVAEstimatorRun2"
 # The tag is an extra string attached to the names of the products
 # such as ValueMaps that needs to distinguish cases when the same MVA estimator
 # class is used with different tuning/weights
-mvaTag = "V1"
+mvaTag = "Spring16NonTrigV1"
 
 # There are 2 categories in this MVA. They have to be configured in this strict order
 # (cuts and weight files order):

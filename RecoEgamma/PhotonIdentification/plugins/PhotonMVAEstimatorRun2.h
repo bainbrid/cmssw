@@ -9,8 +9,12 @@
 
 #include "DataFormats/EgammaCandidates/interface/Photon.h"
 
+#include "FWCore/ParameterSet/interface/FileInPath.h"
+
 #include "RecoEgamma/EgammaTools/interface/GBRForestTools.h"
 #include "RecoEgamma/EgammaTools/interface/MVAVariableManager.h"
+
+#include "RecoEgamma/EgammaTools/interface/EffectiveAreas.h"
 
 #include <vector>
 #include <string>
@@ -53,6 +57,7 @@ class PhotonMVAEstimatorRun2 : public AnyMVAEstimatorRun2Base{
   // event content pices
   //void getEventContent(const edm::Event& iEvent) override;
 
+  bool isEndcapCategory( int category ) const;
   
  private:
 
@@ -81,7 +86,13 @@ class PhotonMVAEstimatorRun2 : public AnyMVAEstimatorRun2Base{
   // The variable manager which stores how to obtain the variables
   MVAVariableManager<reco::Photon> mvaVarMngr_;
 
-  bool debug_;
+  const bool debug_;
+
+  // Other objects needed by the MVA
+  unique_ptr<EffectiveAreas> effectiveAreas_;
+  std::vector<double> phoIsoPtScalingCoeff_;
+  double phoIsoCutoff_;
+
 };
 
 #endif

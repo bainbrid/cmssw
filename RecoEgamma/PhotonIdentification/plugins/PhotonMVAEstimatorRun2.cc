@@ -11,6 +11,11 @@ PhotonMVAEstimatorRun2::PhotonMVAEstimatorRun2(const edm::ParameterSet& conf):
   //
   // Construct the MVA estimators
   //
+  if (tag_ == "Spring16NonTrigV1") {
+      effectiveAreas_ = make_unique<EffectiveAreas>((conf.getParameter<edm::FileInPath>("effAreasConfigFile")).fullPath());
+      phoIsoPtScalingCoeff_ = conf.getParameter<std::vector<double >>("phoIsoPtScalingCoeff");
+      phoIsoCutoff_ = conf.getParameter<double>("phoIsoCutoff");
+  }
 
   const std::vector <std::string> weightFileNames
     = conf.getParameter<std::vector<std::string> >("weightFileNames");
@@ -55,17 +60,34 @@ PhotonMVAEstimatorRun2::
 }
 
 float PhotonMVAEstimatorRun2::
-mvaValue(const edm::Ptr<reco::Candidate>& particle, const edm::Event& iEvent) const {  
+mvaValue(const edm::Ptr<reco::Candidate>& particle, const edm::Event& iEvent) const {
 
   const int iCategory = findCategory( particle );
-  //const std::vector<float> vars = std::move( fillMVAVariables( particle, iEvent ) );  
   const edm::Ptr<reco::Photon> phoRecoPtr = ( edm::Ptr<reco::Photon> )particle;
   std::vector<float> vars;
 
   for (int i = 0; i < nVariables_[iCategory]; ++i) {
       vars.push_back(mvaVarMngr_.getValue(variables_[iCategory][i], phoRecoPtr, iEvent));
   }
-  
+
+  // Special case for Spring16!
+  if (tag_ == "Spring16NonTrigV1" && isEndcapCategory(iCategory)) {
+      //std::cout << vars[10] << std::endl;
+      // Raw value for EB only, because of loss of transparency in EE
+      // for endcap MVA only in 2016
+      double eA = effectiveAreas_->getEffectiveArea( std::abs(phoRecoPtr->superCluster()->eta()) );
+      // vars[9] : rho
+      // vars[10]: CITK_isoPhotons
+      //std::cout << eA << std::endl;
+      //std::cout << phoIsoPtScalingCoeff_.at(1) << std::endl;
+      //std::cout << phoIsoCutoff_ << std::endl;
+      //std::cout << phoRecoPtr->pt() << std::endl;
+      //std::cout << eA*(double)vars[9] << std::endl;
+      double phoIsoCorr = vars[10] - eA*(double)vars[9] - phoIsoPtScalingCoeff_.at(1) * phoRecoPtr->pt();
+      //std::cout << phoIsoCorr << std::endl;
+      vars[10] = TMath::Max( phoIsoCorr, phoIsoCutoff_);
+  }
+
   const float response = gbrForests_.at(iCategory)->GetResponse(vars.data());
 
   if(debug_) {
@@ -76,12 +98,12 @@ mvaValue(const edm::Ptr<reco::Candidate>& particle, const edm::Event& iEvent) co
     }
     std::cout << " ### MVA " << response << std::endl << std::endl;
   }
-  
+
   return response;
 }
 
 int PhotonMVAEstimatorRun2::findCategory( const edm::Ptr<reco::Candidate>& particle) const {
-  
+
   // Try to cast the particle into a reco particle.
   // This should work for both reco and pat.
   const edm::Ptr<reco::Photon> phoRecoPtr = ( edm::Ptr<reco::Photon> )particle;
@@ -98,10 +120,10 @@ int PhotonMVAEstimatorRun2::findCategory( const edm::Ptr<reco::Candidate>& parti
   int  iCategory = UNDEFINED;
   const float ebeeSplit = 1.479; // division between barrel and endcap
 
-  if ( std::abs(eta) < ebeeSplit)  
+  if ( std::abs(eta) < ebeeSplit)
     iCategory = CAT_EB;
 
-  if (std::abs(eta) >= ebeeSplit) 
+  if (std::abs(eta) >= ebeeSplit)
     iCategory = CAT_EE;
 
   return iCategory;
@@ -123,6 +145,18 @@ std::vector<float> PhotonMVAEstimatorRun2::
 fillMVAVariables(const edm::Ptr<reco::Candidate>& particle, const edm::Event& iEvent) const {
   std::vector<float> vars;
   return vars;
+}
+
+bool PhotonMVAEstimatorRun2::
+isEndcapCategory(int category) const {
+
+  // For this specific MVA the function is trivial, but kept for possible
+  // future evolution to an MVA with more categories in eta
+  bool isEndcap = false;
+  if( category == CAT_EE )
+    isEndcap = true;
+
+  return isEndcap;
 }
 
 DEFINE_EDM_PLUGIN(AnyMVAEstimatorRun2Factory,

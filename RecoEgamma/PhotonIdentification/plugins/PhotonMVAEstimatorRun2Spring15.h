@@ -1,5 +1,5 @@
-#ifndef RecoEgamma_PhotonIdentification_PhotonMVAEstimatorRun2Spring16NonTrig_H
-#define RecoEgamma_PhotonIdentification_PhotonMVAEstimatorRun2Spring16NonTrig_H
+#ifndef RecoEgamma_PhotonIdentification_PhotonMVAEstimatorRun2Spring15_H
+#define RecoEgamma_PhotonIdentification_PhotonMVAEstimatorRun2Spring15_H
 
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 
@@ -9,24 +9,18 @@
 
 #include "DataFormats/EgammaCandidates/interface/Photon.h"
 
-#include "CondFormats/EgammaObjects/interface/GBRForest.h"
-
-#include "RecoEgamma/EgammaTools/interface/EffectiveAreas.h"
+#include "RecoEgamma/EgammaTools/interface/GBRForestTools.h"
 
 #include <vector>
 #include <string>
 
-#include "TMVA/Factory.h"
-#include "TMVA/Tools.h"
-#include "TMVA/Reader.h"
-
-class PhotonMVAEstimatorRun2Spring16NonTrig : public AnyMVAEstimatorRun2Base{
+class PhotonMVAEstimatorRun2Spring15 : public AnyMVAEstimatorRun2Base{
   
  public:
 
   // Define here the number and the meaning of the categories
   // for this specific MVA
-  const uint nCategories = 2;
+  const int nCategories = 2;
   enum mvaCategories {
     UNDEFINED = -1,
     CAT_EB  = 0,
@@ -35,12 +29,14 @@ class PhotonMVAEstimatorRun2Spring16NonTrig : public AnyMVAEstimatorRun2Base{
 
   // Define the struct that contains all necessary for MVA variables
   struct AllVariables {
-
-    float scPhi;    
+    
+    float varPhi;
     float varR9;
     float varSieie;
     float varSieip;
+    float varE1x3overE5x5;
     float varE2x2overE5x5;
+    float varE2x5overE5x5;
     float varSCEta;
     float varRawE;
     float varSCEtaWidth;
@@ -50,16 +46,17 @@ class PhotonMVAEstimatorRun2Spring16NonTrig : public AnyMVAEstimatorRun2Base{
     // Pile-up
     float varRho;
     // Isolations
-    float varPhoIsoRaw;// for barrel only in 2016
-    float varPhoIsoCorr;//for endcap only in 2016
+    float varPhoIsoRaw;
     float varChIsoRaw;
     float varWorstChRaw;
-
+    // Spectators
+    float varPt;
+    float varEta;
   };
   
   // Constructor and destructor
-  PhotonMVAEstimatorRun2Spring16NonTrig(const edm::ParameterSet& conf);
-  ~PhotonMVAEstimatorRun2Spring16NonTrig() override;
+  PhotonMVAEstimatorRun2Spring15(const edm::ParameterSet& conf);
+  ~PhotonMVAEstimatorRun2Spring15() override;
 
   // Calculation of the MVA value
   float mvaValue( const edm::Ptr<reco::Candidate>& particle, const edm::Event&) const override;
@@ -93,19 +90,19 @@ class PhotonMVAEstimatorRun2Spring16NonTrig : public AnyMVAEstimatorRun2Base{
   // MVA name. This is a unique name for this MVA implementation.
   // It will be used as part of ValueMap names.
   // For simplicity, keep it set to the class name.
-  const std::string name_ = "PhotonMVAEstimatorRun2Spring16NonTrig";
+  const std::string name_;
 
   // MVA tag. This is an additional string variable to distinguish
   // instances of the estimator of this class configured with different
   // weight files.
-  std::string tag_;
+  const std::string tag_;
 
   // Data members
   std::vector< std::unique_ptr<const GBRForest> > gbrForests_;
 
   // All variables needed by this MVA
-  const std::string MethodName_;
-  AllVariables allMVAVars_;
+  const std::string methodName_;
+  AllVariables _allMVAVars;
   
   // This MVA implementation relies on several ValueMap objects
   // produced upstream. 
@@ -114,15 +111,19 @@ class PhotonMVAEstimatorRun2Spring16NonTrig : public AnyMVAEstimatorRun2Base{
   // Declare all tokens that will be needed to retrieve misc
   // data from the event content required by this MVA
   //
-  const edm::InputTag phoChargedIsolationLabel_; 
-  const edm::InputTag phoPhotonIsolationLabel_; 
-  const edm::InputTag phoWorstChargedIsolationLabel_; 
-  const edm::InputTag rhoLabel_;
-
-  // Other objects needed by the MVA
-  EffectiveAreas effectiveAreas_;
-  std::vector<double> phoIsoPtScalingCoeff_;
-  double          phoIsoCutoff_;
+  const bool _useValueMaps;
+  const edm::InputTag _full5x5SigmaIEtaIEtaMapLabel; 
+  const edm::InputTag _full5x5SigmaIEtaIPhiMapLabel; 
+  const edm::InputTag _full5x5E1x3MapLabel; 
+  const edm::InputTag _full5x5E2x2MapLabel; 
+  const edm::InputTag _full5x5E2x5MaxMapLabel; 
+  const edm::InputTag _full5x5E5x5MapLabel; 
+  const edm::InputTag _esEffSigmaRRMapLabel; 
+  //
+  const edm::InputTag _phoChargedIsolationLabel; 
+  const edm::InputTag _phoPhotonIsolationLabel; 
+  const edm::InputTag _phoWorstChargedIsolationLabel; 
+  const edm::InputTag _rhoLabel;
 };
 
 #endif
