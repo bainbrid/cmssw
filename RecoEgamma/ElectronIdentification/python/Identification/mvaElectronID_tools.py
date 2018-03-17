@@ -66,6 +66,32 @@ class EleMVA_WP:
         keylist.sort()
         return [self.cuts[key] for key in keylist]
 
+class EleMVARaw_WP:
+    """
+    This is a container class to hold MVA cut values for a n-category MVA
+    as well as the names of the value maps that contain the MVA values computed
+    for all particles in a producer upstream.
+
+    IMPORTANT: the cuts need to be given in alphabetical order, which must
+    be the order in which they are used by the cut class.
+    """
+    def __init__(self,
+                 idName,
+                 mvaTag,
+                 **cuts
+                 ):
+        self.idName               = idName
+        # map with MVA values for all particles
+        self.mvaValueMapName      = mvaProducerModuleLabel + ":" + mvaClassName + mvaTag + "ValuesRaw"
+        # map with category index for all particles
+        self.mvaCategoriesMapName = mvaProducerModuleLabel + ":" + mvaClassName + mvaTag + "Categories"
+        self.cuts = cuts
+
+    def getCutValues(self):
+        keylist = self.cuts.keys()
+        keylist.sort()
+        return [self.cuts[key] for key in keylist]
+
 # ================================
 # Define the complete MVA cut sets
 # ================================
