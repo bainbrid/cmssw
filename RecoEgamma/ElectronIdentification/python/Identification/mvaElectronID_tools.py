@@ -82,7 +82,7 @@ class EleMVARaw_WP:
                  ):
         self.idName               = idName
         # map with MVA values for all particles
-        self.mvaValueMapName      = mvaProducerModuleLabel + ":" + mvaClassName + mvaTag + "ValuesRaw"
+        self.mvaValueMapName      = mvaProducerModuleLabel + ":" + mvaClassName + mvaTag + "RawValues"
         # map with category index for all particles
         self.mvaCategoriesMapName = mvaProducerModuleLabel + ":" + mvaClassName + mvaTag + "Categories"
         self.cuts = cuts
