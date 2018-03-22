@@ -1,8 +1,20 @@
 #ifndef RecoEgamma_EgammaTools_MVAVariableManager_H
 #define RecoEgamma_EgammaTools_MVAVariableManager_H
 
+#include <vector>
+#include <string>
+#include <fstream>
+
 #include "CommonTools/Utils/interface/StringObjectFunction.h"
 #include "CommonTools/Utils/interface/StringCutObjectSelector.h"
+
+#include "FWCore/ParameterSet/interface/FileInPath.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/ConsumesCollector.h"
+
+#include "DataFormats/Candidate/interface/Candidate.h"
 
 using namespace std;
 
@@ -11,7 +23,7 @@ class MVAVariableManager {
 
   public:
     MVAVariableManager() {
-        nVars = 0;
+        nVars_ = 0;
     };
 
     MVAVariableManager(const string variableDefinitionFileName) {
@@ -19,7 +31,7 @@ class MVAVariableManager {
     };
 
     int init(const string variableDefinitionFileName) {
-        nVars = 0;
+        nVars_ = 0;
 
         variableInfos_.clear();
         functions_.clear();
@@ -44,7 +56,7 @@ class MVAVariableManager {
             }
             addVariable_(name, formula, lower, upper);
         }
-        return nVars;
+        return nVars_;
     };
 
     int getVarIndex(string &name) {
@@ -58,6 +70,10 @@ class MVAVariableManager {
 
     const string getName(int index) const {
         return names_[index];
+    }
+
+    const int getNVars() const {
+        return nVars_;
     }
 
     vector<edm::InputTag> getHelperInputTags() const {
@@ -112,7 +128,7 @@ class MVAVariableManager {
         float lowerClipValue = hasLowerClip ? (float)::atof(lowerClip.c_str()) : 0.;
         float upperClipValue = hasUpperClip ? (float)::atof(upperClip.c_str()) : 0.;
 
-        // fixedGridRhoFastjetAll is the only global variable used ever, so its hardcoded...
+        // *Rho* is the only global variable used ever, so its hardcoded...
         bool isGlobalVariable = formula.find("Rho") != string::npos;
 
         functions_.push_back(!(fromVariableHelper || isGlobalVariable) ? StringObjectFunction<ParticleType>(formula) : StringObjectFunction<ParticleType>("pt"));
@@ -132,12 +148,12 @@ class MVAVariableManager {
             .isGlobalVariable   = isGlobalVariable};
         variableInfos_.push_back(varInfo);
         names_.push_back(name);
-        indexMap_[name] = nVars;
-        nVars++;
+        indexMap_[name] = nVars_;
+        nVars_++;
     };
 
 
-    int nVars;
+    int nVars_;
     vector<MVAVariableInfo> variableInfos_;
     vector<StringObjectFunction<ParticleType>> functions_;
     vector<string> formulas_;
