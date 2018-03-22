@@ -41,35 +41,35 @@ mvaSpring15NonTrigWeightFiles_V1 = cms.vstring(
 idName90 = "mvaEleID-Spring15-25ns-nonTrig-V1-wp90"
 MVA_WP90 = EleMVA_WP(
     idName = idName90, mvaTag = mvaTag,
-    cutCategory0 = -0.083313, # EB1 low pt
-    cutCategory1 = -0.235222, # EB2 low pt
-    cutCategory2 = -0.67099, # EE low pt 
-    cutCategory3 =  0.913286, # EB1       
-    cutCategory4 =  0.805013, # EB2       
-    cutCategory5 =  0.358969  # EE        
+    cutCategory0 = "-0.083313", # EB1 low pt
+    cutCategory1 = "-0.235222", # EB2 low pt
+    cutCategory2 = "-0.67099", # EE low pt 
+    cutCategory3 = " 0.913286", # EB1       
+    cutCategory4 = " 0.805013", # EB2       
+    cutCategory5 = " 0.358969"  # EE        
     )
 
 idName80 = "mvaEleID-Spring15-25ns-nonTrig-V1-wp80"
 MVA_WP80 = EleMVA_WP(
     idName = idName80, mvaTag = mvaTag,
-    cutCategory0 =  0.287435, # EB1 low pt
-    cutCategory1 =  0.221846, # EB2 low pt
-    cutCategory2 = -0.303263, # EE low pt 
-    cutCategory3 =  0.967083, # EB1       
-    cutCategory4 =  0.929117, # EB2       
-    cutCategory5 =  0.726311  # EE        
+    cutCategory0 = " 0.287435", # EB1 low pt
+    cutCategory1 = " 0.221846", # EB2 low pt
+    cutCategory2 = "-0.303263", # EE low pt 
+    cutCategory3 = " 0.967083", # EB1       
+    cutCategory4 = " 0.929117", # EB2       
+    cutCategory5 = " 0.726311"  # EE        
     )
 
 ### WP tuned for HZZ analysis with very high efficiency (about 98%)
 idNameLoose = "mvaEleID-Spring15-25ns-nonTrig-V1-wpLoose"
 MVA_WPLoose = EleMVA_WP(
     idName = idNameLoose, mvaTag = mvaTag,
-    cutCategory0 =  -0.265, # EB1 low pt
-    cutCategory1 =  -0.556, # EB2 low pt
-    cutCategory2 =  -0.551, # EE low pt
-    cutCategory3 =  -0.072, # EB1
-    cutCategory4 =  -0.286, # EB2
-    cutCategory5 =  -0.267  # EE
+    cutCategory0 = " -0.265", # EB1 low pt
+    cutCategory1 = " -0.556", # EB2 low pt
+    cutCategory2 = " -0.551", # EE low pt
+    cutCategory3 = " -0.072", # EB1
+    cutCategory4 = " -0.286", # EB2
+    cutCategory5 = " -0.267"  # EE
     )
 
 
@@ -90,9 +90,9 @@ mvaEleID_Spring15_25ns_nonTrig_V1_producer_config = cms.PSet(
     variableDefinition  = cms.string(mvaVariablesFile)
     )
 # Create the VPset's for VID cuts
-mvaEleID_Spring15_25ns_nonTrig_V1_wpLoose = configureVIDMVAEleID_V1( MVA_WPLoose )
-mvaEleID_Spring15_25ns_nonTrig_V1_wp90    = configureVIDMVAEleID_V1( MVA_WP90 )
-mvaEleID_Spring15_25ns_nonTrig_V1_wp80    = configureVIDMVAEleID_V1( MVA_WP80 )
+mvaEleID_Spring15_25ns_nonTrig_V1_wpLoose = configureVIDMVAEleID( MVA_WPLoose )
+mvaEleID_Spring15_25ns_nonTrig_V1_wp90    = configureVIDMVAEleID( MVA_WP90 )
+mvaEleID_Spring15_25ns_nonTrig_V1_wp80    = configureVIDMVAEleID( MVA_WP80 )
 
 
 # The MD5 sum numbers below reflect the exact set of cut variables

@@ -43,12 +43,12 @@ mvaSpring16WeightFiles_V1 = cms.vstring(
 idNameLoose = "mvaEleID-Spring16-HZZ-V1-wpLoose"
 MVA_WPLoose = EleMVA_WP(
     idNameLoose, mvaTag,
-    cutCategory0 =  -0.211, # EB1 low pt
-    cutCategory1 =  -0.396, # EB2 low pt
-    cutCategory2 =  -0.215, # EE low pt
-    cutCategory3 =  -0.870, # EB1
-    cutCategory4 =  -0.838, # EB2
-    cutCategory5 =  -0.763  # EE
+    cutCategory0 =  "-0.211", # EB1 low pt
+    cutCategory1 =  "-0.396", # EB2 low pt
+    cutCategory2 =  "-0.215", # EE low pt
+    cutCategory3 =  "-0.870", # EB1
+    cutCategory4 =  "-0.838", # EB2
+    cutCategory5 =  "-0.763"  # EE
     )
 
 
@@ -68,7 +68,7 @@ mvaEleID_Spring16_HZZ_V1_producer_config = cms.PSet(
     variableDefinition  = cms.string(mvaVariablesFile)
     )
 # Create the VPset's for VID cuts
-mvaEleID_Spring16_HZZ_V1_wpLoose = configureVIDMVAEleID_V1( MVA_WPLoose )
+mvaEleID_Spring16_HZZ_V1_wpLoose = configureVIDMVAEleID( MVA_WPLoose )
 
 
 # The MD5 sum numbers below reflect the exact set of cut variables

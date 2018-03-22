@@ -40,47 +40,23 @@ mvaFall17WeightFiles_V1 = cms.vstring(
 idName90 = "mvaEleID-Fall17-noIso-V1-wp90"
 MVA_WP90 = EleMVA_WP(
     idName = idName90, mvaTag = mvaTag,
-    cutCategory0_C0 = 0.9165112826974601, # EB1 low pt
-    cutCategory0_C1 = 2.7381703555094217,
-    cutCategory0_C2 = 1.03549199648109,
-    cutCategory1_C0 = 0.8655738322220173, # EB2 low pt
-    cutCategory1_C1 = 2.4027944652597073,
-    cutCategory1_C2 = 0.7975615613282494,
-    cutCategory2_C0 = -3016.035055227131, # EE low pt
-    cutCategory2_C1 = -52140.61856333602,
-    cutCategory2_C2 = -3016.3029387236506,
-    cutCategory3_C0 = 0.9616542816132922, # EB1
-    cutCategory3_C1 = 8.757943837889817,
-    cutCategory3_C2 = 3.1390200321591206,
-    cutCategory4_C0 = 0.9319258011430132, # EB2
-    cutCategory4_C1 = 8.846057432565809,
-    cutCategory4_C2 = 3.5985063793347787,
-    cutCategory5_C0 = 0.8899260780999244, # EE
-    cutCategory5_C1 = 10.124234115859881,
-    cutCategory5_C2 = 4.352791250718547
+    cutCategory0 = "0.9165112826974601 - exp(-pt / 2.7381703555094217) *    1.03549199648109", # EB1 low pt
+    cutCategory1 = "0.8655738322220173 - exp(-pt / 2.4027944652597073) *  0.7975615613282494", # EB2 low pt
+    cutCategory2 = "-3016.035055227131 - exp(-pt / -52140.61856333602) * -3016.3029387236506", # EE low pt
+    cutCategory3 = "0.9616542816132922 - exp(-pt /  8.757943837889817) *  3.1390200321591206", # EB1
+    cutCategory4 = "0.9319258011430132 - exp(-pt /  8.846057432565809) *  3.5985063793347787", # EB2
+    cutCategory5 = "0.8899260780999244 - exp(-pt / 10.124234115859881) *   4.352791250718547", # EE
     )
 
 idName80 = "mvaEleID-Fall17-noIso-V1-wp80"
 MVA_WP80 = EleMVA_WP(
     idName = idName80, mvaTag = mvaTag,
-    cutCategory0_C0 = 0.9530240956555949, # EB1 low pt
-    cutCategory0_C1 = 2.7591425841003647,
-    cutCategory0_C2 = 0.4669644718545271,
-    cutCategory1_C0 = 0.9336564763961019, # EB2 low pt
-    cutCategory1_C1 = 2.709276284272272,
-    cutCategory1_C2 = 0.33512286599215946,
-    cutCategory2_C0 = 0.9313133688365339, # EE low pt
-    cutCategory2_C1 = 1.5821934800715558,
-    cutCategory2_C2 = 3.8889462619659265,
-    cutCategory3_C0 = 0.9825268564943458, # EB1
-    cutCategory3_C1 = 8.702601455860762,
-    cutCategory3_C2 = 1.1974861596609097,
-    cutCategory4_C0 = 0.9727509457929913, # EB2
-    cutCategory4_C1 = 8.179525631018565,
-    cutCategory4_C2 = 1.7111755094657688,
-    cutCategory5_C0 = 0.9562619539540145, # EE
-    cutCategory5_C1 = 8.109845366281608,
-    cutCategory5_C2 = 3.013927699126942
+    cutCategory0 = "0.9530240956555949 - exp(-pt / 2.7591425841003647) *  0.4669644718545271", # EB1 low pt
+    cutCategory1 = "0.9336564763961019 - exp(-pt /  2.709276284272272) * 0.33512286599215946", # EB2 low pt
+    cutCategory2 = "0.9313133688365339 - exp(-pt / 1.5821934800715558) *  3.8889462619659265", # EE low pt
+    cutCategory3 = "0.9825268564943458 - exp(-pt /  8.702601455860762) *  1.1974861596609097", # EB1
+    cutCategory4 = "0.9727509457929913 - exp(-pt /  8.179525631018565) *  1.7111755094657688", # EB2
+    cutCategory5 = "0.9562619539540145 - exp(-pt /  8.109845366281608) *   3.013927699126942", # EE
 )
 
 ### WP tuned for HZZ analysis with very high efficiency (about 98%)
@@ -90,12 +66,12 @@ MVA_WP80 = EleMVA_WP(
 idNamewpLoose = "mvaEleID-Fall17-noIso-V1-wpLoose"
 MVA_WPLoose = EleMVA_WP(
     idName = idNamewpLoose, mvaTag = mvaTag,
-    cutCategory0 =  -0.13285867293779202, # EB1 low pt
-    cutCategory1 =  -0.31765300958836074, # EB2 low pt
-    cutCategory2 =  -0.0799205914718861 , # EE low pt
-    cutCategory3 =  -0.856871961305474  , # EB1
-    cutCategory4 =  -0.8107642141584835 , # EB2
-    cutCategory5 =  -0.7179265933023059   # EE
+    cutCategory0 =  "-0.13285867293779202", # EB1 low pt
+    cutCategory1 =  "-0.31765300958836074", # EB2 low pt
+    cutCategory2 =  "-0.0799205914718861" , # EE low pt
+    cutCategory3 =  "-0.856871961305474"  , # EB1
+    cutCategory4 =  "-0.8107642141584835" , # EB2
+    cutCategory5 =  "-0.7179265933023059"   # EE
     )
 
 #
@@ -114,9 +90,9 @@ mvaEleID_Fall17_noIso_V1_producer_config = cms.PSet(
     variableDefinition  = cms.string(mvaVariablesFile)
     )
 # Create the VPset's for VID cuts
-mvaEleID_Fall17_V1_wpLoose = configureVIDMVAEleID_V1( MVA_WPLoose )
-mvaEleID_Fall17_V1_wp90 = configureVIDMVAEleID_V1( MVA_WP90, cutName="GsfEleMVAExpoScalingCut")
-mvaEleID_Fall17_V1_wp80 = configureVIDMVAEleID_V1( MVA_WP80, cutName="GsfEleMVAExpoScalingCut")
+mvaEleID_Fall17_V1_wpLoose = configureVIDMVAEleID( MVA_WPLoose )
+mvaEleID_Fall17_V1_wp90 = configureVIDMVAEleID( MVA_WP90 )
+mvaEleID_Fall17_V1_wp80 = configureVIDMVAEleID( MVA_WP80 )
 
 mvaEleID_Fall17_V1_wpLoose.isPOGApproved = cms.untracked.bool(True)
 mvaEleID_Fall17_V1_wp90.isPOGApproved = cms.untracked.bool(True)

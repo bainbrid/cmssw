@@ -41,12 +41,12 @@ mvaPhys14NonTrigWeightFiles_V1 = cms.vstring(
 idName = "mvaEleID-PHYS14-PU20bx25-nonTrig-V1-wp80"
 MVA_WP80 = EleMVA_WP(
     idName, mvaTag,
-    cutCategory0 = -0.253, # EB1 low pt
-    cutCategory1 =  0.081, # EB2 low pt
-    cutCategory2 = -0.081, # EE low pt
-    cutCategory3 =  0.965, # EB1 
-    cutCategory4 =  0.917, # EB2
-    cutCategory5 =  0.683  # EE
+    cutCategory0 = "-0.253", # EB1 low pt
+    cutCategory1 = " 0.081", # EB2 low pt
+    cutCategory2 = "-0.081", # EE low pt
+    cutCategory3 = " 0.965", # EB1 
+    cutCategory4 = " 0.917", # EB2
+    cutCategory5 = " 0.683"  # EE
     )
 
 # The working point for this MVA that is expected to have about 90% signal
@@ -54,12 +54,12 @@ MVA_WP80 = EleMVA_WP(
 idName = "mvaEleID-PHYS14-PU20bx25-nonTrig-V1-wp90"
 MVA_WP90 = EleMVA_WP(
     idName, mvaTag,
-    cutCategory0 = -0.483, # EB1 low pt
-    cutCategory1 = -0.267, # EB2 low pt
-    cutCategory2 = -0.323, # EE low pt 
-    cutCategory3 =  0.933, # EB1       
-    cutCategory4 =  0.825, # EB2       
-    cutCategory5 =  0.337  # EE        
+    cutCategory0 = "-0.483", # EB1 low pt
+    cutCategory1 = "-0.267", # EB2 low pt
+    cutCategory2 = "-0.323", # EE low pt 
+    cutCategory3 = " 0.933", # EB1       
+    cutCategory4 = " 0.825", # EB2       
+    cutCategory5 = " 0.337"  # EE        
     )
 
 #
@@ -78,8 +78,8 @@ mvaEleID_PHYS14_PU20bx25_nonTrig_V1_producer_config = cms.PSet(
     variableDefinition = cms.string(mvaVariablesFileClassic)
     )
 # Create the VPset's for VID cuts
-mvaEleID_PHYS14_PU20bx25_nonTrig_V1_wp80 = configureVIDMVAEleID_V1( MVA_WP80 )
-mvaEleID_PHYS14_PU20bx25_nonTrig_V1_wp90 = configureVIDMVAEleID_V1( MVA_WP90 )
+mvaEleID_PHYS14_PU20bx25_nonTrig_V1_wp80 = configureVIDMVAEleID( MVA_WP80 )
+mvaEleID_PHYS14_PU20bx25_nonTrig_V1_wp90 = configureVIDMVAEleID( MVA_WP90 )
 
 # The MD5 sum numbers below reflect the exact set of cut variables
 # and values above. If anything changes, one has to

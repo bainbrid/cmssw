@@ -34,15 +34,15 @@ mvaSpring16WeightFiles_V1 = cms.vstring(
 ### For turn-on and details see documentation linked above
 MVA_WP90 = EleMVA_WP(
     idName = "mvaEleID-Spring16-GeneralPurpose-V1-wp90", mvaTag = mvaTag,
-    cutCategory0 =  0.836695742607, # EB1
-    cutCategory1 =  0.715337944031, # EB2
-    cutCategory2 =  0.356799721718, # EE
+    cutCategory0 =  "0.836695742607", # EB1
+    cutCategory1 =  "0.715337944031", # EB2
+    cutCategory2 =  "0.356799721718", # EE
     )
 MVA_WP80 = EleMVA_WP(
     idName = "mvaEleID-Spring16-GeneralPurpose-V1-wp80", mvaTag = mvaTag,
-    cutCategory0 =  0.940962684155, # EB1
-    cutCategory1 =  0.899208843708, # EB2
-    cutCategory2 =  0.758484721184, # EE
+    cutCategory0 =  "0.940962684155", # EB1
+    cutCategory1 =  "0.899208843708", # EB2
+    cutCategory2 =  "0.758484721184", # EE
     )
 
 
@@ -63,8 +63,8 @@ mvaEleID_Spring16_GeneralPurpose_V1_producer_config = cms.PSet(
     variableDefinition  = cms.string(mvaVariablesFile)
     )
 # Create the VPset's for VID cuts
-mvaEleID_Spring16_GeneralPurpose_V1_wp90 = configureVIDMVAEleID_V1( MVA_WP90 )
-mvaEleID_Spring16_GeneralPurpose_V1_wp80 = configureVIDMVAEleID_V1( MVA_WP80 )
+mvaEleID_Spring16_GeneralPurpose_V1_wp90 = configureVIDMVAEleID( MVA_WP90 )
+mvaEleID_Spring16_GeneralPurpose_V1_wp80 = configureVIDMVAEleID( MVA_WP80 )
 
 
 # The MD5 sum numbers below reflect the exact set of cut variables

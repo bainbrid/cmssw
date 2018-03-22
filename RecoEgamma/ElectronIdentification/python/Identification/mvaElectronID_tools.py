@@ -96,7 +96,7 @@ class EleMVARaw_WP:
 # Define the complete MVA cut sets
 # ================================
 
-def configureVIDMVAEleID_V1(mvaWP, cutName="GsfEleMVACut"):
+def configureVIDMVAEleID(mvaWP, cutName="GsfEleMVACut"):
     """
     This function configures the full cms.PSet for a VID ID and returns it.
     The inputs: an object of the class EleMVA_WP or similar
@@ -107,7 +107,7 @@ def configureVIDMVAEleID_V1(mvaWP, cutName="GsfEleMVACut"):
         idName = cms.string( mvaWP.idName ),
         cutFlow = cms.VPSet(
             cms.PSet( cutName = cms.string(cutName),
-                      mvaCuts = cms.vdouble( mvaWP.getCutValues() ),
+                      mvaCuts = cms.vstring( mvaWP.getCutValues() ),
                       mvaValueMapName = cms.InputTag( mvaWP.mvaValueMapName ),
                       mvaCategoriesMapName = cms.InputTag( mvaWP.mvaCategoriesMapName ),
                       needsAdditionalProducts = cms.bool(True),

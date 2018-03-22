@@ -35,17 +35,17 @@ mvaSpring15TrigWeightFiles_V1 = cms.vstring(
 idName90 = "mvaEleID-Spring15-50ns-Trig-V1-wp90"
 MVA_WP90 = EleMVA_WP(
     idName = idName90, mvaTag = mvaTag,
-    cutCategory0 = 0.953843, # EB1 
-    cutCategory1 = 0.849994, # EB2 
-    cutCategory2 = 0.514118  # EE 
+    cutCategory0 = "0.953843", # EB1 
+    cutCategory1 = "0.849994", # EB2 
+    cutCategory2 = "0.514118"  # EE 
     )
 
 idName80 = "mvaEleID-Spring15-50ns-Trig-V1-wp80"
 MVA_WP80 = EleMVA_WP(
     idName = idName80, mvaTag = mvaTag,
-    cutCategory0 = 0.981841, # EB1 
-    cutCategory1 = 0.946762, # EB2 
-    cutCategory2 = 0.79704  # EE 
+    cutCategory0 = "0.981841", # EB1 
+    cutCategory1 = "0.946762", # EB2 
+    cutCategory2 = "0.79704"  # EE 
     )
 
 #
@@ -64,8 +64,8 @@ mvaEleID_Spring15_50ns_Trig_V1_producer_config = cms.PSet(
     variableDefinition  = cms.string(mvaVariablesFile)
     )
 # Create the VPset's for VID cuts
-mvaEleID_Spring15_50ns_Trig_V1_wp90 = configureVIDMVAEleID_V1( MVA_WP90 )
-mvaEleID_Spring15_50ns_Trig_V1_wp80 = configureVIDMVAEleID_V1( MVA_WP80 )
+mvaEleID_Spring15_50ns_Trig_V1_wp90 = configureVIDMVAEleID( MVA_WP90 )
+mvaEleID_Spring15_50ns_Trig_V1_wp80 = configureVIDMVAEleID( MVA_WP80 )
 
 # The MD5 sum numbers below reflect the exact set of cut variables
 # and values above. If anything changes, one has to 
