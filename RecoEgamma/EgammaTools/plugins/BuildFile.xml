@@ -4,7 +4,6 @@
   <use   name="PhysicsTools/MVAComputer"/>
   <use   name="PhysicsTools/MVATrainer"/>
   <use   name="CommonTools/CandAlgos"/>
-  <use   name="CommonTools/UtilAlgos"/>
   <use   name="CondCore/PluginSystem"/>
   <use   name="CondCore/DBOutputService"/>
   <use   name="CondFormats/DataRecord"/>
