@@ -61,9 +61,8 @@ class EleMVA_WP:
         self.mvaCategoriesMapName = mvaProducerModuleLabel + ":" + mvaClassName + mvaTag + "Categories"
         self.cuts = cuts
 
-    def getCutValues(self):
-        keylist = self.cuts.keys()
-        keylist.sort()
+    def getCutStrings(self):
+        keylist = sorted(self.cuts.keys())
         return [self.cuts[key] for key in keylist]
 
 class EleMVARaw_WP:
@@ -87,7 +86,7 @@ class EleMVARaw_WP:
         self.mvaCategoriesMapName = mvaProducerModuleLabel + ":" + mvaClassName + mvaTag + "Categories"
         self.cuts = cuts
 
-    def getCutValues(self):
+    def getCutStrings(self):
         keylist = self.cuts.keys()
         keylist.sort()
         return [self.cuts[key] for key in keylist]
@@ -107,7 +106,7 @@ def configureVIDMVAEleID(mvaWP, cutName="GsfEleMVACut"):
         idName = cms.string( mvaWP.idName ),
         cutFlow = cms.VPSet(
             cms.PSet( cutName = cms.string(cutName),
-                      mvaCuts = cms.vstring( mvaWP.getCutValues() ),
+                      mvaCuts = cms.vstring( mvaWP.getCutStrings() ),
                       mvaValueMapName = cms.InputTag( mvaWP.mvaValueMapName ),
                       mvaCategoriesMapName = cms.InputTag( mvaWP.mvaCategoriesMapName ),
                       needsAdditionalProducts = cms.bool(True),

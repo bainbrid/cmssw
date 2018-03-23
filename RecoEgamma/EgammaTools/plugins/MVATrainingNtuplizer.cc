@@ -1,9 +1,9 @@
 // -*- C++ -*-
 //
-// Package:    RecoEgamma/ElectronIdentification
-// Class:      ElectronMVATrainingNtuplizer
+// Package:    RecoEgamma/EgammaTools
+// Class:      MVATrainingNtuplizer
 //
-/**\class ElectronMVATrainingNtuplizer ElectronMVATrainingNtuplizer.cc RecoEgamma/ElectronIdentification/plugins/ElectronMVATrainingNtuplizer.cc
+/**\class MVATrainingNtuplizer MVATrainingNtuplizer.cc RecoEgamma/EgammaTools/plugins/MVATrainingNtuplizer.cc
 
  Description: [one line class summary]
 
@@ -58,10 +58,10 @@
 
 using reco::TrackCollection;
 
-class ElectronMVATrainingNtuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
+class MVATrainingNtuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
    public:
-      explicit ElectronMVATrainingNtuplizer(const edm::ParameterSet&);
-      ~ElectronMVATrainingNtuplizer();
+      explicit MVATrainingNtuplizer(const edm::ParameterSet&);
+      ~MVATrainingNtuplizer();
 
       static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
@@ -110,7 +110,7 @@ class ElectronMVATrainingNtuplizer : public edm::one::EDAnalyzer<edm::one::Share
 //
 // constructors and destructor
 //
-ElectronMVATrainingNtuplizer::ElectronMVATrainingNtuplizer(const edm::ParameterSet& iConfig)
+MVATrainingNtuplizer::MVATrainingNtuplizer(const edm::ParameterSet& iConfig)
  :
   src_            (consumes<edm::View<reco::GsfElectron> >(iConfig.getParameter<edm::InputTag>("src"))),
   vertices_       (consumes<std::vector<reco::Vertex> >(iConfig.getParameter<edm::InputTag>("vertices"))),
@@ -152,7 +152,7 @@ ElectronMVATrainingNtuplizer::ElectronMVATrainingNtuplizer(const edm::ParameterS
 }
 
 
-ElectronMVATrainingNtuplizer::~ElectronMVATrainingNtuplizer()
+MVATrainingNtuplizer::~MVATrainingNtuplizer()
 {
 
    // do anything here that needs to be done at desctruction time
@@ -167,7 +167,7 @@ ElectronMVATrainingNtuplizer::~ElectronMVATrainingNtuplizer()
 
 // ------------ method called for each event  ------------
 void
-ElectronMVATrainingNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
+MVATrainingNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
     // Fill global event info
     nEvent_ = iEvent.id().event();
@@ -242,19 +242,19 @@ ElectronMVATrainingNtuplizer::analyze(const edm::Event& iEvent, const edm::Event
 
 // ------------ method called once each job just before starting event loop  ------------
 void
-ElectronMVATrainingNtuplizer::beginJob()
+MVATrainingNtuplizer::beginJob()
 {
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
 void
-ElectronMVATrainingNtuplizer::endJob()
+MVATrainingNtuplizer::endJob()
 {
 }
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
 void
-ElectronMVATrainingNtuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+MVATrainingNtuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   //The following says we do not know what parameters are allowed so do no validation
   // Please change this to state exactly what you do use, even if it is no parameters
   edm::ParameterSetDescription desc;
@@ -269,4 +269,4 @@ ElectronMVATrainingNtuplizer::fillDescriptions(edm::ConfigurationDescriptions& d
 }
 
 //define this as a plug-in
-DEFINE_FWK_MODULE(ElectronMVATrainingNtuplizer);
+DEFINE_FWK_MODULE(MVATrainingNtuplizer);

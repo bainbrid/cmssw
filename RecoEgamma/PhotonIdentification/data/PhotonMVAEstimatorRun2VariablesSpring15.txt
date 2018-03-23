@@ -1,14 +1,13 @@
 #
 # File: PhotonMVAEstimatorRun2VariablesSpring15.txt
 #
-# This file is to be read by the ElectronMVAEstimatorRun2 class. Lists all the
+# This file is to be read by the MVAVariableManager class. Lists all the
 # variables with appear in the xml files for the MVA based Photon IDs for Run2.
 # Varibles are given line by line. The columns of each entry correspond to:
 #
 #     1. The name under which the variable appears in the weight files.
 #     2. How to get this variable from the electron with the cut parser (NO SPACES!)
-#        or if not available,
-#        how the get it from the ValueMaps produced by the ElectronMVAVariableHelper plugin.
+#        or if not available, how to get the varaibles elsewhere.
 #     3. The lower clip value for the variable to avoid crazy values. "None" if no clip.
 #     3. The upper clip value.
 #

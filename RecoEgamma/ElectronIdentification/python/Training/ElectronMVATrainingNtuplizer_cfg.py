@@ -1,9 +1,9 @@
 import FWCore.ParameterSet.Config as cms
-from RecoEgamma.ElectronIdentification.ElectronMVAValueMapProducer_cfi import electronMVAVariableHelper
+from RecoEgamma.ElectronIdentification.MVAValueMapProducer_cfi import electronMVAVariableHelper
 from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
 from Configuration.AlCa.GlobalTag import GlobalTag
 
-process = cms.Process("ElectronMVATrainingNtuplizer")
+process = cms.Process("MVATrainingNtuplizer")
 
 process.load("FWCore.MessageService.MessageLogger_cfi")
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
@@ -15,8 +15,7 @@ mvaVariablesFile = "RecoEgamma/ElectronIdentification/python/Training/electron_v
 
 outputFile = "electron_ntuple.root"
 
-# process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(10) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
@@ -25,7 +24,7 @@ process.source = cms.Source("PoolSource",
     )
 )
 
-process.ntuplizer = cms.EDAnalyzer('ElectronMVATrainingNtuplizer',
+process.ntuplizer = cms.EDAnalyzer('MVATrainingNtuplizer',
         # AOD case
         src                  = cms.InputTag('gedGsfElectrons'),
         vertices             = cms.InputTag('offlinePrimaryVertices'),
