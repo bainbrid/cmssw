@@ -116,6 +116,18 @@ class ElectronMVATrainingNtuplizer : public edm::one::EDAnalyzer<edm::one::Share
       const bool isMC_;
       const double deltaR_;
       const double ptThreshold_;
+
+      // ID decisions objects
+      std::vector< edm::EDGetTokenT< edm::ValueMap<bool> > > eleMapTokens_;
+      std::vector< std::string > eleMapBranchNames_;
+      size_t nEleMaps_;
+
+      // MVA values and categories (optional)
+      std::vector< edm::EDGetTokenT<edm::ValueMap<float> > > valuesMapTokens_;
+      std::vector< std::string > valuesMapBranchNames_;
+      size_t nValuesMaps_;
+
+      edm::EDGetTokenT<edm::ValueMap<int> > mvaCategoriesMapToken_;
 };
 
 //
@@ -149,10 +161,61 @@ ElectronMVATrainingNtuplizer::ElectronMVATrainingNtuplizer(const edm::ParameterS
   mvaVarMngr_            (iConfig.getParameter<std::string>("variableDefinition")),
   isMC_                  (iConfig.getParameter<bool>("isMC")),
   deltaR_                (iConfig.existsAs<double>("deltaR")        ? iConfig.getParameter<double>("deltaR"): 0.1),
-  ptThreshold_           (iConfig.existsAs<double>("ptThreshold")   ? iConfig.getParameter<double>("ptThreshold"): 5)
-
+  ptThreshold_           (iConfig.existsAs<double>("ptThreshold")   ? iConfig.getParameter<double>("ptThreshold"): 5),
+  mvaCategoriesMapToken_(consumes<edm::ValueMap<int> >(iConfig.getParameter<edm::InputTag>("mvaCategoriesMap")))
 {
-   //now do what ever initialization is needed
+/*
+ * // eleMaps
+ * std::string eleMapK;
+ * nEleMaps_ = 0;
+ * for (size_t k = 0; k < 999; ++k) { // Avoid infinite loop with some high limit to the number of eleID maps
+ *   eleMapK = "eleMap" + std::to_string(k + 1);
+ *
+ *   // Break look if there is no eleMapK config parameter anymore
+ *   if(!iConfig.exists(eleMapK)) {
+ *     break;
+ *   }
+ *
+ *   eleMapTokens_.push_back(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>(eleMapK)));
+ *
+ *   // Set ID branch name if there is one given in the config file
+ *   if(iConfig.exists(eleMapK + "BranchName")) {
+ *     eleMapBranchNames_.push_back(iConfig.getParameter<std::string>(eleMapK + "BranchName"));
+ *   } else {
+ *     eleMapBranchNames_.push_back(eleMapK);
+ *   }
+ *
+ *   // Initialize vectors for holding ID decisions
+ *   pass_.push_back(0);
+ *   passVec_.push_back(std::vector<Int_t>());
+ *
+ *   ++nEleMaps_;
+ * }
+ *
+ * // valuesMaps
+ * std::string valuesMapK;
+ * nValuesMaps_ = 0;
+ * for (size_t k = 0; k < 999; ++k) { // Avoid infinite loop with some high limit to the number of eleID maps
+ *   valuesMapK = "valuesMap" + std::to_string(k + 1);
+ *
+ *   // Break look if there is no valuesMapK config parameter anymore
+ *   if(!iConfig.exists(valuesMapK)) {
+ *     break;
+ *   }
+ *
+ *   valuesMapTokens_.push_back(consumes<edm::ValueMap<float> >(iConfig.getParameter<edm::InputTag>(valuesMapK)));
+ *
+ *   // Set ID branch name if there is one given in the config file
+ *   if(iConfig.exists(valuesMapK + "BranchName")) {
+ *     valuesMapBranchNames_.push_back(iConfig.getParameter<std::string>(valuesMapK + "BranchName"));
+ *   } else {
+ *     valuesMapBranchNames_.push_back(valuesMapK);
+ *   }
+ *
+ *   // Initialize vectors for holding MVA values
+ *   mvaValue_.push_back(0.0);
+ *   mvaValueVec_.push_back(std::vector<Float_t>());
+ */
 
    // Book tree
    usesResource(TFileService::kSharedResource);

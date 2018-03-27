@@ -11,7 +11,7 @@ process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run2_mc', '')
 
 # File with the ID variables to include in the Ntuplizer
-mvaVariablesFile = "RecoEgamma/ElectronIdentification/python/Training/electron_variables.txt"
+mvaVariablesFile = "RecoEgamma/ElectronIdentification/data/ElectronIDVariables.txt"
 
 outputFile = "electron_ntuple.root"
 
