@@ -1,9 +1,9 @@
 // -*- C++ -*-
 //
 // Package:    RecoEgamma/ElectronIdentification
-// Class:      ElectronMVATrainingNtuplizer
+// Class:      ElectronMVANtuplizer
 //
-/**\class ElectronMVATrainingNtuplizer ElectronMVATrainingNtuplizer.cc RecoEgamma/ElectronIdentification/plugins/ElectronMVATrainingNtuplizer.cc
+/**\class ElectronMVANtuplizer ElectronMVANtuplizer.cc RecoEgamma/ElectronIdentification/plugins/ElectronMVANtuplizer.cc
 
  Description: [one line class summary]
 
@@ -43,6 +43,10 @@
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
 
+#include <DataFormats/METReco/interface/PFMET.h>
+#include <DataFormats/METReco/interface/PFMETCollection.h>
+#include <DataFormats/PatCandidates/interface/MET.h>
+
 #include "TTree.h"
 #include "TFile.h"
 #include "Math/VectorUtil.h"
@@ -57,10 +61,10 @@
 // This will improve performance in multithreaded jobs.
 //
 
-class ElectronMVATrainingNtuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
+class ElectronMVANtuplizer : public edm::one::EDAnalyzer<edm::one::SharedResources>  {
    public:
-      explicit ElectronMVATrainingNtuplizer(const edm::ParameterSet&);
-      ~ElectronMVATrainingNtuplizer();
+      explicit ElectronMVANtuplizer(const edm::ParameterSet&);
+      ~ElectronMVANtuplizer();
 
       static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
 
@@ -81,27 +85,34 @@ class ElectronMVATrainingNtuplizer : public edm::one::EDAnalyzer<edm::one::Share
       edm::EDGetToken src_;
       edm::EDGetToken vertices_;
       edm::EDGetToken pileup_;
-      edm::EDGetTokenT<edm::View<reco::GenParticle> > genParticles_;
+      edm::EDGetToken genParticles_;
+      edm::EDGetToken metToken_;
 
       // for miniAOD case
       edm::EDGetToken srcMiniAOD_;
       edm::EDGetToken verticesMiniAOD_;
       edm::EDGetToken pileupMiniAOD_;
-      edm::EDGetTokenT<edm::View<reco::GenParticle> > genParticlesMiniAOD_;
+      edm::EDGetToken genParticlesMiniAOD_;
+      edm::EDGetToken metTokenMiniAOD_;
 
       // other
       TTree* tree_;
 
       MVAVariableManager<reco::GsfElectron> mvaVarMngr_;
-      float vars_[200];
+      std::vector<float> vars_;
       int nVars_;
 
       //global variables
       int nEvent_, nRun_, nLumi_;
       int genNpu_;
       int vtxN_;
+      float met_;
+
+      // electron variables
+      float eleQ_;
       int matchedToGenEle_;
       int matchedGenIdx_;
+
 
       // gap variables
       bool eleIsEB_;
@@ -112,22 +123,33 @@ class ElectronMVATrainingNtuplizer : public edm::one::EDAnalyzer<edm::one::Share
       bool eleIsEEDeeGap_;
       bool eleIsEERingGap_;
 
+      // to hold ID decisions and categories
+      std::vector<int> mvaPasses_;
+      std::vector<float> mvaValues_;
+      std::vector<int> mvaCats_;
+
       // config
       const bool isMC_;
       const double deltaR_;
+      //const bool saveIDVariables_;
       const double ptThreshold_;
 
       // ID decisions objects
+      const std::vector< std::string > eleMapTags_;
       std::vector< edm::EDGetTokenT< edm::ValueMap<bool> > > eleMapTokens_;
-      std::vector< std::string > eleMapBranchNames_;
-      size_t nEleMaps_;
+      const std::vector< std::string > eleMapBranchNames_;
+      const size_t nEleMaps_;
 
       // MVA values and categories (optional)
-      std::vector< edm::EDGetTokenT<edm::ValueMap<float> > > valuesMapTokens_;
-      std::vector< std::string > valuesMapBranchNames_;
-      size_t nValuesMaps_;
+      const std::vector< std::string > valMapTags_;
+      std::vector< edm::EDGetTokenT<edm::ValueMap<float> > > valMapTokens_;
+      const std::vector< std::string > valMapBranchNames_;
+      const size_t nValMaps_;
 
-      edm::EDGetTokenT<edm::ValueMap<int> > mvaCategoriesMapToken_;
+      const std::vector< std::string > mvaCatTags_;
+      std::vector< edm::EDGetTokenT<edm::ValueMap<int> > > mvaCatTokens_;
+      const std::vector< std::string > mvaCatBranchNames_;
+      const size_t nCats_;
 };
 
 //
@@ -148,74 +170,57 @@ enum ElectronMatchType {
 //
 // constructors and destructor
 //
-ElectronMVATrainingNtuplizer::ElectronMVATrainingNtuplizer(const edm::ParameterSet& iConfig)
+ElectronMVANtuplizer::ElectronMVANtuplizer(const edm::ParameterSet& iConfig)
  :
   src_                   (consumes<edm::View<reco::GsfElectron> >(iConfig.getParameter<edm::InputTag>("src"))),
   vertices_              (consumes<std::vector<reco::Vertex> >(iConfig.getParameter<edm::InputTag>("vertices"))),
   pileup_                (consumes<std::vector< PileupSummaryInfo > >(iConfig.getParameter<edm::InputTag>("pileup"))),
   genParticles_          (consumes<edm::View<reco::GenParticle> >(iConfig.getParameter<edm::InputTag>("genParticles"))),
+  metToken_              (consumes<pat::METCollection >(iConfig.getParameter<edm::InputTag>("MET"))),
   srcMiniAOD_            (consumes<edm::View<reco::GsfElectron> >(iConfig.getParameter<edm::InputTag>("srcMiniAOD"))),
   verticesMiniAOD_       (consumes<std::vector<reco::Vertex> >(iConfig.getParameter<edm::InputTag>("verticesMiniAOD"))),
   pileupMiniAOD_         (consumes<std::vector< PileupSummaryInfo > >(iConfig.getParameter<edm::InputTag>("pileupMiniAOD"))),
   genParticlesMiniAOD_   (consumes<edm::View<reco::GenParticle> >(iConfig.getParameter<edm::InputTag>("genParticlesMiniAOD"))),
+  metTokenMiniAOD_       (consumes<pat::METCollection>(iConfig.getParameter<edm::InputTag>("METMiniAOD"))),
   mvaVarMngr_            (iConfig.getParameter<std::string>("variableDefinition")),
   isMC_                  (iConfig.getParameter<bool>("isMC")),
-  deltaR_                (iConfig.existsAs<double>("deltaR")        ? iConfig.getParameter<double>("deltaR"): 0.1),
-  ptThreshold_           (iConfig.existsAs<double>("ptThreshold")   ? iConfig.getParameter<double>("ptThreshold"): 5),
-  mvaCategoriesMapToken_(consumes<edm::ValueMap<int> >(iConfig.getParameter<edm::InputTag>("mvaCategoriesMap")))
+  deltaR_                (iConfig.existsAs<double>("deltaR")          ? iConfig.getParameter<double>("deltaR"): 0.1),
+  //saveIDVariables_       (iConfig.existsAs<double>("saveIDVariables") ? iConfig.getParameter<double>("saveIDVariables"): true),
+  ptThreshold_           (iConfig.existsAs<double>("ptThreshold")     ? iConfig.getParameter<double>("ptThreshold"): 5),
+  eleMapTags_            (iConfig.getParameter<std::vector<std::string>>("eleMVAs")),
+  eleMapBranchNames_     (iConfig.getParameter<std::vector<std::string>>("eleMVALabels")),
+  nEleMaps_              (eleMapBranchNames_.size()),
+  valMapTags_            (iConfig.getParameter<std::vector<std::string>>("eleMVAValMaps")),
+  valMapBranchNames_     (iConfig.getParameter<std::vector<std::string>>("eleMVAValMapLabels")),
+  nValMaps_              (valMapBranchNames_.size()),
+  mvaCatTags_            (iConfig.getParameter<std::vector<std::string>>("eleMVACats")),
+  mvaCatBranchNames_     (iConfig.getParameter<std::vector<std::string>>("eleMVACatLabels")),
+  nCats_                 (mvaCatBranchNames_.size())
 {
-/*
- * // eleMaps
- * std::string eleMapK;
- * nEleMaps_ = 0;
- * for (size_t k = 0; k < 999; ++k) { // Avoid infinite loop with some high limit to the number of eleID maps
- *   eleMapK = "eleMap" + std::to_string(k + 1);
- *
- *   // Break look if there is no eleMapK config parameter anymore
- *   if(!iConfig.exists(eleMapK)) {
- *     break;
- *   }
- *
- *   eleMapTokens_.push_back(consumes<edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>(eleMapK)));
- *
- *   // Set ID branch name if there is one given in the config file
- *   if(iConfig.exists(eleMapK + "BranchName")) {
- *     eleMapBranchNames_.push_back(iConfig.getParameter<std::string>(eleMapK + "BranchName"));
- *   } else {
- *     eleMapBranchNames_.push_back(eleMapK);
- *   }
- *
- *   // Initialize vectors for holding ID decisions
- *   pass_.push_back(0);
- *   passVec_.push_back(std::vector<Int_t>());
- *
- *   ++nEleMaps_;
- * }
- *
- * // valuesMaps
- * std::string valuesMapK;
- * nValuesMaps_ = 0;
- * for (size_t k = 0; k < 999; ++k) { // Avoid infinite loop with some high limit to the number of eleID maps
- *   valuesMapK = "valuesMap" + std::to_string(k + 1);
- *
- *   // Break look if there is no valuesMapK config parameter anymore
- *   if(!iConfig.exists(valuesMapK)) {
- *     break;
- *   }
- *
- *   valuesMapTokens_.push_back(consumes<edm::ValueMap<float> >(iConfig.getParameter<edm::InputTag>(valuesMapK)));
- *
- *   // Set ID branch name if there is one given in the config file
- *   if(iConfig.exists(valuesMapK + "BranchName")) {
- *     valuesMapBranchNames_.push_back(iConfig.getParameter<std::string>(valuesMapK + "BranchName"));
- *   } else {
- *     valuesMapBranchNames_.push_back(valuesMapK);
- *   }
- *
- *   // Initialize vectors for holding MVA values
- *   mvaValue_.push_back(0.0);
- *   mvaValueVec_.push_back(std::vector<Float_t>());
- */
+    // eleMaps
+    for (size_t k = 0; k < nEleMaps_; ++k) {
+
+        eleMapTokens_.push_back(consumes<edm::ValueMap<bool> >(edm::InputTag(eleMapTags_[k])));
+
+        // Initialize vectors for holding ID decisions
+        mvaPasses_.push_back(0);
+    }
+
+    // valMaps
+    for (size_t k = 0; k < nValMaps_; ++k) {
+        valMapTokens_.push_back(consumes<edm::ValueMap<float> >(edm::InputTag(valMapTags_[k])));
+
+        // Initialize vectors for holding MVA values
+        mvaValues_.push_back(0.0);
+    }
+
+    // categories
+    for (size_t k = 0; k < nCats_; ++k) {
+        mvaCatTokens_.push_back(consumes<edm::ValueMap<int> >(edm::InputTag(mvaCatTags_[k])));
+
+        // Initialize vectors for holding MVA values
+        mvaCats_.push_back(0);
+    }
 
    // Book tree
    usesResource(TFileService::kSharedResource);
@@ -229,13 +234,20 @@ ElectronMVATrainingNtuplizer::ElectronMVATrainingNtuplizer(const edm::ParameterS
    tree_->Branch("nLumi",   &nLumi_);
    tree_->Branch("genNpu", &genNpu_);
    tree_->Branch("vtxN",   &vtxN_);
+   tree_->Branch("met",   &met_);
+
+   tree_->Branch("ele_q",&eleQ_);
 
    if (isMC_) {
        tree_->Branch("matchedToGenEle",   &matchedToGenEle_);
    }
 
+   // Has to be in two different loops
    for (int i = 0; i < nVars_; ++i) {
-       tree_->Branch(mvaVarMngr_.getName(i).c_str(), &(vars_[i]));
+       vars_.push_back(0.0);
+   }
+   for (int i = 0; i < nVars_; ++i) {
+       tree_->Branch(mvaVarMngr_.getName(i).c_str(), &vars_[i]);
    }
 
    tree_->Branch("ele_isEB",&eleIsEB_);
@@ -245,6 +257,19 @@ ElectronMVATrainingNtuplizer::ElectronMVATrainingNtuplizer(const edm::ParameterS
    tree_->Branch("ele_isEBEEGap", &eleIsEBEEGap_);
    tree_->Branch("ele_isEEDeeGap",&eleIsEEDeeGap_);
    tree_->Branch("ele_isEERingGap",&eleIsEERingGap_);
+
+   // IDs
+   for (size_t k = 0; k < nValMaps_; ++k) {
+       tree_->Branch(valMapBranchNames_[k].c_str() ,  &mvaValues_[k]);
+   }
+
+   for (size_t k = 0; k < nEleMaps_; ++k) {
+       tree_->Branch(eleMapBranchNames_[k].c_str() ,  &mvaPasses_[k]);
+   }
+
+   for (size_t k = 0; k < nCats_; ++k) {
+       tree_->Branch(mvaCatBranchNames_[k].c_str() ,  &mvaCats_[k]);
+   }
 
    // All tokens for event content needed by this MVA
    // Tags from the variable helper
@@ -257,7 +282,7 @@ ElectronMVATrainingNtuplizer::ElectronMVATrainingNtuplizer(const edm::ParameterS
 }
 
 
-ElectronMVATrainingNtuplizer::~ElectronMVATrainingNtuplizer()
+ElectronMVANtuplizer::~ElectronMVANtuplizer()
 {
 
    // do anything here that needs to be done at desctruction time
@@ -272,7 +297,7 @@ ElectronMVATrainingNtuplizer::~ElectronMVATrainingNtuplizer()
 
 // ------------ method called for each event  ------------
 void
-ElectronMVATrainingNtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
+ElectronMVANtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
     // Fill global event info
     nEvent_ = iEvent.id().event();
@@ -291,6 +316,18 @@ ElectronMVATrainingNtuplizer::analyze(const edm::Event& iEvent, const edm::Event
     }
 
     vtxN_ = vertices->size();
+
+    // MET
+    edm::Handle<pat::METCollection> metHandle;
+    iEvent.getByToken(metToken_,metHandle);
+    if( !metHandle.isValid() ){
+      iEvent.getByToken(metTokenMiniAOD_,metHandle);
+      if( metHandle.isValid() )
+        throw cms::Exception(" Collection not found: ")
+          << " failed to find a standard AOD or miniAOD MET collection " << std::endl;
+    }
+    const pat::MET &met = metHandle->front();
+    met_ = met.pt();
 
     // Retrieve Pileup Info
     edm::Handle<std::vector< PileupSummaryInfo > >  pileup;
@@ -339,11 +376,31 @@ ElectronMVATrainingNtuplizer::analyze(const edm::Event& iEvent, const edm::Event
           << " failed to find a standard AOD or miniAOD particle collection " << std::endl;
     }
 
+    // Get MVA decisions
+    edm::Handle<edm::ValueMap<bool> > decisions[nEleMaps_];
+    for (size_t k = 0; k < nEleMaps_; ++k) {
+        iEvent.getByToken(eleMapTokens_[k],decisions[k]);
+    }
+
+    // Get MVA values
+    edm::Handle<edm::ValueMap<float> > values[nValMaps_];
+    for (size_t k = 0; k < nValMaps_; ++k) {
+        iEvent.getByToken(valMapTokens_[k],values[k]);
+    }
+
+    // Get MVA categories
+    edm::Handle<edm::ValueMap<int> > mvaCats[nCats_];
+    for (size_t k = 0; k < nCats_; ++k) {
+        iEvent.getByToken(mvaCatTokens_[k],mvaCats[k]);
+    }
+
     int nEle = src->size();
 
     for(int iEle = 0; iEle < nEle; ++iEle) {
 
         const auto ele =  src->ptrAt(iEle);
+
+        eleQ_ = ele->charge();
 
         if (ele->pt() < ptThreshold_) {
             continue;
@@ -366,12 +423,28 @@ ElectronMVATrainingNtuplizer::analyze(const edm::Event& iEvent, const edm::Event
         eleIsEEDeeGap_ = ele->isEEDeeGap();
         eleIsEERingGap_ = ele->isEERingGap();
 
+        //
+        // Look up and save the ID decisions
+        //
+        for (size_t k = 0; k < nEleMaps_; ++k) {
+          mvaPasses_[k] = (int)(*decisions[k])[ele];
+        }
+
+        for (size_t k = 0; k < nValMaps_; ++k) {
+          mvaValues_[k] = (*values[k])[ele];
+        }
+
+        for (size_t k = 0; k < nCats_; ++k) {
+          mvaCats_[k] = (*mvaCats[k])[ele];
+        }
+
+
         tree_->Fill();
     }
 
 }
 
-void ElectronMVATrainingNtuplizer::findFirstNonElectronMother2(const reco::Candidate *particle,
+void ElectronMVANtuplizer::findFirstNonElectronMother2(const reco::Candidate *particle,
                          int &ancestorPID, int &ancestorStatus){
 
   if( particle == 0 ){
@@ -392,7 +465,7 @@ void ElectronMVATrainingNtuplizer::findFirstNonElectronMother2(const reco::Candi
 }
 
 template<class T, class V>
-int ElectronMVATrainingNtuplizer::matchToTruth(const T &el, const V &prunedGenParticles, int &genIdx){
+int ElectronMVANtuplizer::matchToTruth(const T &el, const V &prunedGenParticles, int &genIdx){
 
   //
   // Explicit loop and geometric matching method (advised by Josh Bendavid)
@@ -444,19 +517,19 @@ int ElectronMVATrainingNtuplizer::matchToTruth(const T &el, const V &prunedGenPa
 
 // ------------ method called once each job just before starting event loop  ------------
 void
-ElectronMVATrainingNtuplizer::beginJob()
+ElectronMVANtuplizer::beginJob()
 {
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
 void
-ElectronMVATrainingNtuplizer::endJob()
+ElectronMVANtuplizer::endJob()
 {
 }
 
 // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
 void
-ElectronMVATrainingNtuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+ElectronMVANtuplizer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   //The following says we do not know what parameters are allowed so do no validation
   // Please change this to state exactly what you do use, even if it is no parameters
   edm::ParameterSetDescription desc;
@@ -471,4 +544,4 @@ ElectronMVATrainingNtuplizer::fillDescriptions(edm::ConfigurationDescriptions& d
 }
 
 //define this as a plug-in
-DEFINE_FWK_MODULE(ElectronMVATrainingNtuplizer);
+DEFINE_FWK_MODULE(ElectronMVANtuplizer);
