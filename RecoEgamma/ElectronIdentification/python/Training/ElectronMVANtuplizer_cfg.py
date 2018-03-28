@@ -55,6 +55,8 @@ switchOnVIDElectronIdProducer(process, dataFormat)
 
 # define which IDs we want to produce
 my_id_modules = [
+        'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_noIso_V2_cff',
+        'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_iso_V2_cff',
         'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_noIso_V1_cff',
         'RecoEgamma.ElectronIdentification.Identification.mvaElectronID_Fall17_iso_V1_cff',
                  ]
@@ -78,6 +80,13 @@ process.ntuplizer = cms.EDAnalyzer('ElectronMVANtuplizer',
         METMiniAOD           = cms.InputTag('slimmedMETs'),
         #
         eleMVAs             = cms.vstring(
+                                          "egmGsfElectronIDs:mvaEleID-Fall17-noIso-V2-wp80",
+                                          "egmGsfElectronIDs:mvaEleID-Fall17-noIso-V2-wpLoose",
+                                          "egmGsfElectronIDs:mvaEleID-Fall17-noIso-V2-wp90",
+                                          "egmGsfElectronIDs:mvaEleID-Fall17-iso-V2-wpHZZ",
+                                          "egmGsfElectronIDs:mvaEleID-Fall17-iso-V2-wp80",
+                                          "egmGsfElectronIDs:mvaEleID-Fall17-iso-V2-wpLoose",
+                                          "egmGsfElectronIDs:mvaEleID-Fall17-iso-V2-wp90",
                                           "egmGsfElectronIDs:mvaEleID-Fall17-noIso-V1-wp90",
                                           "egmGsfElectronIDs:mvaEleID-Fall17-noIso-V1-wp80",
                                           "egmGsfElectronIDs:mvaEleID-Fall17-noIso-V1-wpLoose",
@@ -86,6 +95,13 @@ process.ntuplizer = cms.EDAnalyzer('ElectronMVANtuplizer',
                                           "egmGsfElectronIDs:mvaEleID-Fall17-iso-V1-wpLoose",
                                           ),
         eleMVALabels        = cms.vstring(
+                                          "Fall17noIsoV2wp80",
+                                          "Fall17noIsoV2wpLoose",
+                                          "Fall17noIsoV2wp90",
+                                          "Fall17isoV2wpHZZ",
+                                          "Fall17isoV2wp80",
+                                          "Fall17isoV2wpLoose",
+                                          "Fall17isoV2wp90",
                                           "Fall17noIsoV1wp90",
                                           "Fall17noIsoV1wp80",
                                           "Fall17noIsoV1wpLoose",
@@ -94,10 +110,18 @@ process.ntuplizer = cms.EDAnalyzer('ElectronMVANtuplizer',
                                           "Fall17isoV1wpLoose",
                                           ),
         eleMVAValMaps        = cms.vstring(
+                                           "electronMVAValueMapProducer:Fall17NoIsoV2Values",
+                                           "electronMVAValueMapProducer:Fall17NoIsoV2RawValues",
+                                           "electronMVAValueMapProducer:Fall17IsoV2Values",
+                                           "electronMVAValueMapProducer:Fall17IsoV2RawValues",
                                            "electronMVAValueMapProducer:ElectronMVAEstimatorRun2Fall17IsoV1Values",
                                            "electronMVAValueMapProducer:ElectronMVAEstimatorRun2Fall17NoIsoV1Values",
                                            ),
         eleMVAValMapLabels   = cms.vstring(
+                                           "Fall17NoIsoV2Vals",
+                                           "Fall17NoIsoV2RawVals",
+                                           "Fall17IsoV2Vals",
+                                           "Fall17IsoV2RawVals",
                                            "Fall17IsoV1Vals",
                                            "Fall17NoIsoV1Vals",
                                            ),
@@ -120,3 +144,4 @@ process.TFileService = cms.Service("TFileService",
 process.electronMVAVariableHelper = electronMVAVariableHelper
 # process.p = cms.Path(process.egmGsfElectronIDSequence * process.electronMVAVariableHelper * process.ntuplizer)
 process.p = cms.Path(process.egmGsfElectronIDSequence * process.ntuplizer)
+
