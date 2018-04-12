@@ -110,6 +110,7 @@ class ElectronMVANtuplizer : public edm::one::EDAnalyzer<edm::one::SharedResourc
 
       // electron variables
       float eleQ_;
+      int ele3Q_;
       int matchedToGenEle_;
       int matchedGenIdx_;
 
@@ -237,6 +238,7 @@ ElectronMVANtuplizer::ElectronMVANtuplizer(const edm::ParameterSet& iConfig)
    tree_->Branch("met",   &met_);
 
    tree_->Branch("ele_q",&eleQ_);
+   tree_->Branch("ele_3q",&ele3Q_);
 
    if (isMC_) {
        tree_->Branch("matchedToGenEle",   &matchedToGenEle_);
@@ -401,6 +403,7 @@ ElectronMVANtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& i
         const auto ele =  src->ptrAt(iEle);
 
         eleQ_ = ele->charge();
+        ele3Q_ = ele->chargeInfo().isGsfCtfScPixConsistent;
 
         if (ele->pt() < ptThreshold_) {
             continue;

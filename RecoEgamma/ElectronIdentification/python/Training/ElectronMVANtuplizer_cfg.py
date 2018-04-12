@@ -21,23 +21,6 @@ process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
         # /DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIFall17MiniAOD-RECOSIMstep_94X_mc2017_realistic_v10-v1/MINIAODSIM
         '/store/mc/RunIIFall17MiniAOD/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/MINIAODSIM/RECOSIMstep_94X_mc2017_realistic_v10-v1/00000/0293A280-B5F3-E711-8303-3417EBE33927.root',
-
-        ## /WToENu_M-100_TuneCP5_13TeV-pythia8/RunIIFall17MiniAOD-94X_mc2017_realistic_v10-v1/MINIAODSIM
-        # '/store/mc/RunIIFall17MiniAOD/WToENu_M-100_TuneCP5_13TeV-pythia8/MINIAODSIM/94X_mc2017_realistic_v10-v1/00000/02BF2F02-3EF9-E711-8343-002590E7E010.root',
-        # '/store/mc/RunIIFall17MiniAOD/WToENu_M-100_TuneCP5_13TeV-pythia8/MINIAODSIM/94X_mc2017_realistic_v10-v1/00000/AEE8E91B-C5F5-E711-AB79-1866DA7F9160.root',
-        # '/store/mc/RunIIFall17MiniAOD/WToENu_M-100_TuneCP5_13TeV-pythia8/MINIAODSIM/94X_mc2017_realistic_v10-v1/00000/DA0CCDF2-91F6-E711-A773-A4BF0112BDCC.root',
-        # '/store/mc/RunIIFall17MiniAOD/WToENu_M-100_TuneCP5_13TeV-pythia8/MINIAODSIM/94X_mc2017_realistic_v10-v1/00000/6638350B-3EF9-E711-8C5C-A0369F301924.root',
-        # '/store/mc/RunIIFall17MiniAOD/WToENu_M-100_TuneCP5_13TeV-pythia8/MINIAODSIM/94X_mc2017_realistic_v10-v1/60000/729D2D36-8AEB-E711-8A52-FA163E341C2D.root',
-
-
-        ## /WToENu_M-1000_TuneCP5_13TeV-pythia8/RunIIFall17MiniAOD-94X_mc2017_realistic_v10-v1/MINIAODSIM
-        # '/store/mc/RunIIFall17MiniAOD/WToENu_M-1000_TuneCP5_13TeV-pythia8/MINIAODSIM/94X_mc2017_realistic_v10-v1/00000/18EDE0D2-1CF5-E711-9C5E-0242AC130002.root',
-
-        ## /QCD_Pt_80to120_TuneCP5_13TeV_pythia8/RunIIFall17MiniAOD-94X_mc2017_realistic_v10-v1/MINIAODSIM
-        # '/store/mc/RunIIFall17MiniAOD/QCD_Pt_80to120_TuneCP5_13TeV_pythia8/MINIAODSIM/94X_mc2017_realistic_v10-v1/40000/281B76D0-DCD7-E711-B799-24BE05C6E591.root',
-
-        ## /TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIIFall17MiniAOD-94X_mc2017_realistic_v10-v1/MINIAODSIM
-        #'/store/mc/RunIIFall17MiniAOD/TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/94X_mc2017_realistic_v10-v1/40000/468BB9EA-650D-E811-9122-7CD30AD08E7E.root',
     )
 )
 
@@ -110,10 +93,10 @@ process.ntuplizer = cms.EDAnalyzer('ElectronMVANtuplizer',
                                           "Fall17isoV1wpLoose",
                                           ),
         eleMVAValMaps        = cms.vstring(
-                                           "electronMVAValueMapProducer:Fall17NoIsoV2Values",
-                                           "electronMVAValueMapProducer:Fall17NoIsoV2RawValues",
-                                           "electronMVAValueMapProducer:Fall17IsoV2Values",
-                                           "electronMVAValueMapProducer:Fall17IsoV2RawValues",
+                                           "electronMVAValueMapProducer:ElectronMVAEstimatorRun2Fall17NoIsoV2Values",
+                                           "electronMVAValueMapProducer:ElectronMVAEstimatorRun2Fall17NoIsoV2RawValues",
+                                           "electronMVAValueMapProducer:ElectronMVAEstimatorRun2Fall17IsoV2Values",
+                                           "electronMVAValueMapProducer:ElectronMVAEstimatorRun2Fall17IsoV2RawValues",
                                            "electronMVAValueMapProducer:ElectronMVAEstimatorRun2Fall17IsoV1Values",
                                            "electronMVAValueMapProducer:ElectronMVAEstimatorRun2Fall17NoIsoV1Values",
                                            ),
@@ -142,6 +125,4 @@ process.TFileService = cms.Service("TFileService",
                                    )
 
 process.electronMVAVariableHelper = electronMVAVariableHelper
-# process.p = cms.Path(process.egmGsfElectronIDSequence * process.electronMVAVariableHelper * process.ntuplizer)
 process.p = cms.Path(process.egmGsfElectronIDSequence * process.ntuplizer)
-
