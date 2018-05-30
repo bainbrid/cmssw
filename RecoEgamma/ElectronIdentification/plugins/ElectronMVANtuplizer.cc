@@ -233,7 +233,7 @@ ElectronMVANtuplizer::ElectronMVANtuplizer(const edm::ParameterSet& iConfig)
    tree_->Branch("nEvent",  &nEvent_);
    tree_->Branch("nRun",    &nRun_);
    tree_->Branch("nLumi",   &nLumi_);
-   tree_->Branch("genNpu", &genNpu_);
+   if (isMC_) tree_->Branch("genNpu", &genNpu_);
    tree_->Branch("vtxN",   &vtxN_);
    tree_->Branch("met",   &met_);
 
@@ -332,17 +332,17 @@ ElectronMVANtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& i
     met_ = met.pt();
 
     // Retrieve Pileup Info
-    edm::Handle<std::vector< PileupSummaryInfo > >  pileup;
-    iEvent.getByToken(pileup_, pileup);
-    if( !pileup.isValid() ){
-      iEvent.getByToken(pileupMiniAOD_,pileup);
-      if( !pileup.isValid() )
-        throw cms::Exception(" Collection not found: ")
-          << " failed to find a standard AOD or miniAOD pileup collection " << std::endl;
-    }
-
-    // Fill with true number of pileup
     if(isMC_) {
+        edm::Handle<std::vector< PileupSummaryInfo > >  pileup;
+        iEvent.getByToken(pileup_, pileup);
+        if( !pileup.isValid() ){
+          iEvent.getByToken(pileupMiniAOD_,pileup);
+          if( !pileup.isValid() )
+            throw cms::Exception(" Collection not found: ")
+              << " failed to find a standard AOD or miniAOD pileup collection " << std::endl;
+        }
+
+        // Fill with true number of pileup
        for(const auto& pu : *pileup)
        {
            int bx = pu.getBunchCrossing();
@@ -356,12 +356,14 @@ ElectronMVANtuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& i
 
     // Retrieve genParticles
     edm::Handle<edm::View<reco::GenParticle> >  genParticles;
-    iEvent.getByToken(genParticles_, genParticles);
-    if( !genParticles.isValid() ){
-      iEvent.getByToken(genParticlesMiniAOD_, genParticles);
-      if( !genParticles.isValid() )
-        throw cms::Exception(" Collection not found: ")
-          << " failed to find a standard AOD or miniAOD genParticle collection " << std::endl;
+    if(isMC_) {
+        iEvent.getByToken(genParticles_, genParticles);
+        if( !genParticles.isValid() ){
+          iEvent.getByToken(genParticlesMiniAOD_, genParticles);
+          if( !genParticles.isValid() )
+            throw cms::Exception(" Collection not found: ")
+              << " failed to find a standard AOD or miniAOD genParticle collection " << std::endl;
+        }
     }
 
 
