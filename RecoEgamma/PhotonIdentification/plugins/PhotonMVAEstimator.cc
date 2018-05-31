@@ -11,7 +11,7 @@ PhotonMVAEstimator::PhotonMVAEstimator(const edm::ParameterSet& conf):
   //
   // Construct the MVA estimators
   //
-  if (tag_ == "Spring16NonTrigV1") {
+  if (tag_ == "Run2Spring16NonTrigV1") {
       effectiveAreas_ = make_unique<EffectiveAreas>((conf.getParameter<edm::FileInPath>("effAreasConfigFile")).fullPath());
       phoIsoPtScalingCoeff_ = conf.getParameter<std::vector<double >>("phoIsoPtScalingCoeff");
       phoIsoCutoff_ = conf.getParameter<double>("phoIsoCutoff");
@@ -71,20 +71,11 @@ mvaValue(const edm::Ptr<reco::Candidate>& particle, const edm::Event& iEvent) co
   }
 
   // Special case for Spring16!
-  if (tag_ == "Spring16NonTrigV1" && isEndcapCategory(iCategory)) {
-      //std::cout << vars[10] << std::endl;
+  if (tag_ == "Run2Spring16NonTrigV1" and isEndcapCategory(iCategory)) {
       // Raw value for EB only, because of loss of transparency in EE
       // for endcap MVA only in 2016
       double eA = effectiveAreas_->getEffectiveArea( std::abs(phoRecoPtr->superCluster()->eta()) );
-      // vars[9] : rho
-      // vars[10]: CITK_isoPhotons
-      //std::cout << eA << std::endl;
-      //std::cout << phoIsoPtScalingCoeff_.at(1) << std::endl;
-      //std::cout << phoIsoCutoff_ << std::endl;
-      //std::cout << phoRecoPtr->pt() << std::endl;
-      //std::cout << eA*(double)vars[9] << std::endl;
       double phoIsoCorr = vars[10] - eA*(double)vars[9] - phoIsoPtScalingCoeff_.at(1) * phoRecoPtr->pt();
-      //std::cout << phoIsoCorr << std::endl;
       vars[10] = TMath::Max( phoIsoCorr, phoIsoCutoff_);
   }
 
