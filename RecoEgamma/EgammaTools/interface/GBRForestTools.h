@@ -22,6 +22,8 @@
 
 #include "CommonTools/Utils/interface/TMVAZipReader.h"
 
+#include "FWCore/Utilities/interface/EDMException.h"
+
 class GBRForestTools
 {
   public:
