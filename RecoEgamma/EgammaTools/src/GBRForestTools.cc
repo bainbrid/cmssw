@@ -49,7 +49,6 @@ std::unique_ptr<const GBRForest> GBRForestTools::createGBRForest(const std::stri
 
   edm::FileInPath weightFileEdm(weightFile);
   return GBRForestTools::createGBRForest(weightFileEdm, varNames);
-
 }
 
 // Creates a pointer to new GBRForest corresponding to a TMVA weights file
@@ -159,7 +158,7 @@ std::unique_ptr<const GBRForest> GBRForestTools::createGBRForest(const edm::File
 
 std::unique_ptr<const GBRForest> GBRForestTools::createGBRForest(const std::string &weightFile){
   std::vector<std::string> varNames;
-  return GBRForestTools::createGBRForest(weightFile);
+  return GBRForestTools::createGBRForest(weightFile, varNames);
 }
 
 std::unique_ptr<const GBRForest> GBRForestTools::createGBRForest(const edm::FileInPath &weightFile){
