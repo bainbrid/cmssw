@@ -13,7 +13,7 @@ ElectronChi2.MaxSagitta = -1
 import TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff
 TrajectoryFilterForElectrons = TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff.CkfBaseTrajectoryFilter_block.clone(
     chargeSignificance = cms.double(-1.0),
-    minPt = cms.double(2.0),
+    minPt = cms.double(0.5),
     minHitsMinPt = cms.int32(-1),
     ComponentType = cms.string('CkfBaseTrajectoryFilter'),
     maxLostHits = cms.int32(1),
