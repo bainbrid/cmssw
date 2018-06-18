@@ -10,6 +10,7 @@
 
 #include "FWCore/ParameterSet/interface/FileInPath.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "DataFormats/Common/interface/ValueMap.h"
 
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/ConsumesCollector.h"
@@ -26,11 +27,11 @@ class MVAVariableManager {
         nVars_ = 0;
     };
 
-    MVAVariableManager(const string variableDefinitionFileName) {
+    MVAVariableManager(const std::string &variableDefinitionFileName) {
         init(variableDefinitionFileName);
     };
 
-    int init(const string variableDefinitionFileName) {
+    int init(const std::string &variableDefinitionFileName) {
         nVars_ = 0;
 
         variableInfos_.clear();
@@ -54,7 +55,7 @@ class MVAVariableManager {
             if (file.eof()) {
                 break;
             }
-            addVariable_(name, formula, lower, upper);
+            addVariable(name, formula, lower, upper);
         }
         return nVars_;
     };
@@ -119,12 +120,12 @@ class MVAVariableManager {
         bool isGlobalVariable;
     };
 
-    void addVariable_(string &name, string &formula, string &lowerClip, string &upperClip) {
-        bool hasLowerClip = lowerClip.find("None") == string::npos;
-        bool hasUpperClip = upperClip.find("None") == string::npos;
-        bool fromVariableHelper = formula.find("MVAVariableHelper") != string::npos ||
-                                  formula.find("IDValueMapProducer") != string::npos ||
-                                  formula.find("egmPhotonIsolation") != string::npos;
+    void addVariable(std::string &name, std::string &formula, std::string &lowerClip, std::string &upperClip) {
+        bool hasLowerClip = lowerClip.find("None") == std::string::npos;
+        bool hasUpperClip = upperClip.find("None") == std::string::npos;
+        bool fromVariableHelper = formula.find("MVAVariableHelper") != std::string::npos ||
+                                  formula.find("IDValueMapProducer") != std::string::npos ||
+                                  formula.find("egmPhotonIsolation") != std::string::npos;
         float lowerClipValue = hasLowerClip ? (float)::atof(lowerClip.c_str()) : 0.;
         float upperClipValue = hasUpperClip ? (float)::atof(upperClip.c_str()) : 0.;
 
