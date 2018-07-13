@@ -1,4 +1,5 @@
 #include "RecoEgamma/EgammaTools/interface/GBRForestTools.h"
+#include "FWCore/Utilities/interface/Exception.h"
 
 #include <iostream>
 #include <fstream>
@@ -41,7 +42,7 @@ std::unique_ptr<const GBRForest> GBRForestTools::createGBRForest(const std::stri
     try {
         edm::FileInPath weightFileEdm(weightFile + "." + gzipExt);
         return GBRForestTools::createGBRForest(weightFileEdm, varNames);
-    } catch (edm::Exception& e) {
+    } catch (cms::Exception& e) {
         if (e.category() == "FileInPathError") continue;
         else throw e;
     }
