@@ -47,7 +47,7 @@ TrajectoryBuilderForElectrons.updator = 'KFUpdator'
 from RecoTracker.CkfPattern.CkfTrackCandidates_cff import *
 import RecoTracker.CkfPattern.CkfTrackCandidates_cfi
 electronCkfTrackCandidates = RecoTracker.CkfPattern.CkfTrackCandidates_cfi.ckfTrackCandidates.clone()
-electronCkfTrackCandidates.src = cms.InputTag('electronMergedSeeds')
+electronCkfTrackCandidates.src = cms.InputTag('trackerDrivenElectronSeeds','SeedsForGsf')
 electronCkfTrackCandidates.TrajectoryBuilderPSet.refToPSet_ = 'TrajectoryBuilderForElectrons'
 #electronCkfTrackCandidates.TrajectoryCleaner = 'TrajectoryCleanerBySharedHits'
 electronCkfTrackCandidates.NavigationSchool = 'SimpleNavigationSchool'
