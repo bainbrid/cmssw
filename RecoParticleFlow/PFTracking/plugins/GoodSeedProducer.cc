@@ -127,6 +127,7 @@ GoodSeedProducer::GoodSeedProducer(const ParameterSet& iConfig, const goodseedhe
 
   trackerRecHitBuilderName_ = iConfig.getParameter<std::string>("TTRHBuilder");
 
+  passThrough_ = iConfig.getUntrackedParameter<bool>("PassThrough",false);
 }
 
 
@@ -443,7 +444,7 @@ GoodSeedProducer::produce(Event& iEvent, const EventSetup& iSetup)
 	} // end of !disablePreId_
 
       
-      if (GoodPreId){
+      if (GoodPreId||passThrough_){
 	//NEW SEED with n hits	
 	ElectronSeed NewSeed(Seed);
 	NewSeed.setCtfTrack(trackRef);
