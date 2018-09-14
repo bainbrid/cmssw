@@ -71,7 +71,7 @@ PFElecTkProducer::PFElecTkProducer(const ParameterSet& iConfig, const convbremhe
 
   produces<GsfPFRecTrackCollection>();
   produces<GsfPFRecTrackCollection>( "Secondary" ).setBranchAlias( "secondary" );
-
+	produces<vector<int> >("GSFFlags");
 
   trajinev_ = iConfig.getParameter<bool>("TrajInEvents");
   modemomentum_ = iConfig.getParameter<bool>("ModeMomentum");
@@ -156,7 +156,8 @@ PFElecTkProducer::produce(Event& iEvent, const EventSetup& iSetup)
       
   
 
-  GsfTrackCollection gsftracks = *(gsftrackscoll.product());	
+  const GsfTrackCollection& gsftracks = *(gsftrackscoll.product());	
+  auto gsfTracksFlags = std::make_unique<vector<int> >(gsftracks.size(), 0); //initialize to all false encode flags in bits (ugly, but effective)
   vector<Trajectory> tjvec(0);
   if (trajinev_){
     iEvent.getByToken(gsfTrackLabel_,TrajectoryCollection); 
@@ -185,83 +186,91 @@ PFElecTkProducer::produce(Event& iEvent, const EventSetup& iSetup)
     GsfTrackRef trackRef(gsftrackscoll, igsf);
 
     int kf_ind=FindPfRef(PfRTkColl,gsftracks[igsf],false);
-    
+		(*gsfTracksFlags)[igsf] += (kf_ind >= 0);
+
     if (kf_ind>=0) {
       
       PFRecTrackRef kf_ref(thePfRecTrackCollection,
-			   kf_ind);
+													 kf_ind);
 
       // remove fifth step tracks
       if( useFifthStepForEcalDriven_ == false
-	  || useFifthStepForTrackDriven_ == false) {
+					|| useFifthStepForTrackDriven_ == false) {
 	
-	bool isFifthStepTrack = PFTrackAlgoTools::isFifthStep(kf_ref->trackRef()->algo());
-	bool isEcalDriven = true;
-	bool isTrackerDriven = true;
+				bool isFifthStepTrack = PFTrackAlgoTools::isFifthStep(kf_ref->trackRef()->algo());
+				bool isEcalDriven = true;
+				bool isTrackerDriven = true;
 	
-	if (&(*trackRef->seedRef())==nullptr) {
-	  isEcalDriven = false;
-	  isTrackerDriven = false;
-	}
-	else {
-	  auto const& SeedFromRef= static_cast<ElectronSeed const&>(*(trackRef->extra()->seedRef()) );
-	  if(SeedFromRef.caloCluster().isNull())
-	    isEcalDriven = false;
-	  if(SeedFromRef.ctfTrack().isNull())
-	    isTrackerDriven = false;
-	}
-	//note: the same track could be both ecalDriven and trackerDriven
-	if(isFifthStepTrack && 
-	   isEcalDriven &&
-	   isTrackerDriven == false &&
-	   useFifthStepForEcalDriven_ == false) {
-	  continue;
-	}
+				if (&(*trackRef->seedRef())==nullptr) {
+					isEcalDriven = false;
+					isTrackerDriven = false;
+				}
+				else {
+					auto const& SeedFromRef= static_cast<ElectronSeed const&>(*(trackRef->extra()->seedRef()) );
+					if(SeedFromRef.caloCluster().isNull())
+						isEcalDriven = false;
+					if(SeedFromRef.ctfTrack().isNull())
+						isTrackerDriven = false;
+				}
 
-	if(isFifthStepTrack && 
-	   isTrackerDriven  && 
-	   isEcalDriven == false && 
-	   useFifthStepForTrackDriven_ == false) {
-	  continue;
-	}
+				(*gsfTracksFlags)[igsf] += 2*isFifthStepTrack;
+				(*gsfTracksFlags)[igsf] += 4*isEcalDriven;
+				(*gsfTracksFlags)[igsf] += 8*isTrackerDriven;
 
-	if(isFifthStepTrack && 
-	   isTrackerDriven && 
-	   isEcalDriven && 
-	   useFifthStepForTrackDriven_ == false &&
-	   useFifthStepForEcalDriven_ == false) {
-	  continue;
-	}
+				//note: the same track could be both ecalDriven and trackerDriven
+				if(isFifthStepTrack && 
+					 isEcalDriven &&
+					 isTrackerDriven == false &&
+					 useFifthStepForEcalDriven_ == false) {
+					continue;
+				}
+
+				if(isFifthStepTrack && 
+					 isTrackerDriven  && 
+					 isEcalDriven == false && 
+					 useFifthStepForTrackDriven_ == false) {
+					continue;
+				}
+
+				if(isFifthStepTrack && 
+					 isTrackerDriven && 
+					 isEcalDriven && 
+					 useFifthStepForTrackDriven_ == false &&
+					 useFifthStepForEcalDriven_ == false) {
+					continue;
+				}
       }
       
       pftrack_=GsfPFRecTrack( gsftracks[igsf].charge(), 
-			      reco::PFRecTrack::GSF, 
-			      igsf, trackRef,
-			      kf_ref);
+															reco::PFRecTrack::GSF, 
+															igsf, trackRef,
+															kf_ref);
     } else  {
       PFRecTrackRef dummyRef;
       pftrack_=GsfPFRecTrack( gsftracks[igsf].charge(), 
-			      reco::PFRecTrack::GSF, 
-			      igsf, trackRef,
-			      dummyRef);
+															reco::PFRecTrack::GSF, 
+															igsf, trackRef,
+															dummyRef);
     }
     
     
     bool validgsfbrem = false;
     if(trajinev_) {
       validgsfbrem = pfTransformer_->addPointsAndBrems(pftrack_, 
-						       gsftracks[igsf], 
-						       tjvec[igsf],
-						       modemomentum_);
+																											 gsftracks[igsf], 
+																											 tjvec[igsf],
+																											 modemomentum_);
     } else {
       validgsfbrem = pfTransformer_->addPointsAndBrems(pftrack_, 
-						       gsftracks[igsf], 
-						       mtsTransform_);
+																											 gsftracks[igsf], 
+																											 mtsTransform_);
     }
+		(*gsfTracksFlags)[igsf] += 16*validgsfbrem;
     
     bool passSel = true;
     if(applySel_) 
       passSel = applySelection(gsftracks[igsf]);      
+		(*gsfTracksFlags)[igsf] += 32*passSel;
 
     if(validgsfbrem && passSel) 
       selGsfPFRecTracks.push_back(pftrack_);
@@ -276,81 +285,83 @@ PFElecTkProducer::produce(Event& iEvent, const EventSetup& iSetup)
       secondaries.clear();
       bool keepGsf = true;
 
+			size_t gsf_trk_idx = selGsfPFRecTracks[ipfgsf].gsfTrackRef().index();
       if(applyGsfClean_) {
-	keepGsf = resolveGsfTracks(selGsfPFRecTracks,ipfgsf,secondaries,theEcalClusters);
+				keepGsf = resolveGsfTracks(selGsfPFRecTracks,ipfgsf,secondaries,theEcalClusters, (*gsfTracksFlags)[gsf_trk_idx]);
       }
  
+			(*gsfTracksFlags)[gsf_trk_idx] += 64*keepGsf;
       //is primary? 
       if(keepGsf == true) {
 
-	// Find kf tracks from converted brem photons
-	if(convBremFinder_->foundConvBremPFRecTrack(thePfRecTrackCollection,thePrimaryVertexColl,
-						    pfNuclears,pfConversions,pfV0,
+				// Find kf tracks from converted brem photons
+				if(convBremFinder_->foundConvBremPFRecTrack(thePfRecTrackCollection,thePrimaryVertexColl,
+																										pfNuclears,pfConversions,pfV0,
                                                     globalCache(),
-						    useNuclear_,useConversions_,useV0_,
-						    theEcalClusters,selGsfPFRecTracks[ipfgsf])) {
-	  const vector<PFRecTrackRef>& convBremPFRecTracks(convBremFinder_->getConvBremPFRecTracks());
-	  for(unsigned int ii = 0; ii<convBremPFRecTracks.size(); ii++) {
-	    selGsfPFRecTracks[ipfgsf].addConvBremPFRecTrackRef(convBremPFRecTracks[ii]);
-	  }
-	}
+																										useNuclear_,useConversions_,useV0_,
+																										theEcalClusters,selGsfPFRecTracks[ipfgsf])) {
+					const vector<PFRecTrackRef>& convBremPFRecTracks(convBremFinder_->getConvBremPFRecTracks());
+					for(unsigned int ii = 0; ii<convBremPFRecTracks.size(); ii++) {
+						selGsfPFRecTracks[ipfgsf].addConvBremPFRecTrackRef(convBremPFRecTracks[ii]);
+					}
+				}
 	
-	// save primaries gsf tracks
-	//	gsfPFRecTrackCollection->push_back(selGsfPFRecTracks[ipfgsf]);
-	primaryGsfPFRecTracks.push_back(selGsfPFRecTracks[ipfgsf]);
+				// save primaries gsf tracks
+				//	gsfPFRecTrackCollection->push_back(selGsfPFRecTracks[ipfgsf]);
+				primaryGsfPFRecTracks.push_back(selGsfPFRecTracks[ipfgsf]);
 	
 	
-	// NOTE:: THE TRACKID IS USED TO LINK THE PRIMARY GSF TRACK. THIS NEEDS 
-	// TO BE CHANGED AS SOON AS IT IS POSSIBLE TO CHANGE DATAFORMATS
-	// A MODIFICATION HERE IMPLIES A MODIFICATION IN PFBLOCKALGO.CC/H
-	unsigned int primGsfIndex = selGsfPFRecTracks[ipfgsf].trackId();
-	vector<reco::GsfPFRecTrack> trueGsfPFRecTracks;
-	if(!secondaries.empty()) {
-	  // loop on secondaries gsf tracks (from converted brems)
-	  for(unsigned int isecpfgsf=0; isecpfgsf<secondaries.size();isecpfgsf++) {
+				// NOTE:: THE TRACKID IS USED TO LINK THE PRIMARY GSF TRACK. THIS NEEDS 
+				// TO BE CHANGED AS SOON AS IT IS POSSIBLE TO CHANGE DATAFORMATS
+				// A MODIFICATION HERE IMPLIES A MODIFICATION IN PFBLOCKALGO.CC/H
+				unsigned int primGsfIndex = selGsfPFRecTracks[ipfgsf].trackId();
+				vector<reco::GsfPFRecTrack> trueGsfPFRecTracks;
+				if(!secondaries.empty()) {
+					// loop on secondaries gsf tracks (from converted brems)
+					for(unsigned int isecpfgsf=0; isecpfgsf<secondaries.size();isecpfgsf++) {
 	    
-	    PFRecTrackRef refsecKF =  selGsfPFRecTracks[(secondaries[isecpfgsf])].kfPFRecTrackRef();
+						PFRecTrackRef refsecKF =  selGsfPFRecTracks[(secondaries[isecpfgsf])].kfPFRecTrackRef();
 	    
-	    unsigned int secGsfIndex = selGsfPFRecTracks[(secondaries[isecpfgsf])].trackId();
-	    GsfTrackRef secGsfRef = selGsfPFRecTracks[(secondaries[isecpfgsf])].gsfTrackRef();
+						unsigned int secGsfIndex = selGsfPFRecTracks[(secondaries[isecpfgsf])].trackId();
+						GsfTrackRef secGsfRef = selGsfPFRecTracks[(secondaries[isecpfgsf])].gsfTrackRef();
 
-	    if(refsecKF.isNonnull()) {
-	      // NOTE::IT SAVED THE TRACKID OF THE PRIMARY!!! THIS IS USED IN PFBLOCKALGO.CC/H
-	      secpftrack_= GsfPFRecTrack( gsftracks[secGsfIndex].charge(), 
-					  reco::PFRecTrack::GSF, 
-					  primGsfIndex, secGsfRef,
-					  refsecKF);
-	    }
-	    else{
-	      PFRecTrackRef dummyRef;
-	      // NOTE::IT SAVED THE TRACKID OF THE PRIMARY!!! THIS IS USED IN PFBLOCKALGO.CC/H
-	      secpftrack_= GsfPFRecTrack( gsftracks[secGsfIndex].charge(), 
-					  reco::PFRecTrack::GSF, 
-					  primGsfIndex, secGsfRef,
-					  dummyRef);
-	    }
+						if(refsecKF.isNonnull()) {
+							// NOTE::IT SAVED THE TRACKID OF THE PRIMARY!!! THIS IS USED IN PFBLOCKALGO.CC/H
+							secpftrack_= GsfPFRecTrack( gsftracks[secGsfIndex].charge(), 
+																					reco::PFRecTrack::GSF, 
+																					primGsfIndex, secGsfRef,
+																					refsecKF);
+						}
+						else{
+							PFRecTrackRef dummyRef;
+							// NOTE::IT SAVED THE TRACKID OF THE PRIMARY!!! THIS IS USED IN PFBLOCKALGO.CC/H
+							secpftrack_= GsfPFRecTrack( gsftracks[secGsfIndex].charge(), 
+																					reco::PFRecTrack::GSF, 
+																					primGsfIndex, secGsfRef,
+																					dummyRef);
+						}
 
-	    bool validgsfbrem = false;
-	    if(trajinev_) {
-	      validgsfbrem = pfTransformer_->addPointsAndBrems(secpftrack_,
-							       gsftracks[secGsfIndex], 
-							       tjvec[secGsfIndex],
-							       modemomentum_);
-	    } else {
-	      validgsfbrem = pfTransformer_->addPointsAndBrems(secpftrack_,
-							       gsftracks[secGsfIndex], 
-							       mtsTransform_);
-	    }	      
+						bool validgsfbrem = false;
+						if(trajinev_) {
+							validgsfbrem = pfTransformer_->addPointsAndBrems(secpftrack_,
+																															 gsftracks[secGsfIndex], 
+																															 tjvec[secGsfIndex],
+																															 modemomentum_);
+						} else {
+							validgsfbrem = pfTransformer_->addPointsAndBrems(secpftrack_,
+																															 gsftracks[secGsfIndex], 
+																															 mtsTransform_);
+						}	      
 
-	    if(validgsfbrem) {
-	      gsfPFRecTrackCollectionSecondary->push_back(secpftrack_);
-	      trueGsfPFRecTracks.push_back(secpftrack_);
-	    }	    
-	  }
-	}
-	GsfPFMap.insert(pair<unsigned int,std::vector<reco::GsfPFRecTrack> >(count_primary,trueGsfPFRecTracks));
-	trueGsfPFRecTracks.clear();
-	count_primary++;
+						if(validgsfbrem) {
+							gsfPFRecTrackCollectionSecondary->push_back(secpftrack_);
+							trueGsfPFRecTracks.push_back(secpftrack_);
+						}	    
+					}
+				}
+				GsfPFMap.insert(pair<unsigned int,std::vector<reco::GsfPFRecTrack> >(count_primary,trueGsfPFRecTracks));
+				trueGsfPFRecTracks.clear();
+				count_primary++;
       }
     }
   }
@@ -367,6 +378,7 @@ PFElecTkProducer::produce(Event& iEvent, const EventSetup& iSetup)
     gsfPFRecTrackCollection->push_back(primaryGsfPFRecTracks[iGSF]);
   }
   iEvent.put(std::move(gsfPFRecTrackCollection));
+	iEvent.put(std::move(gsfTracksFlags), "GSFFlags");
 
   selGsfPFRecTracks.clear();
   GsfPFMap.clear();
@@ -378,8 +390,8 @@ PFElecTkProducer::produce(Event& iEvent, const EventSetup& iSetup)
 // create the secondary GsfPFRecTracks Ref
 void
 PFElecTkProducer::createGsfPFRecTrackRef(const edm::OrphanHandle<reco::GsfPFRecTrackCollection>& gsfPfHandle,
-					 std::vector<reco::GsfPFRecTrack>& gsfPFRecTrackPrimary,
-					 const std::map<unsigned int, std::vector<reco::GsfPFRecTrack> >& MapPrimSec) {
+																				 std::vector<reco::GsfPFRecTrack>& gsfPFRecTrackPrimary,
+																				 const std::map<unsigned int, std::vector<reco::GsfPFRecTrack> >& MapPrimSec) {
   unsigned int cgsf=0;
   unsigned int csecgsf=0;
   for (std::map<unsigned int, std::vector<reco::GsfPFRecTrack> >::const_iterator igsf = MapPrimSec.begin();
@@ -397,8 +409,8 @@ PFElecTkProducer::createGsfPFRecTrackRef(const edm::OrphanHandle<reco::GsfPFRecT
 // ------------- method for find the corresponding kf pfrectrack ---------------------
 int
 PFElecTkProducer::FindPfRef(const reco::PFRecTrackCollection  & PfRTkColl, 
-			    const reco::GsfTrack& gsftk,
-			    bool otherColl){
+														const reco::GsfTrack& gsftk,
+														bool otherColl){
 
 
   if (&(*gsftk.seedRef())==nullptr) return -1;
@@ -422,33 +434,33 @@ PFElecTkProducer::FindPfRef(const reco::PFRecTrackCollection  & PfRTkColl,
       float dr =sqrt(dph*dph+det*det);  
       
       trackingRecHit_iterator  hhit=
-	pft->trackRef()->recHitsBegin();
+				pft->trackRef()->recHitsBegin();
       trackingRecHit_iterator  hhit_end=
-	pft->trackRef()->recHitsEnd();
+				pft->trackRef()->recHitsEnd();
       
     
       
       for(;hhit!=hhit_end;++hhit){
-	if (!(*hhit)->isValid()) continue;
-	TrajectorySeed::const_iterator hit=
-	  gsftk.seedRef()->recHits().first;
-	TrajectorySeed::const_iterator hit_end=
-	  gsftk.seedRef()->recHits().second;
- 	for(;hit!=hit_end;++hit){
-	  if (!(hit->isValid())) continue;
-	  if((*hhit)->sharesInput(&*(hit),TrackingRecHit::all))  ish++; 
-	//   if((hit->geographicalId()==(*hhit)->geographicalId())&&
-        //     (((*hhit)->localPosition()-hit->localPosition()).mag()<0.01)) ish++;
- 	}	
+				if (!(*hhit)->isValid()) continue;
+				TrajectorySeed::const_iterator hit=
+					gsftk.seedRef()->recHits().first;
+				TrajectorySeed::const_iterator hit_end=
+					gsftk.seedRef()->recHits().second;
+				for(;hit!=hit_end;++hit){
+					if (!(hit->isValid())) continue;
+					if((*hhit)->sharesInput(&*(hit),TrackingRecHit::all))  ish++; 
+					//   if((hit->geographicalId()==(*hhit)->geographicalId())&&
+					//     (((*hhit)->localPosition()-hit->localPosition()).mag()<0.01)) ish++;
+				}	
 	
       }
       
 
       if ((ish>ish_max)||
-	  ((ish==ish_max)&&(dr<dr_min))){
-	ish_max=ish;
-	dr_min=dr;
-	ibest=i_pf;
+					((ish==ish_max)&&(dr<dr_min))){
+				ish_max=ish;
+				dr_min=dr;
+				ibest=i_pf;
       }
       
    
@@ -471,7 +483,7 @@ PFElecTkProducer::FindPfRef(const reco::PFRecTrackCollection  & PfRTkColl,
     for(;pft!=pftend;++pft){
       //REF COMPARISON
       if (pft->trackRef()==ElSeedFromRef.ctfTrack()){
-	return i_pf;
+				return i_pf;
       }
       i_pf++;
     }
@@ -496,7 +508,7 @@ PFElecTkProducer::applySelection(const reco::GsfTrack& gsftk) {
       float fphi = fabs(scRef->phi()-gsftk.phiMode());
       if (fphi>TMath::Pi()) fphi-= TMath::TwoPi();
       if(caloEne > SCEne_ && feta < detaGsfSC_ && fabs(fphi) < dphiGsfSC_)
-	passCut = true;
+				passCut = true;
     }
   }
   else {
@@ -507,25 +519,27 @@ PFElecTkProducer::applySelection(const reco::GsfTrack& gsftk) {
 }
 bool 
 PFElecTkProducer::resolveGsfTracks(const vector<reco::GsfPFRecTrack>  & GsfPFVec, 
-				   unsigned int ngsf, 
-				   vector<unsigned int> &secondaries,
-				   const reco::PFClusterCollection & theEClus) {
+																	 unsigned int ngsf, 
+																	 vector<unsigned int> &secondaries,
+																	 const reco::PFClusterCollection & theEClus,
+																	 int& internal_flags) {
   bool debugCleaning = debugGsfCleaning_;
   bool n_keepGsf = true;
 
   const reco::GsfTrackRef& nGsfTrack = GsfPFVec[ngsf].gsfTrackRef();
   
   if (&(*nGsfTrack->seedRef())==nullptr) return false;    
+	internal_flags += 1<<7;
   auto const& nElSeedFromRef=static_cast<ElectronSeed const&>( *(nGsfTrack->extra()->seedRef()) );
   
   /* // now gotten from cache below
-  TrajectoryStateOnSurface inTSOS = mtsTransform_.innerStateOnSurface((*nGsfTrack));
-  GlobalVector ninnMom;
-  float nPin =  nGsfTrack->pMode();
-  if(inTSOS.isValid()){
-    mtsMode_->momentumFromModeCartesian(inTSOS,ninnMom);
-    nPin = ninnMom.mag();
-  }
+		 TrajectoryStateOnSurface inTSOS = mtsTransform_.innerStateOnSurface((*nGsfTrack));
+		 GlobalVector ninnMom;
+		 float nPin =  nGsfTrack->pMode();
+		 if(inTSOS.isValid()){
+		 mtsMode_->momentumFromModeCartesian(inTSOS,ninnMom);
+		 nPin = ninnMom.mag();
+		 }
   */
   float nPin = gsfInnerMomentumCache_[nGsfTrack.key()];
 
@@ -537,7 +551,7 @@ PFElecTkProducer::resolveGsfTracks(const vector<reco::GsfPFRecTrack>  & GsfPFVec
   
   if(debugCleaning)
     cout << " PFElecTkProducer:: considering track " << nGsfTrack->pt() 
-	 << " eta,phi " <<  nGsfTrack->eta() << ", " <<  nGsfTrack->phi()  << endl;
+				 << " eta,phi " <<  nGsfTrack->eta() << ", " <<  nGsfTrack->phi()  << endl;
   
   
   for (unsigned int igsf=0; igsf< GsfPFVec.size();igsf++) {
@@ -545,8 +559,8 @@ PFElecTkProducer::resolveGsfTracks(const vector<reco::GsfPFRecTrack>  & GsfPFVec
       reco::GsfTrackRef iGsfTrack = GsfPFVec[igsf].gsfTrackRef();
 
       if(debugCleaning)
-	cout << " PFElecTkProducer:: and  comparing with track " << iGsfTrack->pt() 
-	     << " eta,phi " <<  iGsfTrack->eta() << ", " <<  iGsfTrack->phi()  << endl;
+				cout << " PFElecTkProducer:: and  comparing with track " << iGsfTrack->pt() 
+						 << " eta,phi " <<  iGsfTrack->eta() << ", " <<  iGsfTrack->phi()  << endl;
       
       float ieta = iGsfTrack->innerMomentum().eta();
       float iphi = iGsfTrack->innerMomentum().phi();
@@ -557,232 +571,241 @@ PFElecTkProducer::resolveGsfTracks(const vector<reco::GsfPFRecTrack>  & GsfPFVec
 
       // apply a superloose preselection only to avoid un-useful cpu time: hard-coded for this reason
       if(feta < 0.5 && fabs(fphi) < 1.0) {
-	if(debugCleaning)
-	  cout << " Entering angular superloose preselection " << endl;
+				if(debugCleaning)
+					cout << " Entering angular superloose preselection " << endl;
 	
         /* //now taken from cache below
-	TrajectoryStateOnSurface i_inTSOS = mtsTransform_.innerStateOnSurface((*iGsfTrack));
-	GlobalVector i_innMom;
-	float iPin = iGsfTrack->pMode();
-	if(i_inTSOS.isValid()){
-	  mtsMode_->momentumFromModeCartesian(i_inTSOS,i_innMom);  
-	  iPin = i_innMom.mag();
-	}
+					 TrajectoryStateOnSurface i_inTSOS = mtsTransform_.innerStateOnSurface((*iGsfTrack));
+					 GlobalVector i_innMom;
+					 float iPin = iGsfTrack->pMode();
+					 if(i_inTSOS.isValid()){
+					 mtsMode_->momentumFromModeCartesian(i_inTSOS,i_innMom);  
+					 iPin = i_innMom.mag();
+					 }
         */
         float iPin = gsfInnerMomentumCache_[iGsfTrack.key()];
 
-	if (&(*iGsfTrack->seedRef())==nullptr) continue;   
-	auto const& iElSeedFromRef=static_cast<ElectronSeed const&>( *(iGsfTrack->extra()->seedRef()) );
+				if (&(*iGsfTrack->seedRef())==nullptr) continue;   
+				auto const& iElSeedFromRef=static_cast<ElectronSeed const&>( *(iGsfTrack->extra()->seedRef()) );
 
-	float SCEnergy = -1.;
-	// Check if two tracks match the same SC     
-	bool areBothGsfEcalDriven = false;;
-	bool isSameSC = isSameEgSC(nElSeedFromRef,iElSeedFromRef,areBothGsfEcalDriven,SCEnergy);
+				float SCEnergy = -1.;
+				// Check if two tracks match the same SC     
+				bool areBothGsfEcalDriven = false;;
+				bool isSameSC = isSameEgSC(nElSeedFromRef,iElSeedFromRef,areBothGsfEcalDriven,SCEnergy);
 	
-	// CASE1 both GsfTracks ecalDriven and match the same SC
-	if(areBothGsfEcalDriven ) {
-	  if(isSameSC) {
-	    float nEP = SCEnergy/nPin;
-	    float iEP =  SCEnergy/iPin;
-	    if(debugCleaning)
-	      cout << " Entering SAME supercluster case " 
-		   << " nEP " << nEP 
-		   << " iEP " << iEP << endl;
+				// CASE1 both GsfTracks ecalDriven and match the same SC
+				if(areBothGsfEcalDriven ) {
+					if(isSameSC) {
+						float nEP = SCEnergy/nPin;
+						float iEP =  SCEnergy/iPin;
+						if(debugCleaning)
+							cout << " Entering SAME supercluster case " 
+									 << " nEP " << nEP 
+									 << " iEP " << iEP << endl;
 	    
 	    
 	    
-	    // if same SC take the closest or if same
-	    // distance the best E/p
+						// if same SC take the closest or if same
+						// distance the best E/p
 	    
-	    // Innermost using LostHits technology
-	    bool isSameLayer = false;
-	    bool iGsfInnermostWithLostHits = 
-	      isInnerMostWithLostHits(nGsfTrack,iGsfTrack,isSameLayer);
+						// Innermost using LostHits technology
+						bool isSameLayer = false;
+						bool iGsfInnermostWithLostHits = 
+							isInnerMostWithLostHits(nGsfTrack,iGsfTrack,isSameLayer);
 	    
 	    
-	    if(debugCleaning)
-	      cout << " iGsf is InnerMostWithLostHits " << iGsfInnermostWithLostHits
-		   << " isSameLayer " << isSameLayer  << endl;
+						if(debugCleaning)
+							cout << " iGsf is InnerMostWithLostHits " << iGsfInnermostWithLostHits
+									 << " isSameLayer " << isSameLayer  << endl;
 	    
-	    if (iGsfInnermostWithLostHits) {
-	      n_keepGsf = false;
-	      return n_keepGsf;
-	    }
-	    else if(isSameLayer){
-	      if(fabs(iEP-1) < fabs(nEP-1)) {
-		n_keepGsf = false;
-		return n_keepGsf;
-	      }
-	      else{
-		secondaries.push_back(igsf);
-	      }
-	    }
-	    else {
-	      // save secondaries gsf track (put selection)
-	    secondaries.push_back(igsf);
-	    }
-	  } // end same SC case
-	}
-	else {
-	  // enter in the condition where at least one track is trackerDriven
-	  float minBremDphi =  minTangDist(GsfPFVec[ngsf],GsfPFVec[igsf]);
-	  float nETot = 0.;
-	  float iETot = 0.;
-	  bool isBothGsfTrackerDriven = false;
-	  bool nEcalDriven = false;
-	  bool iEcalDriven = false;
-	  bool isSameScEgPf = isSharingEcalEnergyWithEgSC(GsfPFVec[ngsf],
-							  GsfPFVec[igsf],
-							  nElSeedFromRef,
-							  iElSeedFromRef,
-							  theEClus,
-							  isBothGsfTrackerDriven,
-							  nEcalDriven,
-							  iEcalDriven,
-							  nETot,
-							  iETot);
+						if (iGsfInnermostWithLostHits) {
+							n_keepGsf = false;
+							internal_flags += 1<<8;
+							return n_keepGsf;
+						}
+						else if(isSameLayer){
+							if(fabs(iEP-1) < fabs(nEP-1)) {
+								n_keepGsf = false;
+								internal_flags += 1<<9;
+								return n_keepGsf;
+							}
+							else{
+								secondaries.push_back(igsf);
+							}
+						}
+						else {
+							// save secondaries gsf track (put selection)
+							secondaries.push_back(igsf);
+						}
+					} // end same SC case
+				}
+				else {
+					// enter in the condition where at least one track is trackerDriven
+					float minBremDphi =  minTangDist(GsfPFVec[ngsf],GsfPFVec[igsf]);
+					float nETot = 0.;
+					float iETot = 0.;
+					bool isBothGsfTrackerDriven = false;
+					bool nEcalDriven = false;
+					bool iEcalDriven = false;
+					bool isSameScEgPf = isSharingEcalEnergyWithEgSC(GsfPFVec[ngsf],
+																													GsfPFVec[igsf],
+																													nElSeedFromRef,
+																													iElSeedFromRef,
+																													theEClus,
+																													isBothGsfTrackerDriven,
+																													nEcalDriven,
+																													iEcalDriven,
+																													nETot,
+																													iETot);
 
-	  // check if the first hit of iGsfTrack < nGsfTrack	      
-	  bool isSameLayer = false;
-	  bool iGsfInnermostWithLostHits = 
-	    isInnerMostWithLostHits(nGsfTrack,iGsfTrack,isSameLayer);
+					// check if the first hit of iGsfTrack < nGsfTrack	      
+					bool isSameLayer = false;
+					bool iGsfInnermostWithLostHits = 
+						isInnerMostWithLostHits(nGsfTrack,iGsfTrack,isSameLayer);
 
-	  if(isSameScEgPf) {
-	    // CASE 2 : One Gsf has reference to a SC and the other one not or both not
+					if(isSameScEgPf) {
+						// CASE 2 : One Gsf has reference to a SC and the other one not or both not
 	   	    
-	    if(debugCleaning) {
-	      cout << " Sharing ECAL energy passed " 
-		   << " nEtot " << nETot 
-		   << " iEtot " << iETot << endl;
-	      if(isBothGsfTrackerDriven) 
-		cout << " Both Track are trackerDriven " << endl;
-	    }
+						if(debugCleaning) {
+							cout << " Sharing ECAL energy passed " 
+									 << " nEtot " << nETot 
+									 << " iEtot " << iETot << endl;
+							if(isBothGsfTrackerDriven) 
+								cout << " Both Track are trackerDriven " << endl;
+						}
 
-	    // Innermost using LostHits technology
-	    if (iGsfInnermostWithLostHits) {
-	      n_keepGsf = false;
-	      return n_keepGsf;
-	    }
-	    else if(isSameLayer){
-	      // Thirt Case:  One Gsf has reference to a SC and the other one not or both not
-	      // gsf tracks starts from the same layer
-	      // check number of sharing modules (at least 50%)
-	      // check number of sharing hits (at least 2)
-	      // check charge flip inner/outer
+						// Innermost using LostHits technology
+						if (iGsfInnermostWithLostHits) {
+							n_keepGsf = false;
+							internal_flags += 1<<10;
+							return n_keepGsf;
+						}
+						else if(isSameLayer){
+							// Thirt Case:  One Gsf has reference to a SC and the other one not or both not
+							// gsf tracks starts from the same layer
+							// check number of sharing modules (at least 50%)
+							// check number of sharing hits (at least 2)
+							// check charge flip inner/outer
 
 	     
-		// they share energy
-	      if(isBothGsfTrackerDriven == false) {
-		// if at least one Gsf track is EcalDriven choose that one.
-		if(iEcalDriven) {
-		  n_keepGsf = false;
-		  return n_keepGsf;
-		}
-		else {
-		  secondaries.push_back(igsf);
-		}
-	      }
-	      else {
-		// if both tracks are tracker driven choose that one with the best E/p
-		// with ETot = max(En,Ei)
+							// they share energy
+							if(isBothGsfTrackerDriven == false) {
+								// if at least one Gsf track is EcalDriven choose that one.
+								if(iEcalDriven) {
+									n_keepGsf = false;
+									internal_flags += 1<<11;
+									return n_keepGsf;
+								}
+								else {
+									secondaries.push_back(igsf);
+								}
+							}
+							else {
+								// if both tracks are tracker driven choose that one with the best E/p
+								// with ETot = max(En,Ei)
 
-		float ETot = -1;
-		if(nETot != iETot) {
-		  if(nETot > iETot)
-		    ETot = nETot;
-		  else 
-		    ETot = iETot;
-		}
-		else {
-		  ETot = nETot;
-		}
-		float nEP = ETot/nPin;
-		float iEP = ETot/iPin;
+								float ETot = -1;
+								if(nETot != iETot) {
+									if(nETot > iETot)
+										ETot = nETot;
+									else 
+										ETot = iETot;
+								}
+								else {
+									ETot = nETot;
+								}
+								float nEP = ETot/nPin;
+								float iEP = ETot/iPin;
 		
 		
-		if(debugCleaning) 
-		  cout << " nETot " << nETot
-		       << " iETot " << iETot 
-		       << " ETot " << ETot << endl 
-		       << " nPin " << nPin
-		       << " iPin " << iPin 
-		       << " nEP " << nEP 
-		       << " iEP " << iEP << endl;
+								if(debugCleaning) 
+									cout << " nETot " << nETot
+											 << " iETot " << iETot 
+											 << " ETot " << ETot << endl 
+											 << " nPin " << nPin
+											 << " iPin " << iPin 
+											 << " nEP " << nEP 
+											 << " iEP " << iEP << endl;
 		
 	
-		if(fabs(iEP-1) < fabs(nEP-1)) {
-		  n_keepGsf = false;
-		  return n_keepGsf;
-		}
-		else{
-		  secondaries.push_back(igsf);
-		}
-	      }
-	    }
-	    else {
-	      secondaries.push_back(igsf);
-	    }
-	  }
-	  else if(feta < detaCutGsfClean_ && minBremDphi < dphiCutGsfClean_) {
-	    // very close tracks
-	    bool secPushedBack = false;
-	    if(nEcalDriven == false && nETot == 0.) {
-	      n_keepGsf = false;
-	      return n_keepGsf;
-	    }
-	    else if(iEcalDriven == false && iETot == 0.) {
-	      secondaries.push_back(igsf);
-	      secPushedBack = true;
-	    }
-	    if(debugCleaning)
-	      cout << " Close Tracks " 
-		   << " feta " << feta << " fabs(fphi) " << fabs(fphi) 
-		   << " minBremDphi " <<  minBremDphi 
-		   << " nETot " << nETot 
-		   << " iETot " << iETot 
-		   << " nLostHits " <<  nGsfTrack->hitPattern().numberOfLostHits(HitPattern::MISSING_INNER_HITS) 
-		   << " iLostHits " << iGsfTrack->hitPattern().numberOfLostHits(HitPattern::MISSING_INNER_HITS) << endl;
+								if(fabs(iEP-1) < fabs(nEP-1)) {
+									n_keepGsf = false;
+									internal_flags += 1<<12;
+									return n_keepGsf;
+								}
+								else{
+									secondaries.push_back(igsf);
+								}
+							}
+						}
+						else {
+							secondaries.push_back(igsf);
+						}
+					}
+					else if(feta < detaCutGsfClean_ && minBremDphi < dphiCutGsfClean_) {
+						// very close tracks
+						bool secPushedBack = false;
+						if(nEcalDriven == false && nETot == 0.) {
+							n_keepGsf = false;
+							internal_flags += 1<<13;
+							return n_keepGsf;
+						}
+						else if(iEcalDriven == false && iETot == 0.) {
+							secondaries.push_back(igsf);
+							secPushedBack = true;
+						}
+						if(debugCleaning)
+							cout << " Close Tracks " 
+									 << " feta " << feta << " fabs(fphi) " << fabs(fphi) 
+									 << " minBremDphi " <<  minBremDphi 
+									 << " nETot " << nETot 
+									 << " iETot " << iETot 
+									 << " nLostHits " <<  nGsfTrack->hitPattern().numberOfLostHits(HitPattern::MISSING_INNER_HITS) 
+									 << " iLostHits " << iGsfTrack->hitPattern().numberOfLostHits(HitPattern::MISSING_INNER_HITS) << endl;
 	    
-	    // apply selection only if one track has lost hits
-	    if(applyAngularGsfClean_) {
-	      if (iGsfInnermostWithLostHits) {
-		n_keepGsf = false;
-		return n_keepGsf;
-	      }
-	      else if(isSameLayer == false) {
-		if(secPushedBack == false) 
-		  secondaries.push_back(igsf);
-	      }
-	    }
-	  }
-	  else if(feta < 0.1 && minBremDphi < 0.2){
-	    // failed all the conditions, discard only tracker driven tracks
-	    // with no PFClusters linked. 
-	    if(debugCleaning)
-	      cout << " Close Tracks and failed all the conditions " 
-		   << " feta " << feta << " fabs(fphi) " << fabs(fphi) 
-		   << " minBremDphi " <<  minBremDphi 
-		   << " nETot " << nETot 
-		   << " iETot " << iETot 
-		   << " nLostHits " <<  nGsfTrack->hitPattern().numberOfLostHits(HitPattern::MISSING_INNER_HITS) 
-		   << " iLostHits " << iGsfTrack->hitPattern().numberOfLostHits(HitPattern::MISSING_INNER_HITS) << endl;
+						// apply selection only if one track has lost hits
+						if(applyAngularGsfClean_) {
+							if (iGsfInnermostWithLostHits) {
+								n_keepGsf = false;
+								internal_flags += 1<<14;
+								return n_keepGsf;
+							}
+							else if(isSameLayer == false) {
+								if(secPushedBack == false) 
+									secondaries.push_back(igsf);
+							}
+						}
+					}
+					else if(feta < 0.1 && minBremDphi < 0.2){
+						// failed all the conditions, discard only tracker driven tracks
+						// with no PFClusters linked. 
+						if(debugCleaning)
+							cout << " Close Tracks and failed all the conditions " 
+									 << " feta " << feta << " fabs(fphi) " << fabs(fphi) 
+									 << " minBremDphi " <<  minBremDphi 
+									 << " nETot " << nETot 
+									 << " iETot " << iETot 
+									 << " nLostHits " <<  nGsfTrack->hitPattern().numberOfLostHits(HitPattern::MISSING_INNER_HITS) 
+									 << " iLostHits " << iGsfTrack->hitPattern().numberOfLostHits(HitPattern::MISSING_INNER_HITS) << endl;
 	    
-	    if(nEcalDriven == false && nETot == 0.) {
-	      n_keepGsf = false;
-	      return n_keepGsf;
-	    }
-	    // Here I do not push back the secondary because considered fakes...
-	  }
-	}
+						if(nEcalDriven == false && nETot == 0.) {
+							n_keepGsf = false;
+							internal_flags += 1<<15;
+							return n_keepGsf;
+						}
+						// Here I do not push back the secondary because considered fakes...
+					}
+				}
       }
     }
   }
   
+	internal_flags += 1<<16;
   return n_keepGsf;
 }
 float 
 PFElecTkProducer::minTangDist(const reco::GsfPFRecTrack& primGsf,
-			      const reco::GsfPFRecTrack& secGsf) {
+															const reco::GsfPFRecTrack& secGsf) {
 
   float minDphi = 1000.; 
 
@@ -803,17 +826,17 @@ PFElecTkProducer::minTangDist(const reco::GsfPFRecTrack& primGsf,
     for(unsigned ipbrem = 0; ipbrem < primPFBrem.size(); ipbrem++) {
       if(primPFBrem[ipbrem].indTrajPoint() == 99) continue;
       const reco::PFTrajectoryPoint& atPrimECAL 
-	= primPFBrem[ipbrem].extrapolatedPoint( reco::PFTrajectoryPoint::ECALEntrance );
+				= primPFBrem[ipbrem].extrapolatedPoint( reco::PFTrajectoryPoint::ECALEntrance );
       if( ! atPrimECAL.isValid() ) continue;
       sbrem++;
       if(sbrem <= 3) {
-	float primPhi = atPrimECAL.positionREP().Phi();
+				float primPhi = atPrimECAL.positionREP().Phi();
 	
-	float dphi = fabs(primPhi - secPhi);
-	if (dphi>TMath::Pi()) dphi-= TMath::TwoPi();     
-	if(fabs(dphi) < minDphi) {	   
-	  minDphi = fabs(dphi);
-	}
+				float dphi = fabs(primPhi - secPhi);
+				if (dphi>TMath::Pi()) dphi-= TMath::TwoPi();     
+				if(fabs(dphi) < minDphi) {	   
+					minDphi = fabs(dphi);
+				}
       }
     }
     
@@ -826,9 +849,9 @@ PFElecTkProducer::minTangDist(const reco::GsfPFRecTrack& primGsf,
 }
 bool 
 PFElecTkProducer::isSameEgSC(const reco::ElectronSeed& nSeed,
-			     const reco::ElectronSeed& iSeed,
-			     bool& bothGsfEcalDriven,
-			     float& SCEnergy) {
+														 const reco::ElectronSeed& iSeed,
+														 bool& bothGsfEcalDriven,
+														 float& SCEnergy) {
   
   bool isSameSC = false;
 
@@ -839,9 +862,9 @@ PFElecTkProducer::isSameEgSC(const reco::ElectronSeed& nSeed,
     if(nscRef && iscRef) {
       bothGsfEcalDriven = true;
       if(nscRef == iscRef) {
-	isSameSC = true;
-	// retrieve the supercluster energy
-	SCEnergy = nscRef->energy();
+				isSameSC = true;
+				// retrieve the supercluster energy
+				SCEnergy = nscRef->energy();
       }
     }
   }
@@ -849,15 +872,15 @@ PFElecTkProducer::isSameEgSC(const reco::ElectronSeed& nSeed,
 }
 bool 
 PFElecTkProducer::isSharingEcalEnergyWithEgSC(const reco::GsfPFRecTrack& nGsfPFRecTrack,
-					      const reco::GsfPFRecTrack& iGsfPFRecTrack,
-					      const reco::ElectronSeed& nSeed,
-					      const reco::ElectronSeed& iSeed,
-					      const reco::PFClusterCollection& theEClus,
-					      bool& bothGsfTrackerDriven,
-					      bool& nEcalDriven,
-					      bool& iEcalDriven,
-					      float& nEnergy,
-					      float& iEnergy) {
+																							const reco::GsfPFRecTrack& iGsfPFRecTrack,
+																							const reco::ElectronSeed& nSeed,
+																							const reco::ElectronSeed& iSeed,
+																							const reco::PFClusterCollection& theEClus,
+																							bool& bothGsfTrackerDriven,
+																							bool& nEcalDriven,
+																							bool& iEcalDriven,
+																							float& nEnergy,
+																							float& iEnergy) {
   
   bool isSharingEnergy = false;
 
@@ -881,7 +904,7 @@ PFElecTkProducer::isSharingEcalEnergyWithEgSC(const reco::GsfPFRecTrack& nGsfPFR
     gsfPfTrack = nGsfPFRecTrack;
   }
   else{
-     oneEcalDriven = false;
+		oneEcalDriven = false;
   }
   
   if(oneEcalDriven) {
@@ -891,8 +914,8 @@ PFElecTkProducer::isSharingEcalEnergyWithEgSC(const reco::GsfPFRecTrack& nGsfPFR
     vecPFClusters.clear();
 
     for (PFClusterCollection::const_iterator clus = theEClus.begin();
-	 clus != theEClus.end();
-	 clus++ ) {
+				 clus != theEClus.end();
+				 clus++ ) {
       PFCluster clust = *clus;
       clust.calculatePositionREP();
 
@@ -903,42 +926,42 @@ PFElecTkProducer::isSharingEcalEnergyWithEgSC(const reco::GsfPFRecTrack& nGsfPFR
       // Angle preselection between the supercluster and pfclusters
       // this is needed just to save some cpu-time for this is hard-coded     
       if(deta < 0.5 && fabs(dphi) < 1.0) {
-	double distGsf = gsfPfTrack.extrapolatedPoint( reco::PFTrajectoryPoint::ECALShowerMax ).isValid() ?
-	  LinkByRecHit::testTrackAndClusterByRecHit(gsfPfTrack , clust ) : -1.;
-	// check if it touch the GsfTrack
-	if(distGsf > 0.) {
-	  if(nEcalDriven) 
-	    iEnergy += clust.energy();
-	  else
-	    nEnergy += clust.energy();
-	  vecPFClusters.push_back(clust);
-	}
-	// check if it touch the Brem-tangents
-	else {
-	  vector<PFBrem> primPFBrem = gsfPfTrack.PFRecBrem();
-	  for(unsigned ipbrem = 0; ipbrem < primPFBrem.size(); ipbrem++) {
-	    if(primPFBrem[ipbrem].indTrajPoint() == 99) continue;
-	    const reco::PFRecTrack& pfBremTrack = primPFBrem[ipbrem];
-	    double dist = pfBremTrack.extrapolatedPoint( reco::PFTrajectoryPoint::ECALShowerMax ).isValid() ?
-	      LinkByRecHit::testTrackAndClusterByRecHit(pfBremTrack , clust, true ) : -1.;
-	    if(dist > 0.) {
-	      if(nEcalDriven) 
-		iEnergy += clust.energy();
-	      else
-		nEnergy += clust.energy();
-	      vecPFClusters.push_back(clust);
-	    }
-	  }	
-	}  
+				double distGsf = gsfPfTrack.extrapolatedPoint( reco::PFTrajectoryPoint::ECALShowerMax ).isValid() ?
+					LinkByRecHit::testTrackAndClusterByRecHit(gsfPfTrack , clust ) : -1.;
+				// check if it touch the GsfTrack
+				if(distGsf > 0.) {
+					if(nEcalDriven) 
+						iEnergy += clust.energy();
+					else
+						nEnergy += clust.energy();
+					vecPFClusters.push_back(clust);
+				}
+				// check if it touch the Brem-tangents
+				else {
+					vector<PFBrem> primPFBrem = gsfPfTrack.PFRecBrem();
+					for(unsigned ipbrem = 0; ipbrem < primPFBrem.size(); ipbrem++) {
+						if(primPFBrem[ipbrem].indTrajPoint() == 99) continue;
+						const reco::PFRecTrack& pfBremTrack = primPFBrem[ipbrem];
+						double dist = pfBremTrack.extrapolatedPoint( reco::PFTrajectoryPoint::ECALShowerMax ).isValid() ?
+							LinkByRecHit::testTrackAndClusterByRecHit(pfBremTrack , clust, true ) : -1.;
+						if(dist > 0.) {
+							if(nEcalDriven) 
+								iEnergy += clust.energy();
+							else
+								nEnergy += clust.energy();
+							vecPFClusters.push_back(clust);
+						}
+					}	
+				}  
       } // END if angle preselection
     } // PFClusters Loop
     if(!vecPFClusters.empty() ) {
       for(unsigned int pf = 0; pf < vecPFClusters.size(); pf++) {
-	bool isCommon = ClusterClusterMapping::overlap(vecPFClusters[pf],*scRef);
-	if(isCommon) {
-	  isSharingEnergy = true;
-	}
-	break;
+				bool isCommon = ClusterClusterMapping::overlap(vecPFClusters[pf],*scRef);
+				if(isCommon) {
+					isSharingEnergy = true;
+				}
+				break;
       }
     }
   }
@@ -953,8 +976,8 @@ PFElecTkProducer::isSharingEcalEnergyWithEgSC(const reco::GsfPFRecTrack& nGsfPFR
     iPFCluster.clear();
 
     for (PFClusterCollection::const_iterator clus = theEClus.begin();
-	 clus != theEClus.end();
-	 clus++ ) {
+				 clus != theEClus.end();
+				 clus++ ) {
       PFCluster clust = *clus;
       clust.calculatePositionREP();
       
@@ -965,26 +988,26 @@ PFElecTkProducer::isSharingEcalEnergyWithEgSC(const reco::GsfPFRecTrack& nGsfPFR
       // just to save cpu time, for this hard-coded
       if(ndeta < 0.5 && fabs(ndphi) < 1.0) {
 	
-	double distGsf = nGsfPFRecTrack.extrapolatedPoint( reco::PFTrajectoryPoint::ECALShowerMax ).isValid() ?
-	  LinkByRecHit::testTrackAndClusterByRecHit(nGsfPFRecTrack , clust ) : -1.;
-	if(distGsf > 0.) {
-	  nPFCluster.push_back(clust);
-	  nEnergy += clust.energy();
-	}
-	else {
-	  const vector<PFBrem>& primPFBrem = nGsfPFRecTrack.PFRecBrem();
-	  for(unsigned ipbrem = 0; ipbrem < primPFBrem.size(); ipbrem++) {
-	    if(primPFBrem[ipbrem].indTrajPoint() == 99) continue;
-	    const reco::PFRecTrack& pfBremTrack = primPFBrem[ipbrem];
-	    double dist = pfBremTrack.extrapolatedPoint( reco::PFTrajectoryPoint::ECALShowerMax ).isValid() ?
-		LinkByRecHit::testTrackAndClusterByRecHit(pfBremTrack , clust, true ) : -1.;
-	    if(dist > 0.) {
-	      nPFCluster.push_back(clust);
-	      nEnergy += clust.energy();
-	      break;
-	    }
-	  }
-	}
+				double distGsf = nGsfPFRecTrack.extrapolatedPoint( reco::PFTrajectoryPoint::ECALShowerMax ).isValid() ?
+					LinkByRecHit::testTrackAndClusterByRecHit(nGsfPFRecTrack , clust ) : -1.;
+				if(distGsf > 0.) {
+					nPFCluster.push_back(clust);
+					nEnergy += clust.energy();
+				}
+				else {
+					const vector<PFBrem>& primPFBrem = nGsfPFRecTrack.PFRecBrem();
+					for(unsigned ipbrem = 0; ipbrem < primPFBrem.size(); ipbrem++) {
+						if(primPFBrem[ipbrem].indTrajPoint() == 99) continue;
+						const reco::PFRecTrack& pfBremTrack = primPFBrem[ipbrem];
+						double dist = pfBremTrack.extrapolatedPoint( reco::PFTrajectoryPoint::ECALShowerMax ).isValid() ?
+							LinkByRecHit::testTrackAndClusterByRecHit(pfBremTrack , clust, true ) : -1.;
+						if(dist > 0.) {
+							nPFCluster.push_back(clust);
+							nEnergy += clust.energy();
+							break;
+						}
+					}
+				}
       }
 
       float ideta = fabs(iGsfPFRecTrack.gsfTrackRef()->eta() - clust.position().eta());
@@ -993,40 +1016,40 @@ PFElecTkProducer::isSharingEcalEnergyWithEgSC(const reco::GsfPFRecTrack& nGsfPFR
       // Apply loose preselection with the track
       // just to save cpu time, for this hard-coded
       if(ideta < 0.5 && fabs(idphi) < 1.0) {
-	double dist = iGsfPFRecTrack.extrapolatedPoint( reco::PFTrajectoryPoint::ECALShowerMax ).isValid() ?
-	  LinkByRecHit::testTrackAndClusterByRecHit(iGsfPFRecTrack , clust ) : -1.;
-	if(dist > 0.) {
-	  iPFCluster.push_back(clust);
-	  iEnergy += clust.energy();
-	}
-	else {
-	  vector<PFBrem> primPFBrem = iGsfPFRecTrack.PFRecBrem();
-	  for(unsigned ipbrem = 0; ipbrem < primPFBrem.size(); ipbrem++) {
-	    if(primPFBrem[ipbrem].indTrajPoint() == 99) continue;
-	    const reco::PFRecTrack& pfBremTrack = primPFBrem[ipbrem];
-	    double dist = LinkByRecHit::testTrackAndClusterByRecHit(pfBremTrack , clust, true );
-	    if(dist > 0.) {
-	      iPFCluster.push_back(clust);
-	      iEnergy += clust.energy();
-	      break;
-	    }
-	  }
-	}
+				double dist = iGsfPFRecTrack.extrapolatedPoint( reco::PFTrajectoryPoint::ECALShowerMax ).isValid() ?
+					LinkByRecHit::testTrackAndClusterByRecHit(iGsfPFRecTrack , clust ) : -1.;
+				if(dist > 0.) {
+					iPFCluster.push_back(clust);
+					iEnergy += clust.energy();
+				}
+				else {
+					vector<PFBrem> primPFBrem = iGsfPFRecTrack.PFRecBrem();
+					for(unsigned ipbrem = 0; ipbrem < primPFBrem.size(); ipbrem++) {
+						if(primPFBrem[ipbrem].indTrajPoint() == 99) continue;
+						const reco::PFRecTrack& pfBremTrack = primPFBrem[ipbrem];
+						double dist = LinkByRecHit::testTrackAndClusterByRecHit(pfBremTrack , clust, true );
+						if(dist > 0.) {
+							iPFCluster.push_back(clust);
+							iEnergy += clust.energy();
+							break;
+						}
+					}
+				}
       }
     }
 
 
     if(!nPFCluster.empty() && !iPFCluster.empty()) {
       for(unsigned int npf = 0; npf < nPFCluster.size(); npf++) {
-	for(unsigned int ipf = 0; ipf < iPFCluster.size(); ipf++) {
-	  bool isCommon = ClusterClusterMapping::overlap(nPFCluster[npf],iPFCluster[ipf]);
-	  if(isCommon) {
-	    isSharingEnergy = true;
-	    break;
-	  }
-	}
-	if(isSharingEnergy)
-	  break;
+				for(unsigned int ipf = 0; ipf < iPFCluster.size(); ipf++) {
+					bool isCommon = ClusterClusterMapping::overlap(nPFCluster[npf],iPFCluster[ipf]);
+					if(isCommon) {
+						isSharingEnergy = true;
+						break;
+					}
+				}
+				if(isSharingEnergy)
+					break;
       }
     }
   }
@@ -1034,8 +1057,8 @@ PFElecTkProducer::isSharingEcalEnergyWithEgSC(const reco::GsfPFRecTrack& nGsfPFR
   return isSharingEnergy;
 }
 bool PFElecTkProducer::isInnerMost(const reco::GsfTrackRef& nGsfTrack,
-				   const reco::GsfTrackRef& iGsfTrack,
-				   bool& sameLayer) {
+																	 const reco::GsfTrackRef& iGsfTrack,
+																	 bool& sameLayer) {
   
   // copied by the class RecoEgamma/EgammaElectronAlgos/src/EgAmbiguityTools.cc
   // obsolete but the code is kept: now using lost hits method
@@ -1048,39 +1071,39 @@ bool PFElecTkProducer::isInnerMost(const reco::GsfTrackRef& nGsfTrack,
   trackingRecHit_iterator elHitsIt1 ;
   for
     ( elHitsIt1 = nGsfTrack->recHitsBegin() ;
-     elHitsIt1 != nGsfTrack->recHitsEnd() ;
-     elHitsIt1++, gsfHitCounter1++ )
-    { if (((**elHitsIt1).isValid())) break ; }
+			elHitsIt1 != nGsfTrack->recHitsEnd() ;
+			elHitsIt1++, gsfHitCounter1++ )
+	{ if (((**elHitsIt1).isValid())) break ; }
   
   int gsfHitCounter2 = 0 ;
   trackingRecHit_iterator elHitsIt2 ;
   for
     ( elHitsIt2 = iGsfTrack->recHitsBegin() ;
-     elHitsIt2 != iGsfTrack->recHitsEnd() ;
-     elHitsIt2++, gsfHitCounter2++ )
-    { if (((**elHitsIt2).isValid())) break ; }
+			elHitsIt2 != iGsfTrack->recHitsEnd() ;
+			elHitsIt2++, gsfHitCounter2++ )
+	{ if (((**elHitsIt2).isValid())) break ; }
   
   uint32_t gsfHit1 = gsfHitPattern1.getHitPattern(HitPattern::TRACK_HITS, gsfHitCounter1) ;
   uint32_t gsfHit2 = gsfHitPattern2.getHitPattern(HitPattern::TRACK_HITS, gsfHitCounter2) ;
   
   
   if (gsfHitPattern1.getSubStructure(gsfHit1)!=gsfHitPattern2.getSubStructure(gsfHit2))
-   { 
-     return (gsfHitPattern2.getSubStructure(gsfHit2)<gsfHitPattern1.getSubStructure(gsfHit1)); 
-   }
+	{ 
+		return (gsfHitPattern2.getSubStructure(gsfHit2)<gsfHitPattern1.getSubStructure(gsfHit1)); 
+	}
   else if (gsfHitPattern1.getLayer(gsfHit1)!=gsfHitPattern2.getLayer(gsfHit2))
-    { 
-      return (gsfHitPattern2.getLayer(gsfHit2)<gsfHitPattern1.getLayer(gsfHit1)); 
-    }
+	{ 
+		return (gsfHitPattern2.getLayer(gsfHit2)<gsfHitPattern1.getLayer(gsfHit1)); 
+	}
   else
-   { 
-     sameLayer = true;
-     return  false; 
-   }
+	{ 
+		sameLayer = true;
+		return  false; 
+	}
 }
 bool PFElecTkProducer::isInnerMostWithLostHits(const reco::GsfTrackRef& nGsfTrack,
-					       const reco::GsfTrackRef& iGsfTrack,
-					       bool& sameLayer) {
+																							 const reco::GsfTrackRef& iGsfTrack,
+																							 bool& sameLayer) {
   
   // define closest using the lost hits on the expectedhitsineer
   unsigned int nLostHits = nGsfTrack->hitPattern().numberOfLostHits(HitPattern::MISSING_INNER_HITS);
@@ -1100,7 +1123,7 @@ bool PFElecTkProducer::isInnerMostWithLostHits(const reco::GsfTrackRef& nGsfTrac
 // ------------ method called once each job just before starting event loop  ------------
 void 
 PFElecTkProducer::beginRun(const edm::Run& run,
-			   const EventSetup& iSetup)
+													 const EventSetup& iSetup)
 {
   ESHandle<MagneticField> magneticField;
   iSetup.get<IdealMagneticFieldRecord>().get(magneticField);
@@ -1127,7 +1150,7 @@ PFElecTkProducer::beginRun(const edm::Run& run,
 // ------------ method called once each job just after ending the event loop  ------------
 void 
 PFElecTkProducer::endRun(const edm::Run& run,
-			 const EventSetup& iSetup) {
+												 const EventSetup& iSetup) {
   pfTransformer_.reset();
   convBremFinder_.reset();
 }

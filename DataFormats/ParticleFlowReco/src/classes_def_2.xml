@@ -286,7 +286,8 @@
 
   <class name="std::pair<std::pair<unsigned int,unsigned int>,std::pair<unsigned int,unsigned int> >"/>
 
-  <class name="reco::PreId" ClassVersion="10">
+  <class name="reco::PreId" ClassVersion="11">
+   <version ClassVersion="11" checksum="3959983539"/>
    <version ClassVersion="10" checksum="1753132977"/>
   </class>
   <class name="std::vector<reco::PreId>"/>

@@ -111,6 +111,9 @@ namespace reco
     reco::TrackRef trackRef() const {return trackRef_;}
     PFClusterRef clusterRef() const {return clusterRef_;}
 
+		void setBin(int ibin) {ibin_ = ibin;}
+		int ibin() const {return ibin_;}
+
   private:
     reco::TrackRef trackRef_;
     PFClusterRef clusterRef_;
@@ -126,6 +129,7 @@ namespace reco
     float chi2Ratio_;
     std::vector<float> mva_;
 
+		int ibin_;
 //    bool goodpreid_;
 //    bool TkId_;
 //    bool EcalMatching_;

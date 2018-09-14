@@ -80,9 +80,10 @@ class PFElecTkProducer final : public edm::stream::EDProducer<edm::GlobalCache<c
       bool applySelection(const reco::GsfTrack&);
       
       bool resolveGsfTracks(const std::vector<reco::GsfPFRecTrack> &GsfPFVec,
-			    unsigned int ngsf,
-			    std::vector<unsigned int> &secondaries,
-			    const reco::PFClusterCollection & theEClus);
+														unsigned int ngsf,
+														std::vector<unsigned int> &secondaries,
+														const reco::PFClusterCollection & theEClus,
+														int& internal_flags);
 
       float minTangDist(const reco::GsfPFRecTrack& primGsf,
 			const reco::GsfPFRecTrack& secGsf); 
