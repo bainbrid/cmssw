@@ -28,7 +28,7 @@ trackerDrivenElectronSeeds = cms.EDProducer("GoodSeedProducer",
     PFEcalClusterLabel = cms.InputTag("particleFlowClusterECAL"),
     PFHcalClusterLabel = cms.InputTag("particleFlowClusterHCAL"),
     PSThresholdFile = cms.string('RecoParticleFlow/PFTracking/data/PSThreshold.dat'),
-    MinPt = cms.double(2.0),
+    MinPt = cms.double(0.5),
     TkColList = cms.VInputTag(cms.InputTag("generalTracks")),
     UseTMVA = cms.untracked.bool(True),
     TrackQuality = cms.string('highPurity'),
@@ -45,7 +45,8 @@ trackerDrivenElectronSeeds = cms.EDProducer("GoodSeedProducer",
     UsePreShower =cms.bool(False),
     PreIdLabel = cms.string('preid'),
     ProducePreId = cms.untracked.bool(True),
-    PtThresholdSavePreId = cms.untracked.double(1.0),
+    PtThresholdSavePreId = cms.untracked.double(0.),
+    PassThrough = cms.untracked.bool(True),
     Min_dr = cms.double(0.2)
 )
 

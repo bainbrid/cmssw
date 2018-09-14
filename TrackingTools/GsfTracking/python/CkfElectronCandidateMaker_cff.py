@@ -13,7 +13,7 @@ ElectronChi2.MaxSagitta = -1
 import TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff
 TrajectoryFilterForElectrons = TrackingTools.TrajectoryFiltering.TrajectoryFilter_cff.CkfBaseTrajectoryFilter_block.clone(
     chargeSignificance = cms.double(-1.0),
-    minPt = cms.double(2.0),
+    minPt = cms.double(0.5),
     minHitsMinPt = cms.int32(-1),
     ComponentType = cms.string('CkfBaseTrajectoryFilter'),
     maxLostHits = cms.int32(1),
@@ -47,7 +47,7 @@ TrajectoryBuilderForElectrons.updator = 'KFUpdator'
 from RecoTracker.CkfPattern.CkfTrackCandidates_cff import *
 import RecoTracker.CkfPattern.CkfTrackCandidates_cfi
 electronCkfTrackCandidates = RecoTracker.CkfPattern.CkfTrackCandidates_cfi.ckfTrackCandidates.clone()
-electronCkfTrackCandidates.src = cms.InputTag('electronMergedSeeds')
+electronCkfTrackCandidates.src = cms.InputTag('trackerDrivenElectronSeeds','SeedsForGsf')
 electronCkfTrackCandidates.TrajectoryBuilderPSet.refToPSet_ = 'TrajectoryBuilderForElectrons'
 #electronCkfTrackCandidates.TrajectoryCleaner = 'TrajectoryCleanerBySharedHits'
 electronCkfTrackCandidates.NavigationSchool = 'SimpleNavigationSchool'

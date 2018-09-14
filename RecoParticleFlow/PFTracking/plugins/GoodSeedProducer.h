@@ -187,5 +187,7 @@ class GoodSeedProducer final : public edm::stream::EDProducer<edm::GlobalCache<g
       std::map<reco::TrackRef,unsigned> refMap_;
 
       PFGeometry pfGeometry_;
+      // Debug "pass through" to store all info for all events
+      bool passThrough_;
 };
 #endif
