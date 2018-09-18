@@ -5,6 +5,7 @@ RecoEgammaFEVT = cms.PSet(
     outputCommands = cms.untracked.vstring(
         'keep *_gsfElectronCores_*_*', 
         'keep *_gsfElectrons_*_*', 
+        'keep *_lowPtGsfElectrons_*_*',
         'keep *_uncleanedOnlyGsfElectronCores_*_*', 
         'keep *_uncleanedOnlyGsfElectrons_*_*', 
         'keep *_eidRobustLoose_*_*',
@@ -46,7 +47,8 @@ RecoEgammaFEVT = cms.PSet(
         'keep *_hfRecoEcalCandidate_*_*',
         'keep *_hfEMClusters_*_*',
         'keep *_gedGsfElectronCores_*_*',
-        'keep *_gedGsfElectrons_*_*'
+        'keep *_gedGsfElectrons_*_*',
+        'keep *_lowPtGsfElectrons_*_*'
   )                                                                 
 )
 
@@ -56,6 +58,7 @@ RecoEgammaRECO = cms.PSet(
         'keep recoGsfElectronCores_gsfElectronCores_*_*',
         'keep recoGsfElectronCores_gedGsfElectronCores_*_*',
         'keep recoGsfElectrons_gsfElectrons_*_*',
+        'keep recoGsfElectrons_lowPtGsfElectrons_*_*',
         'keep recoGsfElectrons_gedGsfElectrons_*_*',
         'keep recoGsfElectronCores_uncleanedOnlyGsfElectronCores_*_*', 
         'keep recoGsfElectrons_uncleanedOnlyGsfElectrons_*_*', 
@@ -108,7 +111,8 @@ RecoEgammaRECO = cms.PSet(
         'keep recoRecoEcalCandidates_hfRecoEcalCandidate_*_*',
         'keep *_hfEMClusters_*_*',
         'keep *_gedGsfElectronCores_*_*',
-        'keep *_gedGsfElectrons_*_*'
+        'keep *_gedGsfElectrons_*_*',
+        'keep *_lowPtGsfElectrons_*_*'
   )                                                                 
 )
 
@@ -118,6 +122,7 @@ RecoEgammaAOD = cms.PSet(
         'keep recoGsfElectronCores_gsfElectronCores_*_*', 
         'keep recoGsfElectronCores_gedGsfElectronCores_*_*',
         'keep recoGsfElectrons_gsfElectrons_*_*', 
+        'keep recoGsfElectrons_lowPtGsfElectrons_*_*',
         'keep recoGsfElectrons_gedGsfElectrons_*_*', 
         'keep recoGsfElectronCores_uncleanedOnlyGsfElectronCores_*_*', 
         'keep recoGsfElectrons_uncleanedOnlyGsfElectrons_*_*', 
@@ -159,7 +164,8 @@ RecoEgammaAOD = cms.PSet(
         'keep recoRecoEcalCandidates_hfRecoEcalCandidate_*_*',
         'keep *_hfEMClusters_*_*',
         'keep *_gedGsfElectronCores_*_*',
-        'keep *_gedGsfElectrons_*_*'
+        'keep *_gedGsfElectrons_*_*',
+        'keep *_lowPtGsfElectrons_*_*'
   )                                                                 
 )
 
