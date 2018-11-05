@@ -7,10 +7,12 @@
 <use   name="Geometry/TrackerGeometryBuilder"/>
 <use   name="MagneticField/Engine"/>
 <use   name="MagneticField/Records"/>
+<use   name="FWCore/MessageLogger"/>
 <use   name="FWCore/Framework"/>
 <use   name="FWCore/ParameterSet"/>
 <use   name="FWCore/PluginManager"/>
 <use   name="DataFormats/EgammaCandidates"/>
+<use   name="DataFormats/GsfTrackReco"/>
 <use   name="DataFormats/DetId"/>
 <use   name="DataFormats/SiPixelCluster"/>
 <use   name="DataFormats/TrackerRecHit2D"/>
