@@ -13,6 +13,7 @@
 #include "LowPtGsfElectronSeedProducer.h"
 #include "DataFormats/EgammaReco/interface/ElectronSeed.h"
 #include "DataFormats/EgammaReco/interface/ElectronSeedFwd.h"
+#include "DataFormats/GeometryVector/interface/GlobalPoint.h"
 #include "DataFormats/Math/interface/LorentzVector.h"
 #include "DataFormats/ParticleFlowReco/interface/PreIdFwd.h"
 #include "DataFormats/ParticleFlowReco/interface/PFCluster.h"
