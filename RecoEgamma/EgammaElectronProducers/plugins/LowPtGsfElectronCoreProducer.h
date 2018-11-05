@@ -13,14 +13,11 @@ class LowPtGsfElectronCoreProducer : public GsfElectronCoreBaseProducer {
   
   explicit LowPtGsfElectronCoreProducer( const edm::ParameterSet& conf );
   
-  ~LowPtGsfElectronCoreProducer() override;
+  ~LowPtGsfElectronCoreProducer();
   
-  void produce( edm::Event&, const edm::EventSetup& ) override;
+  void produce( edm::Event&, const edm::EventSetup& );
   
  private:
-  
-  void produceTrackerDrivenCore( const reco::GsfTrackRef& gsfTrackRef, 
-				 reco::GsfElectronCoreCollection* electrons );
   
   edm::EDGetTokenT<reco::SuperClusterCollection> superClusters_;
   edm::EDGetTokenT< edm::ValueMap<reco::SuperClusterRef> > superClusterRefs_;
