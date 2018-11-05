@@ -19,6 +19,8 @@ LowPtGsfElectronCoreProducer::LowPtGsfElectronCoreProducer( const edm::Parameter
   superClusterRefs_ = consumes< edm::ValueMap<reco::SuperClusterRef> >(config.getParameter<edm::InputTag>("superClusters"));
 }
 
+LowPtGsfElectronCoreProducer::~LowPtGsfElectronCoreProducer() {}
+
 void LowPtGsfElectronCoreProducer::produce( edm::Event& event, const edm::EventSetup& setup ) {
 
   // Output collection
@@ -61,19 +63,7 @@ void LowPtGsfElectronCoreProducer::produce( edm::Event& event, const edm::EventS
 
   }
 
-  //std::cout << "[LowPtGsfElectronCoreProducer::produce] " << electrons->size() << std::endl; //@@
   event.put(std::move(electrons));
 
 }
-
-void LowPtGsfElectronCoreProducer::produceTrackerDrivenCore( const GsfTrackRef& gsfTrackRef,
-							     GsfElectronCoreCollection* electrons ) {
-  //@@ This method not currently used!
-  GsfElectronCore* eleCore = new GsfElectronCore(gsfTrackRef);
-  if (eleCore->ecalDrivenSeed()) { delete eleCore; return; }
-  GsfElectronCoreBaseProducer::fillElectronCore(eleCore);
-  electrons->push_back(*eleCore);
-}
-
-LowPtGsfElectronCoreProducer::~LowPtGsfElectronCoreProducer() {}
 
