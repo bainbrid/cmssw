@@ -31,9 +31,11 @@ electronGsfTracksOpen = electronGsfTracks.clone()
 electronGsfTracksOpen.Fitter = 'GsfElectronFittingSmootherOpen'
 electronGsfTracksOpen.src = 'electronCkfTrackCandidatesOpen'
 
-# PFTracks
+# PFTracks (post electronGsfTracks module)
 from RecoParticleFlow.PFTracking.pfTrack_cfi import *
 pfTrackOpen = pfTrack.clone()
+pfTrackOpen.TkColList = ["generalTracks"]
+pfTrackOpen.GsfTracksInEvents = True
 pfTrackOpen.GsfTrackModuleLabel = 'electronGsfTracksOpen'
 
 # PFGSFTracks
