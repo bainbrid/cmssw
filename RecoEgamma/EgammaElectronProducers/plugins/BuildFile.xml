@@ -11,6 +11,7 @@
 <use   name="FWCore/Framework"/>
 <use   name="FWCore/ParameterSet"/>
 <use   name="FWCore/PluginManager"/>
+<use   name="DataFormats/Candidate"/>
 <use   name="DataFormats/EgammaCandidates"/>
 <use   name="DataFormats/GsfTrackReco"/>
 <use   name="DataFormats/DetId"/>
