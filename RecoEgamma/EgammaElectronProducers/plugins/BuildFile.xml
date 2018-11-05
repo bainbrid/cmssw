@@ -20,6 +20,14 @@
 <use   name="hepmc"/>
 <use   name="clhep"/>
 <use   name="root"/>
+
+<use   name="FastSimulation/BaseParticlePropagator"/>
+<use   name="FWCore/Utilities"/>
+<use   name="DataFormats/Math"/>
+<use   name="DataFormats/EgammaReco"/>
+<use   name="DataFormats/TrackReco"/>
+<use   name="DataFormats/ParticleFlowReco"/>
+<use   name="DataFormats/GeometryVector"/>
 <library   file="*.cc" name="RecoEgammaEgammaElectronProducersPlugins">
   <flags   EDM_PLUGIN="1"/>
 </library>
