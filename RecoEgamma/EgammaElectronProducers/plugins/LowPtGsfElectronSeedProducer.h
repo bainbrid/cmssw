@@ -5,7 +5,6 @@
 #include "DataFormats/ParticleFlowReco/interface/PFClusterFwd.h"
 #include "DataFormats/ParticleFlowReco/interface/PreId.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
-#include "DataFormats/GeometryVector/interface/GlobalPoint.h"
 #include "FWCore/Framework/interface/stream/EDProducer.h"
 class BaseParticlePropagator;
 
