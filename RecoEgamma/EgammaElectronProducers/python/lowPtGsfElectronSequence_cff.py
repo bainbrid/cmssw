@@ -6,13 +6,9 @@ import FWCore.ParameterSet.Config as cms
 # tracker-driven electron seeds, KF track candidates, GSF tracks.
 #==============================================================================
 
-# Tracker-driven seeds
+# Low pT electron seeds
 # Below relies on default configuration for generalTracks
-from RecoParticleFlow.PFTracking.trackerDrivenElectronSeeds_cfi import *
-trackerDrivenElectronSeedsOpen = trackerDrivenElectronSeeds.clone()
-trackerDrivenElectronSeedsOpen.PassThrough = True
-trackerDrivenElectronSeedsOpen.PtThresholdSavePreId = 0.
-trackerDrivenElectronSeedsOpen.MinPt = 0.
+from RecoEgamma.EgammaElectronProducers.lowPtGsfElectronSeeds_cfi import *
 
 # Electron (KF) track candidates
 from TrackingTools.GsfTracking.CkfElectronCandidateMaker_cff import *
@@ -23,7 +19,7 @@ TrajectoryBuilderForElectronsOpen = TrajectoryBuilderForElectrons.clone()
 TrajectoryBuilderForElectronsOpen.trajectoryFilter.refToPSet_ = 'TrajectoryFilterForElectronsOpen'
 electronCkfTrackCandidatesOpen = electronCkfTrackCandidates.clone()
 electronCkfTrackCandidatesOpen.TrajectoryBuilderPSet.refToPSet_ = 'TrajectoryBuilderForElectronsOpen'
-electronCkfTrackCandidatesOpen.src = 'trackerDrivenElectronSeedsOpen:SeedsForGsf'
+electronCkfTrackCandidatesOpen.src = 'lowPtGsfElectronSeeds'
 
 # GSF tracks
 from TrackingTools.GsfTracking.GsfElectronGsfFit_cff import *
@@ -65,7 +61,7 @@ lowPtGsfElectronCores.useGsfPfRecTracks = True
 # Low pT electrons
 from RecoEgamma.EgammaElectronProducers.lowPtGsfElectrons_cfi import *
 lowPtGsfElectrons.gsfElectronCoresTag = 'lowPtGsfElectronCores'
-lowPtGsfElectrons.seedsTag = 'trackerDrivenElectronSeedsOpen:SeedsForGsf'
+lowPtGsfElectrons.seedsTag = 'lowPtGsfElectronSeeds'
 lowPtGsfElectrons.gsfPfRecTracksTag = 'pfTrackElecOpen'
 # Ignore below for now
 #lowPtGsfElectrons.ctfTracksCheck = False
@@ -81,7 +77,7 @@ lowPtGsfElectrons.gsfPfRecTracksTag = 'pfTrackElecOpen'
 #lowPtGsfElectrons.minMvaByPassForIsolatedPflow = -0.4
 
 # Full Open sequence 
-lowPtGsfElectronSequence = cms.Sequence(trackerDrivenElectronSeedsOpen+
+lowPtGsfElectronSequence = cms.Sequence(lowPtGsfElectronSeeds+
                                         electronCkfTrackCandidatesOpen+
                                         electronGsfTracksOpen+
                                         pfTrackOpen+
