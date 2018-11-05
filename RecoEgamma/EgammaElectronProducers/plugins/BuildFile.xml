@@ -23,6 +23,7 @@
 
 <use   name="FastSimulation/BaseParticlePropagator"/>
 <use   name="FWCore/Utilities"/>
+<use   name="DataFormats/Common"/>
 <use   name="DataFormats/Math"/>
 <use   name="DataFormats/EgammaReco"/>
 <use   name="DataFormats/TrackReco"/>
