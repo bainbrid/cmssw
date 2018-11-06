@@ -1,4 +1,5 @@
 <use   name="RecoEgamma/EgammaElectronAlgos"/>
+<use   name="RecoEgamma/EgammaElectronProducers"/>
 <use   name="RecoEgamma/EgammaIsolationAlgos"/>
 <use   name="RecoTracker/CkfPattern"/>
 <use   name="RecoTracker/TrackProducer"/>
@@ -20,6 +21,11 @@
 <use   name="DataFormats/TrackingRecHit"/>
 <use   name="DataFormats/ParticleFlowCandidate"/>
 <use   name="RecoParticleFlow/PFClusterTools"/>
+<use   name="RecoTracker/TransientTrackingRecHit"/>
+<use   name="TrackingTools/PatternTools"/>
+<use   name="TrackingTools/Records"/>
+<use   name="TrackingTools/TrajectoryParametrization"/>
+<use   name="TrackingTools/TrajectoryState"/>
 <use   name="hepmc"/>
 <use   name="clhep"/>
 <use   name="root"/>
