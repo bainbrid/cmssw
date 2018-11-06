@@ -13,9 +13,9 @@ class LowPtGsfElectronCoreProducer : public GsfElectronCoreBaseProducer {
   
   explicit LowPtGsfElectronCoreProducer( const edm::ParameterSet& conf );
   
-  ~LowPtGsfElectronCoreProducer();
+  ~LowPtGsfElectronCoreProducer() override;
   
-  void produce( edm::Event&, const edm::EventSetup& );
+  void produce( edm::Event&, const edm::EventSetup& ) override;
   
  private:
   
