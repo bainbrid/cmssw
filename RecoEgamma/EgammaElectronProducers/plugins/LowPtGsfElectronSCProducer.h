@@ -16,9 +16,9 @@ class LowPtGsfElectronSCProducer : public edm::stream::EDProducer<> {
   
   explicit LowPtGsfElectronSCProducer( const edm::ParameterSet& );
 
-  ~LowPtGsfElectronSCProducer();
+  ~LowPtGsfElectronSCProducer() override;
 
-  void produce( edm::Event&, const edm::EventSetup& );
+  void produce( edm::Event&, const edm::EventSetup& ) override;
 
  private:
 
