@@ -10,9 +10,9 @@ class LowPtGsfElectronProducer : public GsfElectronBaseProducer {
   explicit LowPtGsfElectronProducer( const edm::ParameterSet&, 
 				     const gsfAlgoHelpers::HeavyObjectCache* );
 
-  ~LowPtGsfElectronProducer();
+  ~LowPtGsfElectronProducer() override;
 
-  void produce( edm::Event&, const edm::EventSetup& );
+  void produce( edm::Event&, const edm::EventSetup& ) override;
 
  private:
 
