@@ -1,0 +1,6 @@
+<use name="CondFormats/EgammaObjects"/>
+<use name="FWCore/ParameterSet"/>
+<use name="roottmva"/>
+<export>
+  <lib name="RecoEgammaEgammaElectronProducers"/>
+</export>
