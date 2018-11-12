@@ -70,8 +70,10 @@ void LowPtGsfElectronSCProducer::produce( edm::Event& event, const edm::EventSet
       const reco::PFTrajectoryPoint& point2 = brem->extrapolatedPoint(LayerType::ECALShowerMax);
       reco::PFClusterRef best_brem = closest_cluster( point2, ecalClusters, ecal_matched );
 
-      if(!best_brem.isNull()) {
-	if(best_seed.isNull()) best_seed = best_brem;
+      if ( !best_brem.isNull() ) {
+	// If no seed, use brem
+	if ( best_seed.isNull() ) best_seed = best_brem;
+	// Store brem cluster
 	clusteredRefs.push_back(best_brem);
       }
 
@@ -97,11 +99,11 @@ void LowPtGsfElectronSCProducer::produce( edm::Event& event, const edm::EventSet
     //    }
 
     //now we need to make the supercluster
-    if(!best_seed.isNull()) {
+    if ( !best_seed.isNull() ) {
 
       float posX=0.,posY=0.,posZ=0.;
       float scEnergy=0.;
-      for(const auto clus : clusteredRefs){
+      for ( const auto clus : clusteredRefs ) {
 	scEnergy+=clus->correctedEnergy();
 	posX+=clus->correctedEnergy()*clus->position().X();
 	posY+=clus->correctedEnergy()*clus->position().Y();
@@ -114,7 +116,7 @@ void LowPtGsfElectronSCProducer::produce( edm::Event& event, const edm::EventSet
       new_sc.setCorrectedEnergy(scEnergy);
       new_sc.setSeed(edm::refToPtr(best_seed));
       std::vector<const reco::PFCluster*> barePtrs;
-      for(const auto clus : clusteredRefs){
+      for ( const auto clus : clusteredRefs ) {
 	new_sc.addCluster(edm::refToPtr(clus));
 	barePtrs.push_back(&*clus);
       }
@@ -128,7 +130,7 @@ void LowPtGsfElectronSCProducer::produce( edm::Event& event, const edm::EventSet
       
       // Populate ValueMap container
       clusters_valuemap.push_back( reco::SuperClusterRef(clusters_refprod,igsfpf) );
-    }else{
+    } else {
       clusters_valuemap.push_back( reco::SuperClusterRef(clusters_refprod.id()) );
     }
   }
