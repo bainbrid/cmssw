@@ -65,7 +65,7 @@ void LowPtGsfElectronSeedProducer::produce( edm::Event& event,
   edm::Handle<reco::TrackCollection> tracks;
   event.getByToken(tracks_, tracks);
   
-  edm::Handle<PFClusters> clusters;
+  edm::Handle<reco::PFClusterCollection> clusters;
   event.getByToken(clusters_,clusters);
 
   for ( unsigned int itrk = 0; itrk < tracks.product()->size(); itrk++ ) {
@@ -109,7 +109,7 @@ void LowPtGsfElectronSeedProducer::produce( edm::Event& event,
 
 bool LowPtGsfElectronSeedProducer::propagate_to_ecal( reco::PreId& preid,
 						      const reco::TrackRef& track_ref,
-						      const edm::Handle<PFClusters>& clusters )
+						      const edm::Handle<reco::PFClusterCollection>& clusters )
 {
 
   // Propagate 'electron' to ECAL surface
