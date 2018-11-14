@@ -152,17 +152,17 @@ reco::PFClusterRef LowPtGsfElectronSCProducer::closest_cluster( const reco::PFTr
 								std::vector<int>& matched ) {
   reco::PFClusterRef best_ref;
   if ( point.isValid() ) {
-    float min_dr = 1.e6;
+    float min_dr2 = 1.e6;
     for ( size_t ii = 0; ii < clusters->size(); ++ii ) {
       if ( std::find( matched.begin(), matched.end(), ii ) == matched.end() ) {
-	float dr = reco::deltaR( clusters->at(ii), point.positionREP() );
-	if ( dr < min_dr ) {
+	float dr2 = reco::deltaR2( clusters->at(ii), point.positionREP() );
+	if ( dr2 < min_dr2 ) {
 	  best_ref = reco::PFClusterRef( clusters, ii );
-	  min_dr = dr;
+	  min_dr2 = dr2;
 	}
       }
     }
-    if ( min_dr < 1.e5 ) { matched.push_back( best_ref.index() ); }
+    if ( min_dr2 < 1.e5 ) { matched.push_back( best_ref.index() ); }
   }
   return best_ref;
 }
