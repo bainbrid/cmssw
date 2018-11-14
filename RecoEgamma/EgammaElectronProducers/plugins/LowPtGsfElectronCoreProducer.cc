@@ -43,7 +43,7 @@ void LowPtGsfElectronCoreProducer::produce( edm::Event& event, const edm::EventS
     reco::GsfTrackRef gsf = pfgsf->gsfTrackRef();
     const reco::SuperClusterRef sc = (*superClusterRefs)[pfgsf];
 
-    // Construct and keep ElectronCore if GSF(PF) track and SC are present
+    // Construct GsfElectronCore and add GSF(PF) track and SC
     GsfElectronCore* core = new GsfElectronCore(gsf);
     if ( core->ecalDrivenSeed() ) { delete core; return; }
 
@@ -55,6 +55,9 @@ void LowPtGsfElectronCoreProducer::produce( edm::Event& event, const edm::EventS
 
     // Store
     electrons->push_back(*core);
+
+    // Delete object
+    delete core;
 
   }
 
