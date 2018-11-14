@@ -164,3 +164,10 @@ reco::PFClusterRef LowPtGsfElectronSCProducer::closest_cluster( const reco::PFTr
   }
   return best_ref;
 }
+
+void LowPtGsfElectronSCProducer::fillDescription( edm::ParameterSetDescription& desc ) 
+{
+  desc.add<edm::InputTag>("gsfPfRecTracks",edm::InputTag("lowPtGsfElePfGsfTracks"));
+  desc.add<edm::InputTag>("ecalClusters",edm::InputTag("particleFlowClusterECAL"));
+  desc.add<edm::InputTag>("hcalClusters",edm::InputTag("particleFlowClusterHCAL"));
+}
