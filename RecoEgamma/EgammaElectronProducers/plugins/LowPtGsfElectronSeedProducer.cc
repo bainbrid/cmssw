@@ -19,9 +19,7 @@
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackBase.h"
 #include "FastSimulation/BaseParticlePropagator/interface/BaseParticlePropagator.h"
-#include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
-#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 #include "MagneticField/Records/interface/IdealMagneticFieldRecord.h"
 #include "RecoTracker/TransientTrackingRecHit/interface/TkClonerImpl.h"
@@ -43,6 +41,7 @@ LowPtGsfElectronSeedProducer::LowPtGsfElectronSeedProducer( const edm::Parameter
   fitter_ = conf.getParameter<std::string>("Fitter");
   smoother_ = conf.getParameter<std::string>("Smoother");
   builder_ = conf.getParameter<std::string>("TTRHBuilder");
+  threshold_ = conf.getParameter<double>("Threshold");
   pass_through_ = conf.getParameter<bool>("PassThrough");
   produces<reco::ElectronSeedCollection>();
   produces<reco::PreIdCollection>();
@@ -297,22 +296,20 @@ bool LowPtGsfElectronSeedProducer::bdt_decision( reco::PreId& preid )
     preid_gsf_chi2red
   };
   float output = globalCache()->gbr->GetClassifier(features);
-  float bdt_cut = 0.9;
-  preid.setMVA( output > bdt_cut, output );
+  preid.setMVA( output > threshold_, output );
   
-  return output > bdt_cut;
+  return output > threshold_;
   
 }
 
-void LowPtGsfElectronSeedProducer::fillDescriptions( edm::ConfigurationDescriptions& descriptions ) 
+void LowPtGsfElectronSeedProducer::fillDescription( edm::ParameterSetDescription& desc ) 
 {
-  edm::ParameterSetDescription desc;
   desc.add<edm::InputTag>("tracks",edm::InputTag("generalTracks"));
   desc.add<edm::InputTag>("clusters",edm::InputTag("particleFlowClusterECAL"));
   desc.add<std::string>("Fitter","GsfTrajectoryFitter_forPreId");
   desc.add<std::string>("Smoother","GsfTrajectorySmoother_forPreId");
   desc.add<std::string>("TTRHBuilder","WithAngleAndTemplate");
   desc.add<std::string>("Weights","RecoEgamma/EgammaElectronProducers/data/BDT.xml");
+  desc.add<double>("Threshold",-0.616);
   desc.add<bool>("PassThrough",false);
-  descriptions.add("lowPtGsfElectronSeeds",desc);
 }
