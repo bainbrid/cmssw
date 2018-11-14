@@ -5,6 +5,7 @@
 #include "DataFormats/EgammaCandidates/interface/GsfElectronCoreFwd.h"
 #include "DataFormats/EgammaReco/interface/SuperCluster.h"
 #include "DataFormats/EgammaReco/interface/SuperClusterFwd.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 #include "RecoEgamma/EgammaElectronProducers/plugins/GsfElectronCoreBaseProducer.h"
 
 class LowPtGsfElectronCoreProducer : public GsfElectronCoreBaseProducer {
@@ -17,8 +18,10 @@ class LowPtGsfElectronCoreProducer : public GsfElectronCoreBaseProducer {
   
   void produce( edm::Event&, const edm::EventSetup& ) override;
   
+  static void fillDescription( edm::ParameterSetDescription& );
+
  private:
-  
+
   edm::EDGetTokenT<reco::SuperClusterCollection> superClusters_;
   edm::EDGetTokenT< edm::ValueMap<reco::SuperClusterRef> > superClusterRefs_;
 
