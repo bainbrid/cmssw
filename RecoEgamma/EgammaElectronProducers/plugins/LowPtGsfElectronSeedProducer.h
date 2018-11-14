@@ -39,11 +39,9 @@ class LowPtGsfElectronSeedProducer final : public edm::stream::EDProducer< edm::
   
  private:
 
-  typedef reco::PFClusterCollection PFClusters;
-  
   bool propagate_to_ecal( reco::PreId&,
 			  const reco::TrackRef&,
-			  const edm::Handle<PFClusters>& );
+			  const edm::Handle<reco::PFClusterCollection>& );
   
   bool light_gsf_tracking( reco::PreId&,
 			   const reco::TrackRef&,
