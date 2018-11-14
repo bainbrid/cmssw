@@ -9,6 +9,7 @@
 #include "DataFormats/ParticleFlowReco/interface/PFTrajectoryPoint.h"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/stream/EDProducer.h"
+#include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
 class LowPtGsfElectronSCProducer : public edm::stream::EDProducer<> {
   
@@ -19,6 +20,8 @@ class LowPtGsfElectronSCProducer : public edm::stream::EDProducer<> {
   ~LowPtGsfElectronSCProducer() override;
 
   void produce( edm::Event&, const edm::EventSetup& ) override;
+
+  static void fillDescription( edm::ParameterSetDescription& );
 
  private:
 
