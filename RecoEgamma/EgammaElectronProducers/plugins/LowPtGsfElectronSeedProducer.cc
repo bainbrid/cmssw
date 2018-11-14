@@ -14,6 +14,8 @@
 #include "DataFormats/EgammaReco/interface/ElectronSeedFwd.h"
 #include "DataFormats/GeometryVector/interface/GlobalPoint.h"
 #include "DataFormats/GeometryVector/interface/GlobalVector.h"
+#include "DataFormats/Math/interface/deltaPhi.h"
+#include "DataFormats/Math/interface/deltaR.h"
 #include "DataFormats/Math/interface/LorentzVector.h"
 #include "DataFormats/ParticleFlowReco/interface/PreIdFwd.h"
 #include "DataFormats/TrackReco/interface/Track.h"
@@ -138,8 +140,8 @@ bool LowPtGsfElectronSeedProducer::propagate_to_ecal( reco::PreId& preid,
   // Store info for PreId
   struct Info {
     reco::PFClusterRef clu_ref = reco::PFClusterRef();
-    float min_dr = 1.e6;
-    float dr = 1.e6;
+    float min_dr2 = 1.e6;
+    float dr2 = 1.e6;
     float deta = 1.e6;
     float dphi = 1.e6;
     math::XYZPoint shower_pos = math::XYZPoint(0.,0.,0.);
@@ -160,15 +162,14 @@ bool LowPtGsfElectronSeedProducer::propagate_to_ecal( reco::PreId& preid,
 
     // Determine deta, dphi, dr
     float deta = std::abs( clu_ref->positionREP().eta() - shower_pos.eta() );
-    float dphi = std::abs( clu_ref->positionREP().phi() - shower_pos.phi() );
-    if ( dphi > float(TMath::Pi())) { dphi -= float(TMath::TwoPi()); }
-    float dr = std::sqrt( std::pow(dphi,2.f) + std::pow(deta,2.f) );
-    
+    float dphi = std::abs( reco::deltaPhi( clu_ref->positionREP().phi(), shower_pos.phi() ));
+    float dr2 = reco::deltaR2( clu_ref->positionREP(), shower_pos );
+
     // Find nearest ECAL cluster
-    if ( dr < info.min_dr ) {
-      info.min_dr = dr;
+    if ( dr2 < info.min_dr2 ) {
+      info.min_dr2 = dr2;
       info.clu_ref = clu_ref;
-      info.dr = dr;
+      info.dr2 = dr2;
       info.deta = deta;
       info.dphi = dphi;
       info.shower_pos = shower_pos;
