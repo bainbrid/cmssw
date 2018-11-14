@@ -37,7 +37,7 @@ void LowPtGsfElectronProducer::produce( edm::Event& event, const edm::EventSetup
     const GsfTrackRef& gsf = ref->gsfTrack();
 
     GsfElectron* ele = new GsfElectron(ref);
-    ele->setP4( GsfElectron::P4_FROM_SUPER_CLUSTER,
+    ele->setP4( GsfElectron::P4_COMBINATION,
 		Candidate::LorentzVector(gsf->px(),gsf->py(),gsf->pz(),0.511E-3),
 		0,
 		true );
