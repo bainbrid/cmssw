@@ -13,11 +13,11 @@
 
 LowPtGsfElectronSCProducer::LowPtGsfElectronSCProducer( const edm::ParameterSet& cfg )
 {
-  produces<SuperClusters>();
+  produces<reco::SuperClusterCollection>();
   produces< edm::ValueMap<reco::SuperClusterRef> >();
-  gsfPfRecTracks_ = consumes<GsfPFRecTracks>( cfg.getParameter<edm::InputTag>("gsfPfRecTracks") );
-  ecalClusters_ = consumes<PFClusters>( cfg.getParameter<edm::InputTag>("ecalClusters") );
-  hcalClusters_ = consumes<PFClusters>( cfg.getParameter<edm::InputTag>("hcalClusters") );
+  gsfPfRecTracks_ = consumes<reco::GsfPFRecTrackCollection>( cfg.getParameter<edm::InputTag>("gsfPfRecTracks") );
+  ecalClusters_ = consumes<reco::PFClusterCollection>( cfg.getParameter<edm::InputTag>("ecalClusters") );
+  hcalClusters_ = consumes<reco::PFClusterCollection>( cfg.getParameter<edm::InputTag>("hcalClusters") );
 }
 
 LowPtGsfElectronSCProducer::~LowPtGsfElectronSCProducer()
@@ -26,22 +26,22 @@ LowPtGsfElectronSCProducer::~LowPtGsfElectronSCProducer()
 void LowPtGsfElectronSCProducer::produce( edm::Event& event, const edm::EventSetup& setup )
 {
 
-  edm::Handle<PFClusters> ecalClusters;
+  edm::Handle<reco::PFClusterCollection> ecalClusters;
   event.getByToken(ecalClusters_,ecalClusters);
   if ( !ecalClusters.isValid() ) { edm::LogError("Problem with ecalClusters handle"); }
 
-  edm::Handle<PFClusters> hcalClusters;
+  edm::Handle<reco::PFClusterCollection> hcalClusters;
   event.getByToken(hcalClusters_,hcalClusters);
   if ( !hcalClusters.isValid() ) { edm::LogError("Problem with hcalClusters handle"); }
 
-  edm::Handle<GsfPFRecTracks> gsfPfRecTracks;
+  edm::Handle<reco::GsfPFRecTrackCollection> gsfPfRecTracks;
   event.getByToken(gsfPfRecTracks_,gsfPfRecTracks);
   if ( !gsfPfRecTracks.isValid() ) { edm::LogError("Problem with gsfPfRecTracks handle"); }
 
   // SuperCluster container and getRefBeforePut
-  std::unique_ptr<SuperClusters> clusters( new SuperClusters() );
+  std::unique_ptr<reco::SuperClusterCollection> clusters( new reco::SuperClusterCollection() );
   clusters->reserve(gsfPfRecTracks->size());
-  const reco::SuperClusterRefProd clusters_refprod = event.getRefBeforePut<SuperClusters>();
+  const reco::SuperClusterRefProd clusters_refprod = event.getRefBeforePut<reco::SuperClusterCollection>();
 
   // ValueMap container
   std::vector<reco::SuperClusterRef> clusters_valuemap;
@@ -55,7 +55,7 @@ void LowPtGsfElectronSCProducer::produce( edm::Event& event, const edm::EventSet
     reco::GsfTrackRef gsf = gsfpf->gsfTrackRef();
 
     // Find closest "seed cluster" to GSF track extrapolated to ECAL
-    const reco::PFTrajectoryPoint& point1 = gsfpf->extrapolatedPoint(LayerType::ECALShowerMax);
+    const reco::PFTrajectoryPoint& point1 = gsfpf->extrapolatedPoint(reco::PFTrajectoryPoint::LayerType::ECALShowerMax);
     reco::PFClusterRef best_seed = closest_cluster( point1, ecalClusters, ecal_matched );
 
     std::vector<reco::PFClusterRef> clusteredRefs;
@@ -67,7 +67,7 @@ void LowPtGsfElectronSCProducer::produce( edm::Event& event, const edm::EventSet
     for ( brem = brems.begin(); brem != brems.end(); ++brem ) {
 
       // Find closest "brem cluster" using brem trajectory extrapolated to ECAL
-      const reco::PFTrajectoryPoint& point2 = brem->extrapolatedPoint(LayerType::ECALShowerMax);
+      const reco::PFTrajectoryPoint& point2 = brem->extrapolatedPoint(reco::PFTrajectoryPoint::LayerType::ECALShowerMax);
       reco::PFClusterRef best_brem = closest_cluster( point2, ecalClusters, ecal_matched );
 
       if ( !best_brem.isNull() ) {
@@ -83,7 +83,7 @@ void LowPtGsfElectronSCProducer::produce( edm::Event& event, const edm::EventSet
     reco::PFTrajectoryPoint point3;
     if ( best_seed.isNull() ) { 
       const reco::PFRecTrackRef& kfpf = gsfpf->kfPFRecTrackRef();
-      point3 = kfpf->extrapolatedPoint(LayerType::ECALShowerMax);
+      point3 = kfpf->extrapolatedPoint(reco::PFTrajectoryPoint::LayerType::ECALShowerMax);
       reco::PFClusterRef best_kf = closest_cluster( point3, ecalClusters, ecal_matched );
       if( !best_kf.isNull() ) { 
 	best_seed = best_kf; 
@@ -148,7 +148,7 @@ void LowPtGsfElectronSCProducer::produce( edm::Event& event, const edm::EventSet
 }
 
 reco::PFClusterRef LowPtGsfElectronSCProducer::closest_cluster( const reco::PFTrajectoryPoint& point,
-								const edm::Handle<PFClusters>& clusters,
+								const edm::Handle<reco::PFClusterCollection>& clusters,
 								std::vector<int>& matched ) {
   reco::PFClusterRef best_ref;
   if ( point.isValid() ) {
