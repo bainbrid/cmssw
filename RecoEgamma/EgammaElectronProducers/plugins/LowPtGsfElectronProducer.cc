@@ -48,6 +48,7 @@ void LowPtGsfElectronProducer::produce( edm::Event& event, const edm::EventSetup
       << ele->p4().e();
 
     electrons->push_back(*ele);
+    delete ele;
 
   }
 
