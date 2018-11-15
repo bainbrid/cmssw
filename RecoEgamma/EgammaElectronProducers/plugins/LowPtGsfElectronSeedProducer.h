@@ -13,22 +13,22 @@
 #include "MagneticField/Engine/interface/MagneticField.h"
 #include "RecoEgamma/EgammaElectronProducers/interface/LowPtGsfElectronSeedHeavyObjectCache.h"
 
-class LowPtGsfElectronSeedProducer final : public edm::stream::EDProducer< edm::GlobalCache<lowpt::HeavyObjectCache> >
+class LowPtGsfElectronSeedProducer final : public edm::stream::EDProducer< edm::GlobalCache<lowptgsfeleseed::HeavyObjectCache> >
 {
   
  public:
   
   explicit LowPtGsfElectronSeedProducer( const edm::ParameterSet&, 
-					 const lowpt::HeavyObjectCache* );
+					 const lowptgsfeleseed::HeavyObjectCache* );
 
   ~LowPtGsfElectronSeedProducer() override;
   
-  static std::unique_ptr<lowpt::HeavyObjectCache> 
+  static std::unique_ptr<lowptgsfeleseed::HeavyObjectCache> 
     initializeGlobalCache( const edm::ParameterSet& conf ) {
-    return std::unique_ptr<lowpt::HeavyObjectCache>(new lowpt::HeavyObjectCache(conf));
+    return std::make_unique<lowptgsfeleseed::HeavyObjectCache>(lowptgsfeleseed::HeavyObjectCache(conf));
   }
   
-  static void globalEndJob( lowpt::HeavyObjectCache const* ) {}
+  static void globalEndJob( lowptgsfeleseed::HeavyObjectCache const* ) {}
   
   void beginLuminosityBlock( edm::LuminosityBlock const&, 
 			     edm::EventSetup const& ) override;

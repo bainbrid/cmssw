@@ -1,11 +1,11 @@
-#ifndef LowPtGsfElectronSeedHeavyObjectCache_h
-#define LowPtGsfElectronSeedHeavyObjectCache_h
+#ifndef RecoEgamma_EgammaElectronProducers_LowPtGsfElectronSeedHeavyObjectCache_h
+#define RecoEgamma_EgammaElectronProducers_LowPtGsfElectronSeedHeavyObjectCache_h
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "CondFormats/EgammaObjects/interface/GBRForest.h"
 #include <memory>
 
-namespace lowpt {
+namespace lowptgsfeleseed {
   class HeavyObjectCache {
 
   public:
@@ -38,4 +38,4 @@ namespace lowpt {
   };
 }
 
-#endif // LowPtGsfElectronSeedHeavyObjectCache_h
+#endif // RecoEgamma_EgammaElectronProducers_LowPtGsfElectronSeedHeavyObjectCache_h

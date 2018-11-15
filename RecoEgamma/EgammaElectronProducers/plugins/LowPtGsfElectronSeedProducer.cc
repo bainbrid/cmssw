@@ -35,7 +35,7 @@
 #include "TMath.h"
 
 LowPtGsfElectronSeedProducer::LowPtGsfElectronSeedProducer( const edm::ParameterSet& conf, 
-							    const lowpt::HeavyObjectCache* ) :
+							    const lowptgsfeleseed::HeavyObjectCache* ) :
   tracks_()
 {
   tracks_ = consumes<reco::TrackCollection>( conf.getParameter<edm::InputTag>("tracks") );

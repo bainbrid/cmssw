@@ -3,7 +3,7 @@
 #include "TMVA/Reader.h"
 #include <string>
 
-namespace lowpt {
+namespace lowptgsfeleseed {
   HeavyObjectCache::HeavyObjectCache( const edm::ParameterSet& conf ) {
     
     edm::FileInPath weights( conf.getParameter<std::string>("Weights") );
