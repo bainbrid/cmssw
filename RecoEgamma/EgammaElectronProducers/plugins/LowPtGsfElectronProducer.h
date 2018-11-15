@@ -1,5 +1,5 @@
-#ifndef LowPtGsfElectronProducer_h
-#define LowPtGsfElectronProducer_h
+#ifndef RecoEgamma_EgammaElectronProducers_LowPtGsfElectronProducer_h
+#define RecoEgamma_EgammaElectronProducers_LowPtGsfElectronProducer_h
 
 #include "RecoEgamma/EgammaElectronProducers/plugins/GsfElectronBaseProducer.h"
 
@@ -18,4 +18,4 @@ class LowPtGsfElectronProducer : public GsfElectronBaseProducer {
 
 };
 
-#endif // LowPtGsfElectronProducer_h
+#endif // RecoEgamma_EgammaElectronProducers_LowPtGsfElectronProducer_h

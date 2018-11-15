@@ -1,5 +1,5 @@
-#ifndef LowPtGsfElectronCoreProducer_h
-#define LowPtGsfElectronCoreProducer_h
+#ifndef RecoEgamma_EgammaElectronProducers_LowPtGsfElectronCoreProducer_h
+#define RecoEgamma_EgammaElectronProducers_LowPtGsfElectronCoreProducer_h
 
 #include "DataFormats/Common/interface/ValueMap.h"
 #include "DataFormats/EgammaCandidates/interface/GsfElectronCoreFwd.h"
@@ -27,5 +27,5 @@ class LowPtGsfElectronCoreProducer : public GsfElectronCoreBaseProducer {
 
 };
 
-#endif // LowPtGsfElectronCoreProducer_h
+#endif // RecoEgamma_EgammaElectronProducers_LowPtGsfElectronCoreProducer_h
 

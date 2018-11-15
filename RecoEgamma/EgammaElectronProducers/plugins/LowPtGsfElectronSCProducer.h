@@ -1,5 +1,5 @@
-#ifndef LowPtGsfElectronSCProducer_h
-#define LowPtGsfElectronSCProducer_h
+#ifndef RecoEgamma_EgammaElectronProducers_LowPtGsfElectronSCProducer_h
+#define RecoEgamma_EgammaElectronProducers_LowPtGsfElectronSCProducer_h
 
 #include "DataFormats/EgammaReco/interface/SuperClusterFwd.h"
 #include "DataFormats/ParticleFlowReco/interface/GsfPFRecTrack.h"
@@ -35,4 +35,4 @@ class LowPtGsfElectronSCProducer : public edm::stream::EDProducer<> {
 
 };
 
-#endif // LowPtGsfElectronSCProducer_h
+#endif // RecoEgamma_EgammaElectronProducers_LowPtGsfElectronSCProducer_h

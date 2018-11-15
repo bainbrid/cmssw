@@ -1,5 +1,5 @@
-#ifndef LowPtGsfElectronSeedProducer_h
-#define LowPtGsfElectronSeedProducer_h
+#ifndef RecoEgamma_EgammaElectronProducers_LowPtGsfElectronSeedProducer_h
+#define RecoEgamma_EgammaElectronProducers_LowPtGsfElectronSeedProducer_h
 
 #include "DataFormats/Common/interface/Handle.h"
 #include "DataFormats/EgammaReco/interface/ElectronSeed.h"
@@ -79,4 +79,4 @@ class LowPtGsfElectronSeedProducer final : public edm::stream::EDProducer< edm::
   
 };
 
-#endif // LowPtGsfElectronSeedProducer_h
+#endif // RecoEgamma_EgammaElectronProducers_LowPtGsfElectronSeedProducer_h
