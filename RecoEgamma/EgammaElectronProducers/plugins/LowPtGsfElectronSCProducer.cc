@@ -63,11 +63,10 @@ void LowPtGsfElectronSCProducer::produce( edm::Event& event, const edm::EventSet
 
     // Iterate through brem trajectories
     const std::vector<reco::PFBrem>& brems = gsfpf->PFRecBrem();
-    std::vector<reco::PFBrem>::const_iterator brem;
-    for ( brem = brems.begin(); brem != brems.end(); ++brem ) {
+    for ( auto brem : brems ) {
 
       // Find closest "brem cluster" using brem trajectory extrapolated to ECAL
-      const reco::PFTrajectoryPoint& point2 = brem->extrapolatedPoint(reco::PFTrajectoryPoint::LayerType::ECALShowerMax);
+      const reco::PFTrajectoryPoint& point2 = brem.extrapolatedPoint(reco::PFTrajectoryPoint::LayerType::ECALShowerMax);
       reco::PFClusterRef best_brem = closest_cluster( point2, ecalClusters, ecal_matched );
 
       if ( !best_brem.isNull() ) {
