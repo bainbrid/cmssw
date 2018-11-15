@@ -39,7 +39,7 @@ class LowPtGsfElectronSeedProducer final : public edm::stream::EDProducer< edm::
   
  private:
 
-  bool propagate_to_ecal( reco::PreId&,
+  void propagate_to_ecal( reco::PreId&,
 			  const reco::TrackRef&,
 			  const edm::Handle<reco::PFClusterCollection>& );
   
@@ -58,24 +58,6 @@ class LowPtGsfElectronSeedProducer final : public edm::stream::EDProducer< edm::
   std::string builder_;
   double threshold_;
   bool pass_through_;
-
-  // For BDT
-  float trk_pt;
-  float trk_eta;
-  float trk_phi;
-  float trk_p;
-  float trk_charge;
-  float trk_nhits;
-  float trk_high_purity;
-  float trk_inp;
-  float trk_outp;
-  float trk_chi2red;
-  float preid_trk_ecal_Deta;
-  float preid_trk_ecal_Dphi;
-  float preid_e_over_p;
-  float preid_gsf_dpt;
-  float preid_trk_gsf_chiratio;
-  float preid_gsf_chi2red;
   
 };
 
