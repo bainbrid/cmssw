@@ -141,7 +141,6 @@ bool LowPtGsfElectronSeedProducer::propagate_to_ecal( reco::PreId& preid,
   struct Info {
     reco::PFClusterRef clu_ref = reco::PFClusterRef();
     float min_dr2 = 1.e6;
-    float dr2 = 1.e6;
     float deta = 1.e6;
     float dphi = 1.e6;
     math::XYZPoint shower_pos = math::XYZPoint(0.,0.,0.);
@@ -169,7 +168,6 @@ bool LowPtGsfElectronSeedProducer::propagate_to_ecal( reco::PreId& preid,
     if ( dr2 < info.min_dr2 ) {
       info.min_dr2 = dr2;
       info.clu_ref = clu_ref;
-      info.dr2 = dr2;
       info.deta = deta;
       info.dphi = dphi;
       info.shower_pos = shower_pos;
