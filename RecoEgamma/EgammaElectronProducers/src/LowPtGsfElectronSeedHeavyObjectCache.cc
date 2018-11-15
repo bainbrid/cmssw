@@ -6,7 +6,7 @@
 namespace lowptgsfeleseed {
   HeavyObjectCache::HeavyObjectCache( const edm::ParameterSet& conf ) {
     
-    edm::FileInPath weights( conf.getParameter<std::string>("Weights") );
+    edm::FileInPath weights( conf.getParameter<edm::FileInPath>("Weights") );
     
     TMVA::Reader reader("!Color:Silent");
     reader.AddVariable("trk_pt",&trk_pt);
