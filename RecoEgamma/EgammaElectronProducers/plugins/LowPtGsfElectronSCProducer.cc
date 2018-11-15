@@ -39,7 +39,7 @@ void LowPtGsfElectronSCProducer::produce( edm::Event& event, const edm::EventSet
   if ( !gsfPfRecTracks.isValid() ) { edm::LogError("Problem with gsfPfRecTracks handle"); }
 
   // SuperCluster container and getRefBeforePut
-  std::unique_ptr<reco::SuperClusterCollection> clusters( new reco::SuperClusterCollection() );
+  auto clusters = std::make_unique<reco::SuperClusterCollection>( reco::SuperClusterCollection() );
   clusters->reserve(gsfPfRecTracks->size());
   const reco::SuperClusterRefProd clusters_refprod = event.getRefBeforePut<reco::SuperClusterCollection>();
 
@@ -139,7 +139,7 @@ void LowPtGsfElectronSCProducer::produce( edm::Event& event, const edm::EventSet
   event.put(std::move(clusters));
 
   // Put ValueMap<SuperClusterRef> in event
-  std::unique_ptr< edm::ValueMap<reco::SuperClusterRef> > ptr( new edm::ValueMap<reco::SuperClusterRef>() );
+  auto ptr = std::make_unique< edm::ValueMap<reco::SuperClusterRef> >( edm::ValueMap<reco::SuperClusterRef>() );
   edm::ValueMap<reco::SuperClusterRef>::Filler filler(*ptr);
   filler.insert(gsfPfRecTracks, clusters_valuemap.begin(), clusters_valuemap.end());
   filler.fill();
