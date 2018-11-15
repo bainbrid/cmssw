@@ -7,7 +7,7 @@ lowPtGsfElectronSeeds = cms.EDProducer(
     Fitter = cms.string('GsfTrajectoryFitter_forPreId'),
     Smoother = cms.string('GsfTrajectorySmoother_forPreId'),
     TTRHBuilder = cms.string('WithAngleAndTemplate'),
-    Weights = cms.string('RecoEgamma/EgammaElectronProducers/data/BDT.xml'),
+    Weights = cms.FileInPath('RecoEgamma/EgammaElectronProducers/data/BDT.xml'),
     Threshold = cms.double(-0.616),
     PassThrough = cms.bool(False),
     )
