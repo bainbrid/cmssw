@@ -109,7 +109,7 @@ void LowPtGsfElectronSeedProducer::produce( edm::Event& event,
 
 }
 
-bool LowPtGsfElectronSeedProducer::propagate_to_ecal( reco::PreId& preid,
+void LowPtGsfElectronSeedProducer::propagate_to_ecal( reco::PreId& preid,
 						      const reco::TrackRef& track_ref,
 						      const edm::Handle<reco::PFClusterCollection>& clusters )
 {
@@ -128,7 +128,7 @@ bool LowPtGsfElectronSeedProducer::propagate_to_ecal( reco::PreId& preid,
   BaseParticlePropagator particle( RawParticle(mom,pos), 0, 0, field.z() );
   particle.setCharge(track_ref->charge());
   particle.propagateToEcalEntrance(false);
-  if ( particle.getSuccess() != 0 ) { return false; }
+  if ( particle.getSuccess() != 0 ) { return; }
   
   // ECAL entry point for track
   GlobalPoint ecal_pos(particle.vertex().x(),
@@ -192,7 +192,7 @@ bool LowPtGsfElectronSeedProducer::propagate_to_ecal( reco::PreId& preid,
 				   track_ref->normalizedChi2(), // chi2
 				   ep );
   
-  return true;
+  return;
   
 }
 
@@ -259,45 +259,29 @@ bool LowPtGsfElectronSeedProducer::light_gsf_tracking( reco::PreId& preid,
 bool LowPtGsfElectronSeedProducer::bdt_decision( reco::PreId& preid )
 {
   
-  trk_pt = preid.trackRef()->pt();
-  trk_eta = preid.trackRef()->eta();
-  trk_phi = preid.trackRef()->phi();
-  trk_p = preid.trackRef()->p();
-  trk_charge = preid.trackRef()->charge();
-  trk_nhits = preid.trackRef()->found();
-  trk_high_purity = preid.trackRef()->quality(reco::TrackBase::qualityByName("highPurity"));
-  trk_inp = sqrt( preid.trackRef()->innerMomentum().Mag2() );
-  trk_outp = sqrt( preid.trackRef()->outerMomentum().Mag2() );
-  trk_chi2red = preid.trackRef()->normalizedChi2();
-  preid_trk_ecal_Deta = preid.geomMatching()[0];
-  preid_trk_ecal_Dphi = preid.geomMatching()[1];
-  preid_e_over_p = preid.eopMatch();
-  preid_gsf_dpt = preid.dpt();
-  preid_trk_gsf_chiratio = preid.chi2Ratio();
-  preid_gsf_chi2red = preid.gsfChi2();
-  
   float features[16] = { 
-    trk_pt,
-    trk_eta,
-    trk_phi,
-    trk_p,
-    trk_charge,
-    trk_nhits,
-    trk_high_purity,
-    trk_inp,
-    trk_outp,
-    trk_chi2red,
-    preid_trk_ecal_Deta,
-    preid_trk_ecal_Dphi,
-    preid_e_over_p,
-    preid_gsf_dpt,
-    preid_trk_gsf_chiratio,
-    preid_gsf_chi2red
+    (float)preid.trackRef()->pt(),
+    (float)preid.trackRef()->eta(),
+    (float)preid.trackRef()->phi(),
+    (float)preid.trackRef()->p(),
+    (float)preid.trackRef()->charge(),
+    (float)preid.trackRef()->found(),
+    (float)preid.trackRef()->quality(reco::TrackBase::qualityByName("highPurity")),
+    (float)sqrt( preid.trackRef()->innerMomentum().Mag2() ),
+    (float)sqrt( preid.trackRef()->outerMomentum().Mag2() ),
+    (float)preid.trackRef()->normalizedChi2(),
+    (float)preid.geomMatching()[0],
+    (float)preid.geomMatching()[1],
+    (float)preid.eopMatch(),
+    (float)preid.dpt(),
+    (float)preid.chi2Ratio(),
+    (float)preid.gsfChi2()
   };
   float output = globalCache()->gbr->GetClassifier(features);
-  preid.setMVA( output > threshold_, output );
+  bool result = output > threshold_;
+  preid.setMVA( result, output );
   
-  return output > threshold_;
+  return result;
   
 }
 
@@ -308,7 +292,7 @@ void LowPtGsfElectronSeedProducer::fillDescription( edm::ParameterSetDescription
   desc.add<std::string>("Fitter","GsfTrajectoryFitter_forPreId");
   desc.add<std::string>("Smoother","GsfTrajectorySmoother_forPreId");
   desc.add<std::string>("TTRHBuilder","WithAngleAndTemplate");
-  desc.add<std::string>("Weights","RecoEgamma/EgammaElectronProducers/data/BDT.xml");
+  desc.add<edm::FileInPath>("Weights",edm::FileInPath("RecoEgamma/EgammaElectronProducers/data/BDT.xml"));
   desc.add<double>("Threshold",-0.616);
   desc.add<bool>("PassThrough",false);
 }
