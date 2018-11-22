@@ -2,7 +2,10 @@
 #include "RecoParticleFlow/PFClusterTools/interface/PFClusterWidthAlgo.h"
 #include "DataFormats/Common/interface/RefToPtr.h"
 #include "DataFormats/Common/interface/ValueMap.h"
+#include "DataFormats/CaloRecHit/interface/CaloCluster.h"
+#include "DataFormats/CaloRecHit/interface/CaloClusterFwd.h"
 #include "DataFormats/EgammaReco/interface/SuperCluster.h"
+#include "DataFormats/EgammaReco/interface/SuperClusterFwd.h"
 #include "DataFormats/GsfTrackReco/interface/GsfTrack.h"
 #include "DataFormats/Math/interface/deltaR.h"
 #include "DataFormats/ParticleFlowReco/interface/PFRecTrack.h"
@@ -13,11 +16,11 @@
 
 LowPtGsfElectronSCProducer::LowPtGsfElectronSCProducer( const edm::ParameterSet& cfg )
 {
+  produces<reco::CaloClusterCollection>();
   produces<reco::SuperClusterCollection>();
   produces< edm::ValueMap<reco::SuperClusterRef> >();
   gsfPfRecTracks_ = consumes<reco::GsfPFRecTrackCollection>( cfg.getParameter<edm::InputTag>("gsfPfRecTracks") );
   ecalClusters_ = consumes<reco::PFClusterCollection>( cfg.getParameter<edm::InputTag>("ecalClusters") );
-  hcalClusters_ = consumes<reco::PFClusterCollection>( cfg.getParameter<edm::InputTag>("hcalClusters") );
 }
 
 LowPtGsfElectronSCProducer::~LowPtGsfElectronSCProducer()
@@ -26,83 +29,89 @@ LowPtGsfElectronSCProducer::~LowPtGsfElectronSCProducer()
 void LowPtGsfElectronSCProducer::produce( edm::Event& event, const edm::EventSetup& setup )
 {
 
+
+  // Input EcalClusters collection
   edm::Handle<reco::PFClusterCollection> ecalClusters;
   event.getByToken(ecalClusters_,ecalClusters);
   if ( !ecalClusters.isValid() ) { edm::LogError("Problem with ecalClusters handle"); }
 
-  edm::Handle<reco::PFClusterCollection> hcalClusters;
-  event.getByToken(hcalClusters_,hcalClusters);
-  if ( !hcalClusters.isValid() ) { edm::LogError("Problem with hcalClusters handle"); }
-
+  // Input GsfPFRecTracks collection
   edm::Handle<reco::GsfPFRecTrackCollection> gsfPfRecTracks;
   event.getByToken(gsfPfRecTracks_,gsfPfRecTracks);
   if ( !gsfPfRecTracks.isValid() ) { edm::LogError("Problem with gsfPfRecTracks handle"); }
 
-  // SuperCluster container and getRefBeforePut
-  auto clusters = std::make_unique<reco::SuperClusterCollection>( reco::SuperClusterCollection() );
-  clusters->reserve(gsfPfRecTracks->size());
-  const reco::SuperClusterRefProd clusters_refprod = event.getRefBeforePut<reco::SuperClusterCollection>();
+  // Output SuperClusters collection and getRefBeforePut
+  auto superClusters = std::make_unique<reco::SuperClusterCollection>( reco::SuperClusterCollection() );
+  superClusters->reserve(gsfPfRecTracks->size());
+  const reco::SuperClusterRefProd superClustersRefProd = event.getRefBeforePut<reco::SuperClusterCollection>();
 
-  // ValueMap container
-  std::vector<reco::SuperClusterRef> clusters_valuemap;
+  // Output ValueMap container of SuperClusterRef to GsfPFRecTrackRef index
+  std::vector<reco::SuperClusterRef> superClustersValueMap;
+
+  // Output CaloClusters collection
+  auto caloClusters = std::make_unique<reco::CaloClusterCollection>( reco::CaloClusterCollection() );
+  caloClusters->reserve(ecalClusters->size());
+
+  // Temporary map of CaloClusterPtr to CaloClusterRef index
+  std::map<reco::CaloClusterPtr,unsigned int> caloClustersMap;
 
   // Iterate through GsfPfRecTracks and create corresponding SuperClusters
-  std::vector<int> ecal_matched;
+  std::vector<int> matchedClusters;
   for ( size_t igsfpf = 0; igsfpf < gsfPfRecTracks->size(); ++igsfpf ) { 
 
-    // Refs to GSF(PF) tracks
+    // Refs to GSF PF tracks
     reco::GsfPFRecTrackRef gsfpf(gsfPfRecTracks, igsfpf);
-    reco::GsfTrackRef gsf = gsfpf->gsfTrackRef();
+
+    // Temp PFClusters collection to build SC
+    std::vector<reco::PFClusterRef> tmpClusters;
 
     // Find closest "seed cluster" to GSF track extrapolated to ECAL
     const reco::PFTrajectoryPoint& point1 = gsfpf->extrapolatedPoint(reco::PFTrajectoryPoint::LayerType::ECALShowerMax);
-    reco::PFClusterRef best_seed = closest_cluster( point1, ecalClusters, ecal_matched );
-
-    std::vector<reco::PFClusterRef> clusteredRefs;
-    if(!best_seed.isNull()) clusteredRefs.push_back(best_seed);
-
-    // Iterate through brem trajectories
+    reco::PFClusterRef best_seed = closestCluster( point1, ecalClusters, matchedClusters );
+    if ( best_seed.isNonnull() ) { 
+      tmpClusters.push_back(best_seed);
+      reco::CaloClusterPtr ptr(edm::refToPtr(best_seed));
+      if ( !caloClustersMap.count(ptr) ) {
+	caloClusters->push_back(*ptr); // Copy CaloCluster
+        caloClustersMap[ptr] = caloClusters->size() - 1;
+      }
+    }
+    
+    // Find closest "brem cluster" using brem trajectory extrapolated to ECAL
     const std::vector<reco::PFBrem>& brems = gsfpf->PFRecBrem();
     for ( auto brem : brems ) {
-
-      // Find closest "brem cluster" using brem trajectory extrapolated to ECAL
       const reco::PFTrajectoryPoint& point2 = brem.extrapolatedPoint(reco::PFTrajectoryPoint::LayerType::ECALShowerMax);
-      reco::PFClusterRef best_brem = closest_cluster( point2, ecalClusters, ecal_matched );
-
-      if ( !best_brem.isNull() ) {
-	// If no seed, use brem
-	if ( best_seed.isNull() ) best_seed = best_brem;
-	// Store brem cluster
-	clusteredRefs.push_back(best_brem);
+      reco::PFClusterRef best_brem = closestCluster( point2, ecalClusters, matchedClusters );
+      if ( best_brem.isNonnull() ) { 
+	tmpClusters.push_back(best_brem);
+	if ( best_seed.isNull() ) { best_seed = best_brem; } // Use brem as seed
+	reco::CaloClusterPtr ptr(edm::refToPtr(best_brem));
+	caloClusters->push_back(*ptr); // Copy CaloCluster 
+        caloClustersMap[ptr] = caloClusters->size() - 1;
       }
-
     }
-
+  
     // If all else fails, attempt to extrapolate KF track and match to seed PF cluster
     reco::PFTrajectoryPoint point3;
     if ( best_seed.isNull() ) { 
       const reco::PFRecTrackRef& kfpf = gsfpf->kfPFRecTrackRef();
       point3 = kfpf->extrapolatedPoint(reco::PFTrajectoryPoint::LayerType::ECALShowerMax);
-      reco::PFClusterRef best_kf = closest_cluster( point3, ecalClusters, ecal_matched );
-      if( !best_kf.isNull() ) { 
-	best_seed = best_kf; 
-	clusteredRefs.push_back(best_kf); 
+      reco::PFClusterRef best_kf = closestCluster( point3, ecalClusters, matchedClusters );
+      if ( best_kf.isNonnull() ) { 
+	tmpClusters.push_back(best_kf);
+	best_seed = best_kf; // Use KF as seed
+	reco::CaloClusterPtr ptr(edm::refToPtr(best_kf));
+	caloClusters->push_back(*ptr); // Copy CaloCluster 
+        caloClustersMap[ptr] = caloClusters->size() - 1;
       }
     }
-    
-    //    // get closest HCAL PF cluster
-    //    auto hcal_position = pftrk->extrapolatedPoint(reco::PFTrajectoryPoint::HCALEntrance);
-    //    PFClusterRef hcal_ref = closest_cluster(hcal_position, hcal_clusters);
-    //    if(!hcal_ref.isNull()) {
-    //      hcal_ktf_clusters_map.insert(std::pair<reco::TrackRef, PFClusterRef>(trk, hcal_ref));
-    //    }
 
-    //now we need to make the supercluster
+    // Now make the SuperCluster
     if ( !best_seed.isNull() ) {
 
       float posX=0.,posY=0.,posZ=0.;
       float scEnergy=0.;
-      for ( const auto clus : clusteredRefs ) {
+      for ( const auto clus : tmpClusters ) {
 	scEnergy+=clus->correctedEnergy();
 	posX+=clus->correctedEnergy()*clus->position().X();
 	posY+=clus->correctedEnergy()*clus->position().Y();
@@ -111,64 +120,76 @@ void LowPtGsfElectronSCProducer::produce( edm::Event& event, const edm::EventSet
       posX/=scEnergy;
       posY/=scEnergy;
       posZ/=scEnergy;
-      reco::SuperCluster new_sc(scEnergy,math::XYZPoint(posX,posY,posZ));   
-      new_sc.setCorrectedEnergy(scEnergy);
-      new_sc.setSeed(edm::refToPtr(best_seed));
+      reco::SuperCluster sc(scEnergy,math::XYZPoint(posX,posY,posZ));
+      sc.setCorrectedEnergy(scEnergy);
+      sc.setSeed(edm::refToPtr(best_seed));
       std::vector<const reco::PFCluster*> barePtrs;
-      for ( const auto clus : clusteredRefs ) {
-	new_sc.addCluster(edm::refToPtr(clus));
+      for ( const auto clus : tmpClusters ) {
+	sc.addCluster(edm::refToPtr(clus));
 	barePtrs.push_back(&*clus);
       }
       PFClusterWidthAlgo pfwidth(barePtrs);
-      new_sc.setEtaWidth(pfwidth.pflowEtaWidth());
-      new_sc.setPhiWidth(pfwidth.pflowPhiWidth());
-      new_sc.rawEnergy();//cache the value of raw energy
-      
+      sc.setEtaWidth(pfwidth.pflowEtaWidth());
+      sc.setPhiWidth(pfwidth.pflowPhiWidth());
+      sc.rawEnergy(); // Cache the value of raw energy
+
       // Store new SuperCluster 
-      clusters->push_back( new_sc );
+      superClusters->push_back(sc);
       
       // Populate ValueMap container
-      clusters_valuemap.push_back( reco::SuperClusterRef(clusters_refprod,igsfpf) );
+      superClustersValueMap.push_back( reco::SuperClusterRef(superClustersRefProd,igsfpf) );
     } else {
-      clusters_valuemap.push_back( reco::SuperClusterRef(clusters_refprod.id()) );
+      superClustersValueMap.push_back( reco::SuperClusterRef(superClustersRefProd.id()) );
     }
   }
 
+  // Put CaloClusters in event first
+  const edm::OrphanHandle<reco::CaloClusterCollection>& caloClustersH = event.put(std::move(caloClusters));
+
+  // Update CaloClusterRefs in SuperClusters
+  for ( auto sc : *superClusters ) {
+    sc.setSeed( reco::CaloClusterPtr( caloClustersH, caloClustersMap[sc.seed()] ) );
+    reco::CaloClusterPtrVector clusters;
+    for ( auto clu : sc.clusters() ) {
+      clusters.push_back( reco::CaloClusterPtr( caloClustersH, caloClustersMap[clu] ) );
+    }
+    sc.setClusters(clusters);
+  }
+
   // Put SuperClusters in event
-  event.put(std::move(clusters));
+  event.put(std::move(superClusters));
 
   // Put ValueMap<SuperClusterRef> in event
   auto ptr = std::make_unique< edm::ValueMap<reco::SuperClusterRef> >( edm::ValueMap<reco::SuperClusterRef>() );
   edm::ValueMap<reco::SuperClusterRef>::Filler filler(*ptr);
-  filler.insert(gsfPfRecTracks, clusters_valuemap.begin(), clusters_valuemap.end());
+  filler.insert(gsfPfRecTracks, superClustersValueMap.begin(), superClustersValueMap.end());
   filler.fill();
   event.put(std::move(ptr));
 
 }
 
-reco::PFClusterRef LowPtGsfElectronSCProducer::closest_cluster( const reco::PFTrajectoryPoint& point,
-								const edm::Handle<reco::PFClusterCollection>& clusters,
-								std::vector<int>& matched ) {
-  reco::PFClusterRef best_ref;
+reco::PFClusterRef LowPtGsfElectronSCProducer::closestCluster( const reco::PFTrajectoryPoint& point,
+							       const edm::Handle<reco::PFClusterCollection>& clusters,
+							       std::vector<int>& matched ) {
+  reco::PFClusterRef closest;
   if ( point.isValid() ) {
-    float min_dr2 = 1.e6;
+    float dr2min = 1.e6;
     for ( size_t ii = 0; ii < clusters->size(); ++ii ) {
       if ( std::find( matched.begin(), matched.end(), ii ) == matched.end() ) {
 	float dr2 = reco::deltaR2( clusters->at(ii), point.positionREP() );
-	if ( dr2 < min_dr2 ) {
-	  best_ref = reco::PFClusterRef( clusters, ii );
-	  min_dr2 = dr2;
+	if ( dr2 < dr2min ) {
+	  closest = reco::PFClusterRef( clusters, ii );
+	  dr2min = dr2;
 	}
       }
     }
-    if ( min_dr2 < 1.e5 ) { matched.push_back( best_ref.index() ); }
+    if ( dr2min < 1.e5 ) { matched.push_back( closest.index() ); }
   }
-  return best_ref;
+  return closest;
 }
 
 void LowPtGsfElectronSCProducer::fillDescription( edm::ParameterSetDescription& desc ) 
 {
   desc.add<edm::InputTag>("gsfPfRecTracks",edm::InputTag("lowPtGsfElePfGsfTracks"));
   desc.add<edm::InputTag>("ecalClusters",edm::InputTag("particleFlowClusterECAL"));
-  desc.add<edm::InputTag>("hcalClusters",edm::InputTag("particleFlowClusterHCAL"));
 }
