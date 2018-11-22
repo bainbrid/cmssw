@@ -1,7 +1,6 @@
 #ifndef RecoEgamma_EgammaElectronProducers_LowPtGsfElectronSCProducer_h
 #define RecoEgamma_EgammaElectronProducers_LowPtGsfElectronSCProducer_h
 
-#include "DataFormats/EgammaReco/interface/SuperClusterFwd.h"
 #include "DataFormats/ParticleFlowReco/interface/GsfPFRecTrack.h"
 #include "DataFormats/ParticleFlowReco/interface/GsfPFRecTrackFwd.h"
 #include "DataFormats/ParticleFlowReco/interface/PFCluster.h"
@@ -25,9 +24,9 @@ class LowPtGsfElectronSCProducer : public edm::stream::EDProducer<> {
 
  private:
 
-  reco::PFClusterRef closest_cluster( const reco::PFTrajectoryPoint& point,
-				      const edm::Handle<reco::PFClusterCollection>& clusters,
-				      std::vector<int>& matched );
+  reco::PFClusterRef closestCluster( const reco::PFTrajectoryPoint& point,
+				     const edm::Handle<reco::PFClusterCollection>& clusters,
+				     std::vector<int>& matched );
   
   edm::EDGetTokenT<reco::GsfPFRecTrackCollection> gsfPfRecTracks_;
   edm::EDGetTokenT<reco::PFClusterCollection> ecalClusters_;
