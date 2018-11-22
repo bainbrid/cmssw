@@ -5,6 +5,8 @@
 #include "CondFormats/EgammaObjects/interface/GBRForest.h"
 #include <memory>
 
+namespace reco { class PreId; }
+
 namespace lowptgsfeleseed {
   class HeavyObjectCache {
 
@@ -12,28 +14,15 @@ namespace lowptgsfeleseed {
 
     HeavyObjectCache( const edm::ParameterSet& );
 
-    std::unique_ptr<const GBRForest> gbr;    
+    bool evalUnbiased( reco::PreId& ecal, reco::PreId& hcal ) const;
+    bool evalPtBiased( reco::PreId& ecal, reco::PreId& hcal ) const;
 
   private:
 
-    // Temporary variable binding while reading
-
-    float trk_pt;
-    float trk_eta;
-    float trk_phi;
-    float trk_p;
-    float trk_charge;
-    float trk_nhits;
-    float trk_high_purity;
-    float trk_inp;
-    float trk_outp;
-    float trk_chi2red;
-    float preid_trk_ecal_Deta;
-    float preid_trk_ecal_Dphi;
-    float preid_e_over_p;
-    float preid_gsf_dpt;
-    float preid_trk_gsf_chiratio;
-    float preid_gsf_chi2red;
+    std::unique_ptr<const GBRForest> unbiased_;
+    std::unique_ptr<const GBRForest> ptbiased_;
+    float unbiasedThreshold_;
+    float ptbiasedThreshold_;
 
   };
 }
