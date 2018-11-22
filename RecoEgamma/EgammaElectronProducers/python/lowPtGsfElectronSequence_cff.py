@@ -6,6 +6,13 @@ import FWCore.ParameterSet.Config as cms
 # tracker-driven electron seeds, KF track candidates, GSF tracks.
 #==============================================================================
 
+# PFTracks (input: generalTracks module)
+from RecoParticleFlow.PFTracking.pfTrack_cfi import *
+lowPtGsfElePfTracks = pfTrack.clone()
+lowPtGsfElePfTracks.TkColList = ['generalTracks']
+lowPtGsfElePfTracks.GsfTracksInEvents = False
+lowPtGsfElePfTracks.GsfTrackModuleLabel = ''
+
 # Low pT electron seeds
 # Below relies on default configuration for generalTracks
 from RecoEgamma.EgammaElectronProducers.lowPtGsfElectronSeeds_cfi import *
@@ -31,12 +38,12 @@ lowPtGsfEleGsfTracks = electronGsfTracks.clone()
 lowPtGsfEleGsfTracks.Fitter = 'lowPtGsfEleFittingSmoother'
 lowPtGsfEleGsfTracks.src = 'lowPtGsfEleCkfTrackCandidates'
 
-# PFTracks (post electronGsfTracks module)
-from RecoParticleFlow.PFTracking.pfTrack_cfi import *
-lowPtGsfElePfTracks = pfTrack.clone()
-lowPtGsfElePfTracks.TkColList = ["generalTracks"]
-lowPtGsfElePfTracks.GsfTracksInEvents = True
-lowPtGsfElePfTracks.GsfTrackModuleLabel = 'lowPtGsfEleGsfTracks'
+# PFTracks (input: lowPtGsfEleGsfTracks module)
+#from RecoParticleFlow.PFTracking.pfTrack_cfi import *
+#lowPtGsfElePfTracks = pfTrack.clone()
+#lowPtGsfElePfTracks.TkColList = ['generalTracks']
+#lowPtGsfElePfTracks.GsfTracksInEvents = True
+#lowPtGsfElePfTracks.GsfTrackModuleLabel = 'lowPtGsfEleGsfTracks'
 
 # PFGSFTracks
 from RecoParticleFlow.PFTracking.pfTrackElec_cfi import *
@@ -67,10 +74,11 @@ lowPtGsfElectrons.seedsTag = 'lowPtGsfElectronSeeds'
 lowPtGsfElectrons.gsfPfRecTracksTag = 'lowPtGsfElePfGsfTracks'
 
 # Full Open sequence 
-lowPtGsfElectronSequence = cms.Sequence(lowPtGsfElectronSeeds+
+lowPtGsfElectronSequence = cms.Sequence(lowPtGsfElePfTracks+
+                                        lowPtGsfElectronSeeds+
                                         lowPtGsfEleCkfTrackCandidates+
                                         lowPtGsfEleGsfTracks+
-                                        lowPtGsfElePfTracks+
+                                        #lowPtGsfElePfTracks+
                                         lowPtGsfElePfGsfTracks+
                                         lowPtGsfElectronSuperClusters+
                                         lowPtGsfElectronCores+
