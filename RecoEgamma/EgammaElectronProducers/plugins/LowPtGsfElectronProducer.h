@@ -12,6 +12,8 @@ class LowPtGsfElectronProducer : public GsfElectronBaseProducer {
 
   ~LowPtGsfElectronProducer() override;
 
+  void beginEvent( edm::Event&, const edm::EventSetup& );
+
   void produce( edm::Event&, const edm::EventSetup& ) override;
 
  private:
