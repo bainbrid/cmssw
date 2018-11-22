@@ -30,7 +30,6 @@ class LowPtGsfElectronSCProducer : public edm::stream::EDProducer<> {
   
   edm::EDGetTokenT<reco::GsfPFRecTrackCollection> gsfPfRecTracks_;
   edm::EDGetTokenT<reco::PFClusterCollection> ecalClusters_;
-  edm::EDGetTokenT<reco::PFClusterCollection> hcalClusters_;
 
 };
 
