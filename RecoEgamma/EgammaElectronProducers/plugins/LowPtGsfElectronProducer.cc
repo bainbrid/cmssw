@@ -10,7 +10,6 @@
 #include "FWCore/ParameterSet/interface/ConfigurationDescriptions.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
-#include "RecoEgamma/EgammaElectronAlgos/interface/GsfElectronAlgo.h"
 #include <iostream>
 
 using namespace reco;
@@ -23,35 +22,54 @@ LowPtGsfElectronProducer::LowPtGsfElectronProducer( const edm::ParameterSet& cfg
 LowPtGsfElectronProducer::~LowPtGsfElectronProducer()
 {}
 
+void LowPtGsfElectronProducer::beginEvent( edm::Event& event, 
+					   const edm::EventSetup& setup )
+{
+  GsfElectronBaseProducer::beginEvent(event,setup);
+}
+
 void LowPtGsfElectronProducer::produce( edm::Event& event, const edm::EventSetup& setup )
 {
 
-  auto electrons = std::make_unique<GsfElectronCollection>();
+  if (1) {
 
-  edm::Handle<reco::GsfElectronCoreCollection> coreElectrons;
-  event.getByToken(inputCfg_.gsfElectronCores,coreElectrons);
+    beginEvent(event,setup);
+    algo_->clonePreviousElectrons();
+    //algo_->completeElectrons(globalCache());
+    //algo_->addPflowInfo();
+    fillEvent(event);
+    endEvent();
 
-  for ( unsigned int ii=0; ii < coreElectrons->size(); ++ii ) {
+  } else {
 
-    const GsfElectronCoreRef ref = edm::Ref<GsfElectronCoreCollection>(coreElectrons,ii);
-    const GsfTrackRef& gsf = ref->gsfTrack();
-
-    GsfElectron* ele = new GsfElectron(ref);
-    ele->setP4( GsfElectron::P4_COMBINATION,
-		Candidate::LorentzVector(gsf->px(),gsf->py(),gsf->pz(),0.511E-3),
-		0,
-		true );
-
-    LogTrace("GsfElectronAlgo") 
-      << "[LowPtGsfElectronProducer::produce]"
-      << " Constructed new electron with energy " 
-      << ele->p4().e();
-
-    electrons->push_back(*ele);
-    delete ele;
-
+    auto electrons = std::make_unique<GsfElectronCollection>();
+    
+    edm::Handle<reco::GsfElectronCoreCollection> coreElectrons;
+    event.getByToken(inputCfg_.gsfElectronCores,coreElectrons);
+    
+    for ( unsigned int ii=0; ii < coreElectrons->size(); ++ii ) {
+      
+      const GsfElectronCoreRef ref = edm::Ref<GsfElectronCoreCollection>(coreElectrons,ii);
+      const GsfTrackRef& gsf = ref->gsfTrack();
+      
+      GsfElectron* ele = new GsfElectron(ref);
+      ele->setP4( GsfElectron::P4_COMBINATION,
+		  Candidate::LorentzVector(gsf->px(),gsf->py(),gsf->pz(),0.511E-3),
+		  0,
+		  true );
+      
+      LogTrace("LowPtGsfElectronProducer") 
+	<< "[LowPtGsfElectronProducer::produce]"
+	<< " Constructed new electron with energy " 
+	<< ele->p4().e();
+      
+      electrons->push_back(*ele);
+      delete ele;
+      
+    }
+    
+    event.put(std::move(electrons));
+    
   }
-
-  event.put(std::move(electrons));
 
 }
