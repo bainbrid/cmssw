@@ -60,9 +60,8 @@ LowPtGsfElectronSeedProducer::LowPtGsfElectronSeedProducer( const edm::Parameter
     pfTracks_ = consumes<reco::PFRecTrackCollection>(conf.getParameter<edm::InputTag>("pfTracks")); 
     hcalClusters_ = consumes<reco::PFClusterCollection>(conf.getParameter<edm::InputTag>("hcalClusters"));
   }
-  else {
-    kfTracks_ = consumes<reco::TrackCollection>(conf.getParameter<edm::InputTag>("tracks")); 
-  }
+  kfTracks_ = consumes<reco::TrackCollection>(conf.getParameter<edm::InputTag>("tracks"));
+
   produces<reco::ElectronSeedCollection>();
   produces<reco::PreIdCollection>();
   produces<reco::PreIdCollection>("HCAL");
@@ -92,56 +91,64 @@ void LowPtGsfElectronSeedProducer::produce( edm::Event& event,
   auto ecalPreIds = std::make_unique<reco::PreIdCollection>();
   auto hcalPreIds = std::make_unique<reco::PreIdCollection>();
 
-  std::vector<reco::PreIdRef> preIdsValueMap; // for ValueMap indexed by edm::Ref<ElectronSeed>.index()
   const edm::RefProd<reco::PreIdCollection> preIdsRefProd =
     event.getRefBeforePut<reco::PreIdCollection>();
   
   // HCAL clusters (only used with PF tracks)
   edm::Handle<reco::PFClusterCollection> hcalClusters;
 
+  //we always need kftracks as we link the preids to them
+  edm::Handle<reco::TrackCollection> kfTracks;
+  event.getByToken(kfTracks_, kfTracks);
+
+  TrackIndxMap trksToPreIdIndx;
   if ( usePfTracks_ ) { 
 
     edm::Handle<reco::PFRecTrackCollection> pfTracks;
     event.getByToken(pfTracks_, pfTracks);
-
     event.getByToken(hcalClusters_,hcalClusters);
+
+    //check consistency between kfTracks and pfTracks collection
+    for(auto& trk : *pfTracks){ 
+      if(trk.trackRef().isNonnull()){
+	if(trk.trackRef().id() != kfTracks.id()){
+	  throw cms::Exception("ConfigError") << "kfTracks is not the collection that pfTracks was built from, please fix this";
+	}
+	break; //we only need one valid track ref to check this so end the loop
+      }
+    }
 
     loop(pfTracks, // PF tracks
 	 hcalClusters,
 	 *seeds,
 	 *ecalPreIds,
 	 *hcalPreIds,
-	 preIdsValueMap,
-	 preIdsRefProd,
+	 trksToPreIdIndx,
 	 event,
 	 setup);
 
   } else { 
-
-    edm::Handle<reco::TrackCollection> kfTracks;
-    event.getByToken(kfTracks_, kfTracks); 
 
     loop(kfTracks, // KF tracks
 	 hcalClusters,
 	 *seeds,
 	 *ecalPreIds,
 	 *hcalPreIds,
-	 preIdsValueMap,
-	 preIdsRefProd,
+	 trksToPreIdIndx,
 	 event,
 	 setup);
 
   }
 
-  edm::OrphanHandle<reco::ElectronSeedCollection> seedsAfterPut = event.put(std::move(seeds));
-  event.put(std::move(ecalPreIds));
+  auto ecalPreIdsHandle = event.put(std::move(ecalPreIds));
   event.put(std::move(hcalPreIds),"HCAL");
+  event.put(std::move(seeds));
 
-  auto ptr = std::make_unique< edm::ValueMap<reco::PreIdRef> >( edm::ValueMap<reco::PreIdRef>() );
-  edm::ValueMap<reco::PreIdRef>::Filler filler(*ptr);
-  filler.insert(seedsAfterPut, preIdsValueMap.begin(), preIdsValueMap.end());
-  filler.fill();
-  event.put(std::move(ptr));
+  auto preIdVMOut = std::make_unique< edm::ValueMap<reco::PreIdRef> >();
+  edm::ValueMap<reco::PreIdRef>::Filler mapFiller(*preIdVMOut);
+  fillPreIdRefValueMap(kfTracks,trksToPreIdIndx,ecalPreIdsHandle,mapFiller);
+  mapFiller.fill();
+  event.put(std::move(preIdVMOut));
   
 }
 
@@ -166,8 +173,7 @@ void LowPtGsfElectronSeedProducer::loop( const edm::Handle< std::vector<T> >& ha
 					 reco::ElectronSeedCollection& seeds,
 					 reco::PreIdCollection& ecalPreIds, 
 					 reco::PreIdCollection& hcalPreIds,
-					 std::vector<reco::PreIdRef>& preIdsValueMap,
-					 const edm::RefProd<reco::PreIdCollection>& preIdsRefProd,
+					 TrackIndxMap& trksToPreIdIndx,
 					 edm::Event& event,
 					 const edm::EventSetup& setup )
 {
@@ -256,10 +262,10 @@ void LowPtGsfElectronSeedProducer::loop( const edm::Handle< std::vector<T> >& ha
     // Store PreId
     ecalPreIds.push_back(ecalPreId);
     hcalPreIds.push_back(hcalPreId);
+    trksToPreIdIndx[trackRef.index()] = ecalPreIds.size()-1;
 
     // Store ElectronSeed and corresponding edm::Ref<PreId>.index()
     seeds.push_back(seed);
-    preIdsValueMap.push_back( reco::PreIdRef( preIdsRefProd, ecalPreIds.size()-1 ) );
 
   }
 
@@ -273,8 +279,7 @@ void LowPtGsfElectronSeedProducer::loop<reco::Track>( const edm::Handle< std::ve
 						      reco::ElectronSeedCollection& seeds,
 						      reco::PreIdCollection& ecalPreIds, 
 						      reco::PreIdCollection& hcalPreIds,
-						      std::vector<reco::PreIdRef>& preIdsValueMap,
-						      const edm::RefProd<reco::PreIdCollection>& preIdsRefProd,
+						      TrackIndxMap& trksToPreIdIndx,
 						      edm::Event&,
 						      const edm::EventSetup& );
 
@@ -286,8 +291,7 @@ void LowPtGsfElectronSeedProducer::loop<reco::PFRecTrack>( const edm::Handle< st
 							   reco::ElectronSeedCollection& seeds,
 							   reco::PreIdCollection& ecalPreIds, 
 							   reco::PreIdCollection& hcalPreIds,
-							   std::vector<reco::PreIdRef>& preIdsValueMap,
-							   const edm::RefProd<reco::PreIdCollection>& preIdsRefProd,
+							   TrackIndxMap& trksToPreIdIndx,
 							   edm::Event&,
 							   const edm::EventSetup& );
 
@@ -543,6 +547,28 @@ bool LowPtGsfElectronSeedProducer::decision( const reco::TrackRef& kfTrackRef,
   return passThrough_;
 }
  
+template<typename CollType>
+void LowPtGsfElectronSeedProducer::fillPreIdRefValueMap( edm::Handle<CollType> tracksHandle,
+							 const TrackIndxMap& trksToPreIdIndx,
+							 const edm::OrphanHandle<reco::PreIdCollection>& preIdHandle,
+							 edm::ValueMap<reco::PreIdRef>::Filler & filler)
+{
+  std::vector<reco::PreIdRef> values;
+
+  unsigned ntracks=tracksHandle->size();
+  for(unsigned itrack=0;itrack<ntracks;++itrack){
+    edm::Ref<CollType> trackRef(tracksHandle,itrack);
+    auto preIdRefIt = trksToPreIdIndx.find(trackRef.index());
+    if(preIdRefIt==trksToPreIdIndx.end()){
+      values.push_back(reco::PreIdRef());
+    }else{
+      edm::Ref<reco::PreIdCollection> preIdRef(preIdHandle,preIdRefIt->second);
+      values.push_back(preIdRef);
+    }
+  }
+  filler.insert(tracksHandle,values.begin(),values.end());
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////
 //
 void LowPtGsfElectronSeedProducer::fillDescriptions( edm::ConfigurationDescriptions& descriptions )
