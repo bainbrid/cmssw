@@ -5,7 +5,7 @@ from RecoEgamma.EgammaElectronProducers.defaultLowPtGsfElectronIDExtra_cfi impor
 lowPtGsfElectronIDExtra = defaultLowPtGsfElectronIDExtra.clone(
     ModelNames = cms.vstring(['']),
     ModelWeights = cms.vstring([
-            'RecoEgamma/ElectronIdentification/data/LowPtElectrons/RunII_Autumn18_LowPtElectrons_mva_id_2020Feb24_depth15.xml.gz',  
+            'RecoEgamma/ElectronIdentification/data/LowPtElectrons/RunII_Autumn18_LowPtElectrons_mva_id_2020Jun25_depth13_ntrees2000.xml.gz',  
             ]),
     ModelThresholds = cms.vdouble([-10.])
     )
