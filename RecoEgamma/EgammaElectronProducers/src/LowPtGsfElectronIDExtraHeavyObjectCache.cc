@@ -260,9 +260,8 @@ namespace lowptgsfeleidextra {
     if (eid_gsf_nhits>50) eid_gsf_nhits=50;
     if (eid_match_SC_EoverP<0)   eid_match_SC_EoverP=0;
     if (eid_match_SC_EoverP>100) eid_match_SC_EoverP=100;
-    if (eid_match_eclu_EoverP<-0.001) eid_match_eclu_EoverP=-0.001;
-    if (eid_match_eclu_EoverP>0.001)  eid_match_eclu_EoverP=0.001;
-    eid_match_eclu_EoverP=eid_match_eclu_EoverP*1.E7;
+    if (eid_match_eclu_EoverP<-1.) eid_match_eclu_EoverP=-1;
+    if (eid_match_eclu_EoverP>1.)  eid_match_eclu_EoverP=1.;
     if (eid_match_SC_dEta<-10) eid_match_SC_dEta=-10;
     if (eid_match_SC_dEta>10)  eid_match_SC_dEta=10;
     if (eid_match_SC_dPhi<-3.14) eid_match_SC_dPhi=-3.14;
