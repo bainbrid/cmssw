@@ -53,6 +53,7 @@ void LowPtGsfElectronIDExtraProducer::produce( edm::Event& event, const edm::Eve
   }
 
   for ( unsigned int iele = 0; iele < gsfElectrons->size(); iele++ ) {
+
     reco::LowPtGsfElectronRef ele(gsfElectrons,iele);
 
     if ( ele->core().isNull() ) { continue; }
@@ -66,13 +67,13 @@ void LowPtGsfElectronIDExtraProducer::produce( edm::Event& event, const edm::Eve
     }
   }
 
+
   // Create and put ValueMap in Event
   for ( unsigned int iname = 0; iname < names_.size(); ++iname ) { 
     auto ptr = std::make_unique< edm::ValueMap<float> >( edm::ValueMap<float>() );
     edm::ValueMap<float>::Filler filler(*ptr);
     filler.insert(gsfElectrons, output[iname].begin(), output[iname].end());
     filler.fill();
-    reco::LowPtGsfElectronRef ele(gsfElectrons,0);
     event.put(std::move(ptr),names_[iname]);
   }  
 }
