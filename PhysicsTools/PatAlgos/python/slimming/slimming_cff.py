@@ -13,7 +13,7 @@ from PhysicsTools.PatAlgos.slimming.slimmedJets_cfi      import *
 from PhysicsTools.PatAlgos.slimming.slimmedCaloJets_cfi  import *
 from PhysicsTools.PatAlgos.slimming.slimmedGenJets_cfi   import *
 from PhysicsTools.PatAlgos.slimming.slimmedElectrons_cfi import *
-from PhysicsTools.PatAlgos.slimming.slimmedLowPtElectrons_cfi import *
+from PhysicsTools.PatAlgos.slimming.slimmedLowPtElectrons_cff import *
 from PhysicsTools.PatAlgos.slimming.lowPtGsfLinks_cfi import *
 from PhysicsTools.PatAlgos.slimming.slimmedMuons_cfi     import *
 from PhysicsTools.PatAlgos.slimming.slimmedPhotons_cfi   import *
@@ -44,6 +44,7 @@ slimmingTask = cms.Task(
     slimmedGenJetsAK8,
     slimmedElectrons,
     slimmedLowPtElectrons,
+    lowPtGsfElectronID,
     lowPtGsfLinks,
     slimmedMuons,
     slimmedPhotons,
