@@ -44,22 +44,16 @@ patLowPtElectrons = patElectrons.clone(
     embedTrack                  = cms.bool(True),
     )
 
-# Rerun IDProducer on pat::Electrons if bParking era specified
+# Rerun IDProducer on pat::Electrons
 from RecoEgamma.EgammaElectronProducers.lowPtGsfElectronID_cfi import *
-from Configuration.Eras.Modifier_bParking_cff import bParking
-bParking.toModify(lowPtGsfElectronID,
-                  electrons='patLowPtElectrons',
-                  rho='fixedGridRhoFastjetAll')
+lowPtGsfElectronID.electrons='patLowPtElectrons'
+lowPtGsfElectronID.rho='fixedGridRhoFastjetAll'
 
 makePatLowPtElectronsTask = cms.Task(
     lowPtElectronMatch,
-    patLowPtElectrons
+    patLowPtElectrons,
+    lowPtGsfElectronID
     )
-
-# Schedule IDProducer if bParking era specified
-_makePatLowPtElectronsTask = makePatLowPtElectronsTask.copy()
-_makePatLowPtElectronsTask.add(lowPtGsfElectronID)
-bParking.toReplaceWith(makePatLowPtElectronsTask,_makePatLowPtElectronsTask)
 
 makePatLowPtElectrons = cms.Sequence(makePatLowPtElectronsTask)
 
