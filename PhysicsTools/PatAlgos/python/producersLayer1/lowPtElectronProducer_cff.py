@@ -46,13 +46,13 @@ patLowPtElectrons = patElectrons.clone(
 
 # Rerun IDProducer on pat::Electrons
 from RecoEgamma.EgammaElectronProducers.lowPtGsfElectronID_cfi import *
-lowPtGsfElectronID.electrons='patLowPtElectrons'
-lowPtGsfElectronID.rho='fixedGridRhoFastjetAll'
+patLowPtGsfElectronID = lowPtGsfElectronID.clone(electrons='patLowPtElectrons',
+                                                 rho='fixedGridRhoFastjetAll')
 
 makePatLowPtElectronsTask = cms.Task(
     lowPtElectronMatch,
     patLowPtElectrons,
-    lowPtGsfElectronID
+    patLowPtGsfElectronID
     )
 
 makePatLowPtElectrons = cms.Sequence(makePatLowPtElectronsTask)
