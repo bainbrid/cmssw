@@ -3,11 +3,14 @@
 #include "FWCore/ParameterSet/interface/FileInPath.h"
 #include "FWCore/Utilities/interface/Exception.h"
 
+#include "TFile.h"
+
 #include <cstdio>
 #include <cstdlib>
 #include <RVersion.h>
 #include <cmath>
 #include <tinyxml2.h>
+#include <boost/filesystem.hpp>
 
 namespace {
 
@@ -252,15 +255,29 @@ std::unique_ptr<const GBRForest> createGBRForest(const edm::FileInPath& weightsF
 }
 
 // Overloaded versions which are taking string vectors by reference to store the variable names in
-std::unique_ptr<const GBRForest> createGBRForest(const std::string& weightsFile, std::vector<std::string>& varNames) {
-  std::unique_ptr<GBRForest> gbrForest;
-
-  if (weightsFile[0] == '/') {
-    gbrForest = init(weightsFile, varNames);
+std::unique_ptr<const GBRForest>
+createGBRForest(const std::string &weightsFile, std::vector<std::string> &varNames)
+{
+  std::string weightsFilePath;
+  
+  if (boost::filesystem::exists(weightsFile)) {
+    weightsFilePath = weightsFile;
   } else {
-    edm::FileInPath weightsFileEdm(weightsFile);
-    gbrForest = init(weightsFileEdm.fullPath(), varNames);
+    weightsFilePath = edm::FileInPath{weightsFile}.fullPath();
   }
+  
+  // if the input file is a ROOT file, just read the GBRForest object
+  if (reco::details::hasEnding(weightsFilePath, ".root")) {
+    std::cout << "[createGBRForest] Opening .root file ..." << std::endl;
+    TFile gbrForestFile(weightsFilePath.c_str());
+    // Use the copy-constructor of GBRForest to copy the GBRForest.
+    // In this way, the ROOT file can be closed.
+    return std::make_unique<GBRForest>(*(GBRForest*)gbrForestFile.Get("gbrForest"));
+  }
+  
+  std::cout << "[createGBRForest] Opening .xml.gz file ..." << std::endl;
+  std::unique_ptr<GBRForest> gbrForest;
+  gbrForest = init(weightsFilePath, varNames);
   return gbrForest;
 }
 
