@@ -8,6 +8,8 @@
 <use name="FWCore/ParameterSet"/>
 <use name="RecoEcal/EgammaCoreTools"/>
 <use name="RecoEgamma/EgammaTools"/>
+<use name="FastSimulation/Particle"/>
+<use name="FastSimulation/BaseParticlePropagator"/>
 <export>
   <lib name="RecoEgammaEgammaElectronProducers"/>
 </export>
