@@ -53,7 +53,6 @@ void LowPtGsfElectronIDExtraProducer::produce( edm::Event& event, const edm::Eve
   }
 
   for ( unsigned int iele = 0; iele < gsfElectrons->size(); iele++ ) {
-
     reco::LowPtGsfElectronRef ele(gsfElectrons,iele);
 
     if ( ele->core().isNull() ) { continue; }
@@ -66,7 +65,6 @@ void LowPtGsfElectronIDExtraProducer::produce( edm::Event& event, const edm::Eve
       output[iname][iele] = globalCache()->eval( names_[iname], ele, *rho, unbiased );
     }
   }
-
 
   // Create and put ValueMap in Event
   for ( unsigned int iname = 0; iname < names_.size(); ++iname ) { 
