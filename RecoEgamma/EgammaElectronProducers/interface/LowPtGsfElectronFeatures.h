@@ -29,6 +29,15 @@ namespace lowptgsfeleid {
 
   std::vector<float> features(edm::Ref<edm::View<reco::GsfElectron> > const& ele, float rho, float unbiased);
 
+  // feature list for original models (2019Aug07 and earlier)
+  std::vector<float> features_V0(edm::Ptr<reco::GsfElectron> const& ele, float rho, float unbiased);
+
+  // feature list for original models (2019Aug07 and earlier)
+  std::vector<float> features_V0(edm::Ref<std::vector<reco::GsfElectron> > const& ele, float rho, float unbiased);
+
+  // feature list for original models (2019Aug07 and earlier)
+  std::vector<float> features_V0(edm::Ref<edm::View<reco::GsfElectron> > const& ele, float rho, float unbiased);
+
 }  // namespace lowptgsfeleid
 
 #endif  // RecoEgamma_EgammaElectronProducers_LowPtGsfElectronFeatures_h
