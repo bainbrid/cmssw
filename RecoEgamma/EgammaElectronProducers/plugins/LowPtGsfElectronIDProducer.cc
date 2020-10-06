@@ -42,6 +42,7 @@ private:
   const double maxPtThreshold_;
   std::vector<std::unique_ptr<const GBRForest> > models_;
   const std::vector<double> thresholds_;
+  const std::string version_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -54,7 +55,8 @@ LowPtGsfElectronIDProducer::LowPtGsfElectronIDProducer(const edm::ParameterSet& 
       passThrough_(conf.getParameter<bool>("PassThrough")),
       minPtThreshold_(conf.getParameter<double>("MinPtThreshold")),
       maxPtThreshold_(conf.getParameter<double>("MaxPtThreshold")),
-      thresholds_(conf.getParameter<std::vector<double> >("ModelThresholds")) {
+      thresholds_(conf.getParameter<std::vector<double> >("ModelThresholds")),
+      version_(conf.getParameter<std::string>("Version")) {
   for (auto& weights : conf.getParameter<std::vector<std::string> >("ModelWeights")) {
     models_.push_back(createGBRForest(edm::FileInPath(weights)));
   }
@@ -65,6 +67,10 @@ LowPtGsfElectronIDProducer::LowPtGsfElectronIDProducer(const edm::ParameterSet& 
   if (models_.size() != thresholds_.size()) {
     throw cms::Exception("Incorrect configuration")
         << "'ModelWeights' size (" << models_.size() << ") != 'ModelThresholds' size (" << thresholds_.size() << ").\n";
+  }
+  if (version_ != "V0" && version_ != "V1") {
+    throw cms::Exception("Incorrect configuration")
+      << "Unknown Version: " << version_ << "\n";
   }
   for (const auto& name : names_) {
     produces<edm::ValueMap<float> >(name);
@@ -146,7 +152,9 @@ double LowPtGsfElectronIDProducer::eval(const std::string& name,
   auto iter = std::find(names_.begin(), names_.end(), name);
   if (iter != names_.end()) {
     int index = std::distance(names_.begin(), iter);
-    std::vector<float> inputs = lowptgsfeleid::features(ele, rho, unbiased);
+    std::vector<float> inputs;
+    if      ( version_ == "V0" ) { inputs = lowptgsfeleid::features_V0(ele, rho, unbiased); }
+    else if ( version_ == "V1" ) { inputs = lowptgsfeleid::features(ele, rho, unbiased); }
     return models_.at(index)->GetResponse(inputs.data());
   } else {
     throw cms::Exception("Unknown model name") << "'Name given: '" << name << "'. Check against configuration file.\n";
@@ -162,13 +170,13 @@ void LowPtGsfElectronIDProducer::fillDescriptions(edm::ConfigurationDescriptions
   desc.add<edm::InputTag>("unbiased", edm::InputTag("lowPtGsfElectronSeedValueMaps:unbiased"));
   desc.add<edm::InputTag>("rho", edm::InputTag("fixedGridRhoFastjetAllTmp"));
   desc.add<std::vector<std::string> >("ModelNames", {""});
-  desc.add<std::vector<std::string> >(
-      "ModelWeights",
-      {"RecoEgamma/ElectronIdentification/data/LowPtElectrons/RunII_Autumn18_LowPtElectrons_mva_id.xml.gz"});
-  desc.add<std::vector<double> >("ModelThresholds", {-10.});
+  desc.add<std::vector<std::string> >("ModelWeights",
+    {"RecoEgamma/ElectronIdentification/data/LowPtElectrons/RunII_Autumn18_LowPtElectrons_mva_id.xml.gz"});
+  desc.add<std::vector<double> >("ModelThresholds", {-99.});
   desc.add<bool>("PassThrough", false);
   desc.add<double>("MinPtThreshold", 0.5);
   desc.add<double>("MaxPtThreshold", 15.);
+  desc.add<std::string>("Version","V0");
   descriptions.add("lowPtGsfElectronID", desc);
 }
 
