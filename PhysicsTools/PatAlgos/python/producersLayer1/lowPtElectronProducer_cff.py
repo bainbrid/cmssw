@@ -51,6 +51,7 @@ makePatLowPtElectronsTask = cms.Task(
 
 makePatLowPtElectrons = cms.Sequence(makePatLowPtElectronsTask)
 
+
 # Modifiers
 from Configuration.Eras.Modifier_fastSim_cff import fastSim
 fastSim.toModify(patLowPtElectrons, embedTrack = False)
