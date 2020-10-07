@@ -21,5 +21,6 @@ slimmedLowPtElectrons = cms.EDProducer("PATElectronSlimmer",
    reducedBarrelRecHitCollection = cms.InputTag("reducedEcalRecHitsEB"),
    reducedEndcapRecHitCollection = cms.InputTag("reducedEcalRecHitsEE"),
    modifyElectrons = cms.bool(False),
-   modifierConfig = cms.PSet()
+   modifierConfig = cms.PSet( modifications = cms.VPSet() )
 )
+
