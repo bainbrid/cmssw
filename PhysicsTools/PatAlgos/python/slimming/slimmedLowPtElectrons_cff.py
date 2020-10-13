@@ -22,13 +22,9 @@ slimmedLowPtElectrons_ = slimmedLowPtElectrons.clone(
 from Configuration.ProcessModifiers.run2_miniAOD_UL_cff import run2_miniAOD_UL
 run2_miniAOD_UL.toReplaceWith(slimmedLowPtElectrons,slimmedLowPtElectrons_)
 
-# Links
-from PhysicsTools.PatAlgos.slimming.lowPtGsfLinks_cfi import lowPtGsfLinks
-
 # Task
 slimmedLowPtElectronsTask = cms.Task(
-    slimmedLowPtElectrons,
-    lowPtGsfLinks,
+    slimmedLowPtElectrons
 )
 
 # Clone to run ID V2 on patLowPtElectrons
