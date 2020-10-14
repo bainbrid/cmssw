@@ -255,17 +255,15 @@ std::unique_ptr<const GBRForest> createGBRForest(const edm::FileInPath& weightsF
 }
 
 // Overloaded versions which are taking string vectors by reference to store the variable names in
-std::unique_ptr<const GBRForest>
-createGBRForest(const std::string &weightsFile, std::vector<std::string> &varNames)
-{
+std::unique_ptr<const GBRForest> createGBRForest(const std::string& weightsFile, std::vector<std::string>& varNames) {
   std::string weightsFilePath;
-  
+
   if (boost::filesystem::exists(weightsFile)) {
     weightsFilePath = weightsFile;
   } else {
     weightsFilePath = edm::FileInPath{weightsFile}.fullPath();
   }
-  
+
   // if the input file is a ROOT file, just read the GBRForest object
   if (reco::details::hasEnding(weightsFilePath, ".root")) {
     TFile gbrForestFile(weightsFilePath.c_str());
@@ -273,7 +271,7 @@ createGBRForest(const std::string &weightsFile, std::vector<std::string> &varNam
     // In this way, the ROOT file can be closed.
     return std::make_unique<GBRForest>(*(GBRForest*)gbrForestFile.Get("gbrForest"));
   }
-  
+
   std::unique_ptr<GBRForest> gbrForest;
   gbrForest = init(weightsFilePath, varNames);
   return gbrForest;

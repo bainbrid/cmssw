@@ -45,25 +45,22 @@ LowPtGsfElectronSeedValueMapsProducer::LowPtGsfElectronSeedValueMapsProducer(con
       names_(),
       rekey_(conf.getParameter<bool>("Rekey")),
       gsfElectrons_(),
-      floatValueMaps_()
-{
-  if ( rekey_ == false ) {
+      floatValueMaps_() {
+  if (rekey_ == false) {
     gsfTracks_ = consumes<reco::GsfTrackCollection>(conf.getParameter<edm::InputTag>("gsfTracks"));
     preIdsValueMap_ = consumes<edm::ValueMap<reco::PreIdRef> >(conf.getParameter<edm::InputTag>("preIdsValueMap"));
     names_ = conf.getParameter<std::vector<std::string> >("ModelNames");
-    for (const auto& name : names_) { 
-      produces<edm::ValueMap<float> >(name); 
+    for (const auto& name : names_) {
+      produces<edm::ValueMap<float> >(name);
     }
   } else {
     gsfElectrons_ = consumes<reco::GsfElectronCollection>(conf.getParameter<edm::InputTag>("gsfElectrons"));
     std::vector<edm::InputTag> tags = conf.getParameter<std::vector<edm::InputTag> >("floatValueMaps");
-    for ( const auto& tag : tags ) {
-      floatValueMaps_ = edm::vector_transform(tags,
-					      [this]( edm::InputTag const& tag ) { 
-						return consumes<edm::ValueMap<float> >(tag); 
-					      });
-      names_.push_back( tag.instance() );
-      produces<edm::ValueMap<float> >( tag.instance() );
+    for (const auto& tag : tags) {
+      floatValueMaps_ = edm::vector_transform(
+          tags, [this](edm::InputTag const& tag) { return consumes<edm::ValueMap<float> >(tag); });
+      names_.push_back(tag.instance());
+      produces<edm::ValueMap<float> >(tag.instance());
     }
   }
 }
@@ -71,10 +68,9 @@ LowPtGsfElectronSeedValueMapsProducer::LowPtGsfElectronSeedValueMapsProducer(con
 ////////////////////////////////////////////////////////////////////////////////
 //
 void LowPtGsfElectronSeedValueMapsProducer::produce(edm::Event& event, const edm::EventSetup& setup) {
-
-  if ( rekey_ == false ) { 
+  if (rekey_ == false) {
     // TRANSFORM VALUEMAP OF PREID OBJECTS KEYED BY KF TRACK ...
-    // .. INTO VALUEMAP OF FLOATS (BDT SCORE) KEYED BY GSF TRACK ... 
+    // .. INTO VALUEMAP OF FLOATS (BDT SCORE) KEYED BY GSF TRACK ...
 
     // Retrieve GsfTracks from Event
     edm::Handle<reco::GsfTrackCollection> gsfTracks;
@@ -98,15 +94,15 @@ void LowPtGsfElectronSeedValueMapsProducer::produce(edm::Event& event, const edm
     for (unsigned int igsf = 0; igsf < gsfTracks->size(); igsf++) {
       reco::GsfTrackRef gsf(gsfTracks, igsf);
       if (gsf.isNonnull() && gsf->extra().isNonnull() && gsf->extra()->seedRef().isNonnull()) {
-	reco::ElectronSeedRef seed = gsf->extra()->seedRef().castTo<reco::ElectronSeedRef>();
-	if (seed.isNonnull() && seed->ctfTrack().isNonnull()) {
-	  const reco::PreIdRef preid = (*preIdsValueMap)[seed->ctfTrack()];
-	  if (preid.isNonnull()) {
-	    for (unsigned int iname = 0; iname < names_.size(); ++iname) {
-	      output[iname][igsf] = preid->mva(iname);
-	    }
-	  }
-	}
+        reco::ElectronSeedRef seed = gsf->extra()->seedRef().castTo<reco::ElectronSeedRef>();
+        if (seed.isNonnull() && seed->ctfTrack().isNonnull()) {
+          const reco::PreIdRef preid = (*preIdsValueMap)[seed->ctfTrack()];
+          if (preid.isNonnull()) {
+            for (unsigned int iname = 0; iname < names_.size(); ++iname) {
+              output[iname][igsf] = preid->mva(iname);
+            }
+          }
+        }
       }
     }
 
@@ -121,7 +117,7 @@ void LowPtGsfElectronSeedValueMapsProducer::produce(edm::Event& event, const edm
 
   } else {
     // TRANSFORM VALUEMAP OF FLOATS (BDT SCORE) KEYED BY GSF TRACK ...
-    // .. INTO VALUEMAP OF FLOATS (BDT SCORE) KEYED BY GSF ELECTRON ... 
+    // .. INTO VALUEMAP OF FLOATS (BDT SCORE) KEYED BY GSF ELECTRON ...
 
     // Retrieve GsfElectrons from Event
     edm::Handle<reco::GsfElectronCollection> gsfElectrons;
@@ -131,20 +127,20 @@ void LowPtGsfElectronSeedValueMapsProducer::produce(edm::Event& event, const edm
     }
 
     // Retrieve float ValueMaps from Event
-    for (unsigned int idx = 0; idx < names_.size(); ++idx ) {
+    for (unsigned int idx = 0; idx < names_.size(); ++idx) {
       // Extract ValueMap from Event
       edm::EDGetTokenT<edm::ValueMap<float> > token = floatValueMaps_[idx];
       edm::Handle<edm::ValueMap<float> > floatValueMap;
       event.getByToken(token, floatValueMap);
       if (!floatValueMap.isValid()) {
-	edm::LogError("Problem with floatValueMap handle");
+        edm::LogError("Problem with floatValueMap handle");
       }
       // Store BDT scores in vector
       std::vector<float> output(gsfElectrons->size(), -99.);
       for (unsigned int iele = 0; iele < gsfElectrons->size(); iele++) {
-	reco::GsfElectronRef ele(gsfElectrons,iele);
-	reco::GsfTrackRef gsf = ele->gsfTrack();
-	output[iele] = (*floatValueMap)[gsf];
+        reco::GsfElectronRef ele(gsfElectrons, iele);
+        reco::GsfTrackRef gsf = ele->gsfTrack();
+        output[iele] = (*floatValueMap)[gsf];
       }
       // Create and put ValueMap in Event
       auto ptr = std::make_unique<edm::ValueMap<float> >(edm::ValueMap<float>());
@@ -153,9 +149,7 @@ void LowPtGsfElectronSeedValueMapsProducer::produce(edm::Event& event, const edm
       filler.fill();
       event.put(std::move(ptr), names_[idx]);
     }
-      
   }
-
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -165,7 +159,7 @@ void LowPtGsfElectronSeedValueMapsProducer::fillDescriptions(edm::ConfigurationD
   desc.add<edm::InputTag>("gsfTracks", edm::InputTag("lowPtGsfEleGsfTracks"));
   desc.add<edm::InputTag>("preIdsValueMap", edm::InputTag("lowPtGsfElectronSeeds"));
   desc.add<std::vector<std::string> >("ModelNames", {"unbiased", "ptbiased"});
-  desc.add<bool>("Rekey",false);
+  desc.add<bool>("Rekey", false);
   desc.add<edm::InputTag>("gsfElectrons", edm::InputTag());
   desc.add<std::vector<edm::InputTag> >("floatValueMaps", std::vector<edm::InputTag>());
   descriptions.add("lowPtGsfElectronSeedValueMaps", desc);

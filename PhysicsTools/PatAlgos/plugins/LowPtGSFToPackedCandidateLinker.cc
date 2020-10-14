@@ -181,7 +181,6 @@ void LowPtGSFToPackedCandidateLinker::produce(edm::StreamID, edm::Event& iEvent,
   ele2pf_filler.insert(electrons, ele2pf.begin(), ele2pf.end());
   ele2pf_filler.fill();
   iEvent.put(std::move(assoc_ele2pf));
-
 }
 
 void LowPtGSFToPackedCandidateLinker::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
