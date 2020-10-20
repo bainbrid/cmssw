@@ -174,12 +174,12 @@ void LowPtGsfElectronIDProducer::fillDescriptions(edm::ConfigurationDescriptions
   desc.add<std::vector<std::string> >("ModelNames", {""});
   desc.add<std::vector<std::string> >(
       "ModelWeights",
-      {"RecoEgamma/ElectronIdentification/data/LowPtElectrons/RunII_Autumn18_LowPtElectrons_mva_id.xml.gz"});
+      {"RecoEgamma/ElectronIdentification/data/LowPtElectrons/LowPtElectrons_ID_2020Sept15.root"});
   desc.add<std::vector<double> >("ModelThresholds", {-99.});
   desc.add<bool>("PassThrough", false);
   desc.add<double>("MinPtThreshold", 0.5);
   desc.add<double>("MaxPtThreshold", 15.);
-  desc.add<std::string>("Version", "V0");
+  desc.add<std::string>("Version", "V1");
   descriptions.add("lowPtGsfElectronID", desc);
 }
 
