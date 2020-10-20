@@ -3,7 +3,7 @@ import FWCore.ParameterSet.Config as cms
 from PhysicsTools.PatAlgos.mcMatchLayer0.electronMatch_cfi import *
 from TrackingTools.TransientTrack.TransientTrackBuilder_cfi import *
 from PhysicsTools.PatAlgos.producersLayer1.electronProducer_cfi import *
-from PhysicsTools.PatAlgos.slimming.lowPtGsfLinks_cfi import lowPtGsfLinks
+from PhysicsTools.PatAlgos.producersLayer1.lowPtGsfLinks_cfi import lowPtGsfLinks
 
 sourceElectrons = cms.InputTag("lowPtGsfElectrons")
 
@@ -73,18 +73,9 @@ patLowPtElectrons = patElectrons.clone(
     isolationValuesNoPFId   = cms.PSet(),
 )
 
-from RecoEgamma.EgammaElectronProducers.lowPtGsfElectronSeedValueMaps_cfi import lowPtGsfElectronSeedValueMaps
-rekeyLowPtGsfElectronSeedValueMaps = lowPtGsfElectronSeedValueMaps.clone(
-    Rekey=cms.bool(True),
-    gsfElectrons=sourceElectrons,
-    floatValueMaps=cms.VInputTag(["lowPtGsfElectronSeedValueMaps:unbiased",
-                                  "lowPtGsfElectronSeedValueMaps:ptbiased"]),
-)
-
 makePatLowPtElectronsTask = cms.Task(
     lowPtGsfLinks,
     lowPtElectronMatch,
-    rekeyLowPtGsfElectronSeedValueMaps,
     patLowPtElectrons,
     )
 
@@ -101,20 +92,8 @@ from Configuration.Eras.Modifier_run2_miniAOD_94XFall17_cff import run2_miniAOD_
                                                            genParticleMatch = "electronMatch"
                                                            )
 
-# Rekey seed BDT ValueMaps by reco::GsfElectron and add to electronIDSources, only for run2_miniAOD_UL
-#from Configuration.ProcessModifiers.run2_miniAOD_UL_cff import run2_miniAOD_UL
-#from RecoEgamma.EgammaElectronProducers.lowPtGsfElectronSeedValueMaps_cfi import lowPtGsfElectronSeedValueMaps
-#rekeyLowPtGsfElectronSeedValueMaps = lowPtGsfElectronSeedValueMaps.clone(
-#    Rekey=cms.bool(True),
-#    gsfElectrons=sourceElectrons,
-#    floatValueMaps=cms.VInputTag(["lowPtGsfElectronSeedValueMaps:unbiased",
-#                                  "lowPtGsfElectronSeedValueMaps:ptbiased"]),
-#)
-#makePatLowPtElectronsTask_ = cms.Task(makePatLowPtElectronsTask.copy(),rekeyLowPtGsfElectronSeedValueMaps)
-#run2_miniAOD_UL.toReplaceWith(makePatLowPtElectronsTask,makePatLowPtElectronsTask_)
-#run2_miniAOD_UL.toModify(patLowPtElectrons,
-#                         electronIDSources = cms.PSet(
-#                             unbiased = cms.InputTag("rekeyLowPtGsfElectronSeedValueMaps:unbiased"),
-#                             ptbiased = cms.InputTag("rekeyLowPtGsfElectronSeedValueMaps:ptbiased"),
-#                         ),
-#                     )
+# Schedule rekeying of seed BDT ValueMaps by reco::GsfElectron for run2_miniAOD_UL
+from Configuration.ProcessModifiers.run2_miniAOD_UL_cff import run2_miniAOD_UL
+from RecoEgamma.EgammaElectronProducers.lowPtGsfElectronSeedValueMaps_cff import rekeyLowPtGsfElectronSeedValueMaps
+makePatLowPtElectronsTask_ = cms.Task(makePatLowPtElectronsTask.copy(),rekeyLowPtGsfElectronSeedValueMaps)
+run2_miniAOD_UL.toReplaceWith(makePatLowPtElectronsTask,makePatLowPtElectronsTask_)
