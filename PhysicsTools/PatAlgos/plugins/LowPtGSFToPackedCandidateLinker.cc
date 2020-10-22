@@ -3,9 +3,9 @@
 #include "DataFormats/Candidate/interface/Candidate.h"
 #include "DataFormats/Common/interface/RefToPtr.h"
 #include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
-#include "DataFormats/EgammaCandidates/interface/GsfElectron.h"
 #include "DataFormats/GsfTrackReco/interface/GsfTrack.h"
 #include "DataFormats/GsfTrackReco/interface/GsfTrackFwd.h"
+#include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/PatCandidates/interface/PackedCandidate.h"
 #include "DataFormats/Common/interface/Association.h"
 #include "FWCore/Framework/interface/global/EDProducer.h"
@@ -37,7 +37,7 @@ private:
   const edm::EDGetTokenT<edm::Association<pat::PackedCandidateCollection> > lost2trk_;
   const edm::EDGetTokenT<edm::Association<reco::TrackCollection> > gsf2trk_;
   const edm::EDGetTokenT<std::vector<reco::GsfTrack> > gsftracks_;
-  const edm::EDGetTokenT<std::vector<reco::GsfElectron> > electrons_;
+  const edm::EDGetTokenT<std::vector<pat::Electron> > electrons_;
 };
 
 LowPtGSFToPackedCandidateLinker::LowPtGSFToPackedCandidateLinker(const edm::ParameterSet& iConfig)
@@ -51,10 +51,11 @@ LowPtGSFToPackedCandidateLinker::LowPtGSFToPackedCandidateLinker(const edm::Para
           iConfig.getParameter<edm::InputTag>("lostTracks"))},
       gsf2trk_{consumes<edm::Association<reco::TrackCollection> >(iConfig.getParameter<edm::InputTag>("gsfToTrack"))},
       gsftracks_{consumes<std::vector<reco::GsfTrack> >(iConfig.getParameter<edm::InputTag>("gsfTracks"))},
-      electrons_{consumes<std::vector<reco::GsfElectron> >(iConfig.getParameter<edm::InputTag>("electrons"))} {
+      electrons_{consumes<std::vector<pat::Electron> >(iConfig.getParameter<edm::InputTag>("electrons"))} {
   produces<edm::Association<pat::PackedCandidateCollection> >("packedCandidates");
   produces<edm::Association<pat::PackedCandidateCollection> >("lostTracks");
-  produces<edm::ValueMap<edm::Ptr<reco::Candidate> > >();
+  produces<edm::ValueMap<edm::Ptr<pat::PackedCandidate> > >("packedCandidates");
+  produces<edm::ValueMap<edm::Ptr<pat::PackedCandidate> > >("lostTracks");
 }
 
 LowPtGSFToPackedCandidateLinker::~LowPtGSFToPackedCandidateLinker() {}
@@ -84,7 +85,7 @@ void LowPtGSFToPackedCandidateLinker::produce(edm::StreamID, edm::Event& iEvent,
   edm::Handle<edm::Association<reco::TrackCollection> > gsf2trk;
   iEvent.getByToken(gsf2trk_, gsf2trk);
 
-  edm::Handle<std::vector<reco::GsfElectron> > electrons;
+  edm::Handle<std::vector<pat::Electron> > electrons;
   iEvent.getByToken(electrons_, electrons);
 
   // collection sizes, for reference
@@ -98,12 +99,14 @@ void LowPtGSFToPackedCandidateLinker::produce(edm::StreamID, edm::Event& iEvent,
   //store index mapping in vectors for easy and fast access
   std::vector<size_t> trk2packed(ntracks, npacked);
   std::vector<size_t> trk2lost(ntracks, nlost);
-  std::vector<edm::Ptr<reco::Candidate> > trk2pf(ntracks, edm::Ptr<reco::Candidate>());
+  std::vector<edm::Ptr<pat::PackedCandidate> > trk2packedptr(ntracks, edm::Ptr<pat::PackedCandidate>());
+  std::vector<edm::Ptr<pat::PackedCandidate> > trk2lostptr(ntracks, edm::Ptr<pat::PackedCandidate>());
 
   //store auxiliary mappings for association
   std::vector<int> gsf2pack(ngsf, -1);
   std::vector<int> gsf2lost(ngsf, -1);
-  std::vector<edm::Ptr<reco::Candidate> > ele2pf(nele, edm::Ptr<reco::Candidate>());
+  std::vector<edm::Ptr<pat::PackedCandidate> > ele2packedptr(nele, edm::Ptr<pat::PackedCandidate>());
+  std::vector<edm::Ptr<pat::PackedCandidate> > ele2lostptr(nele, edm::Ptr<pat::PackedCandidate>());
 
   //electrons will never store their track (they store the Gsf track)
   //map PackedPF <--> Track
@@ -115,7 +118,9 @@ void LowPtGSFToPackedCandidateLinker::produce(edm::StreamID, edm::Event& iEvent,
       size_t trkid = cand.trackRef().index();
       size_t packid = packed_ref.index();
       trk2packed[trkid] = packid;
-      trk2pf[trkid] = edm::refToPtr(pf_ref);
+      // reco::Track index -> Ptr<Packed>
+      edm::Ptr<pat::PackedCandidate> packed_ptr = edm::refToPtr(packed_ref);
+      trk2packedptr[trkid] = packed_ptr;
     }
   }
 
@@ -126,6 +131,12 @@ void LowPtGSFToPackedCandidateLinker::produce(edm::StreamID, edm::Event& iEvent,
     if (lostTrack.isNonnull()) {
       size_t ilost = lostTrack.index();  //assumes that LostTracks are all made from the same track collection
       trk2lost[itrk] = ilost;
+      // reco::Track index -> Ptr<Packed>
+      if (key.isNonnull()) {
+	size_t trkid = key.index();
+	edm::Ptr<pat::PackedCandidate> lost_ptr = edm::refToPtr(lostTrack);
+	trk2lostptr[trkid] = lost_ptr;
+      }
     }
   }
 
@@ -149,8 +160,8 @@ void LowPtGSFToPackedCandidateLinker::produce(edm::StreamID, edm::Event& iEvent,
 
   //map Electron-->pat::PFCandidatePtr via Electron-->GsfTrack-->Track and Track-->pat::PFCandidatePtr
   for (unsigned int iele = 0; iele < nele; ++iele) {
-    reco::GsfElectronRef ele_ref(electrons, iele);
-    reco::GsfTrackRef gsf_ref = ele_ref->gsfTrack();
+    edm::Ptr<pat::Electron> ele_ptr(electrons, iele);
+    reco::GsfTrackRef gsf_ref = ele_ptr->gsfTrack();
     reco::TrackRef trk_ref = (*gsf2trk)[gsf_ref];
     if (trk_ref.id() != tracks.id()) {
       throw cms::Exception(
@@ -158,8 +169,11 @@ void LowPtGSFToPackedCandidateLinker::produce(edm::StreamID, edm::Event& iEvent,
           "The reco::Track collection used to match against the GSF Tracks was not used to produce such tracks");
     }
     size_t trkid = trk_ref.index();
-    if (trk2pf[trkid] != edm::Ptr<reco::Candidate>()) {
-      ele2pf[iele] = trk2pf[trkid];
+    if (trk2packedptr[trkid] != edm::Ptr<pat::PackedCandidate>()) {
+      ele2packedptr[iele] = trk2packedptr[trkid];
+    }
+    if (trk2lostptr[trkid] != edm::Ptr<pat::PackedCandidate>()) {
+      ele2lostptr[iele] = trk2lostptr[trkid];
     }
   }
 
@@ -176,11 +190,18 @@ void LowPtGSFToPackedCandidateLinker::produce(edm::StreamID, edm::Event& iEvent,
   gsf2lost_filler.fill();
   iEvent.put(std::move(assoc_gsf2lost), "lostTracks");
 
-  auto assoc_ele2pf = std::make_unique<edm::ValueMap<edm::Ptr<reco::Candidate> > >();
-  edm::ValueMap<edm::Ptr<reco::Candidate> >::Filler ele2pf_filler(*assoc_ele2pf);
-  ele2pf_filler.insert(electrons, ele2pf.begin(), ele2pf.end());
-  ele2pf_filler.fill();
-  iEvent.put(std::move(assoc_ele2pf));
+  auto assoc_ele2packedptr = std::make_unique<edm::ValueMap<edm::Ptr<pat::PackedCandidate> > >();
+  edm::ValueMap<edm::Ptr<pat::PackedCandidate> >::Filler ele2packedptr_filler(*assoc_ele2packedptr);
+  ele2packedptr_filler.insert(electrons, ele2packedptr.begin(), ele2packedptr.end());
+  ele2packedptr_filler.fill();
+  iEvent.put(std::move(assoc_ele2packedptr), "packedCandidates");
+
+  auto assoc_ele2lostptr = std::make_unique<edm::ValueMap<edm::Ptr<pat::PackedCandidate> > >();
+  edm::ValueMap<edm::Ptr<pat::PackedCandidate> >::Filler ele2lostptr_filler(*assoc_ele2lostptr);
+  ele2lostptr_filler.insert(electrons, ele2lostptr.begin(), ele2lostptr.end());
+  ele2lostptr_filler.fill();
+  iEvent.put(std::move(assoc_ele2lostptr), "lostTracks");
+
 }
 
 void LowPtGSFToPackedCandidateLinker::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
@@ -191,7 +212,7 @@ void LowPtGSFToPackedCandidateLinker::fillDescriptions(edm::ConfigurationDescrip
   desc.add<edm::InputTag>("tracks", edm::InputTag("generalTracks"));
   desc.add<edm::InputTag>("gsfToTrack", edm::InputTag("lowPtGsfToTrackLinks"));
   desc.add<edm::InputTag>("gsfTracks", edm::InputTag("lowPtGsfEleGsfTracks"));
-  desc.add<edm::InputTag>("electrons", edm::InputTag("lowPtGsfElectrons"));
+  desc.add<edm::InputTag>("electrons", edm::InputTag("patLowPtElectrons"));
   descriptions.add("lowPtGsfLinksDefault", desc);
 }
 
