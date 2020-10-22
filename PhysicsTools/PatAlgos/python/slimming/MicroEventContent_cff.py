@@ -90,6 +90,10 @@ MicroEventContent = cms.PSet(
         'keep *_prefiringweight_*_*',
         # patLowPtElectrons
         'keep *_slimmedLowPtElectrons_*_*',
+        'keep recoGsfElectronCores_lowPtGsfElectronCores_*_*',
+        'keep recoGsfTracks_lowPtGsfEleGsfTracks_*_*',
+        'keep recoSuperClusters_lowPtGsfElectronSuperClusters_*_*',
+        'keep recoCaloClusters_lowPtGsfElectronSuperClusters_*_*',
         'keep *_gsfTracksOpenConversions_*_*',
     )
 )
