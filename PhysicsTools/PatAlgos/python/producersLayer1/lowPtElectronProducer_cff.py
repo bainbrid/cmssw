@@ -3,7 +3,6 @@ import FWCore.ParameterSet.Config as cms
 from PhysicsTools.PatAlgos.mcMatchLayer0.electronMatch_cfi import *
 from TrackingTools.TransientTrack.TransientTrackBuilder_cfi import *
 from PhysicsTools.PatAlgos.producersLayer1.electronProducer_cfi import *
-from PhysicsTools.PatAlgos.producersLayer1.lowPtGsfLinks_cfi import lowPtGsfLinks
 
 sourceElectrons = cms.InputTag("lowPtGsfElectrons")
 
@@ -18,7 +17,7 @@ patLowPtElectrons = patElectrons.clone(
 
     # MC matching
     addGenMatch      = cms.bool(True),
-    embedGenMatch    = cms.bool(True),
+    embedGenMatch    = cms.bool(False),
     genParticleMatch = cms.InputTag("lowPtElectronMatch"),
 
     # Electron ID
@@ -33,30 +32,24 @@ patLowPtElectrons = patElectrons.clone(
         userClasses = cms.PSet( src = cms.VInputTag('') ),
         userFloats = cms.PSet( src = cms.VInputTag('') ),
         userInts = cms.PSet( src = cms.VInputTag('') ),
-        userCands = cms.PSet( src = cms.VInputTag('lowPtGsfLinks') ),
+        userCands = cms.PSet( src = cms.VInputTag('') ),
         userFunctions = cms.vstring(),
         userFunctionLabels = cms.vstring()
     ),
 
     # Embedding of RECO/AOD items
-    embedGsfElectronCore        = cms.bool(True),
+    embedGsfElectronCore        = cms.bool(False),
     embedPFCandidate            = cms.bool(False),
-    embedGsfTrack               = cms.bool(True),
+    embedGsfTrack               = cms.bool(False),
     embedTrack                  = cms.bool(True),
-    embedSuperCluster           = cms.bool(True),
-    embedSeedCluster            = cms.bool(True),
-    embedBasicClusters          = cms.bool(True),
+    embedSuperCluster           = cms.bool(False),
+    embedSeedCluster            = cms.bool(False),
+    embedBasicClusters          = cms.bool(False),
     embedPreshowerClusters      = cms.bool(False),
     embedRecHits                = cms.bool(False),
     embedPflowSuperCluster      = cms.bool(False),
     embedPflowBasicClusters     = cms.bool(False),
     embedPflowPreshowerClusters = cms.bool(False),
-
-    # Mini-Isolation 
-    computeMiniIso    = cms.bool(True), # See: PhysicsTools/PatUtils/src/MiniIsolation.cc
-    pfCandsForMiniIso = cms.InputTag("packedPFCandidates"),
-    miniIsoParamsE    = cms.vdouble(0.2, 0.2, 10.0, 0.0, 0.015, 0.015, 0.08, 0.0, 0.0),
-    miniIsoParamsB    = cms.vdouble(0.2, 0.2, 10.0, 0.0, 0.000, 0.000, 0.00, 0.0, 0.0),
 
     # Miscellaneous flags
     useParticleFlow         = cms.bool(False),
@@ -65,6 +58,7 @@ patLowPtElectrons = patElectrons.clone(
     addEfficiencies         = cms.bool(False),
     addResolutions          = cms.bool(False),
     embedHighLevelSelection = cms.bool(False),
+    computeMiniIso          = cms.bool(False),
     addPFClusterIso         = cms.bool(False),
     addPuppiIsolation       = cms.bool(False),
     isoDeposits             = cms.PSet(),
@@ -74,7 +68,6 @@ patLowPtElectrons = patElectrons.clone(
 )
 
 makePatLowPtElectronsTask = cms.Task(
-    lowPtGsfLinks,
     lowPtElectronMatch,
     patLowPtElectrons,
     )
