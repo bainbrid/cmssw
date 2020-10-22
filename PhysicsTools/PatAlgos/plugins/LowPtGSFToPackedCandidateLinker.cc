@@ -133,9 +133,9 @@ void LowPtGSFToPackedCandidateLinker::produce(edm::StreamID, edm::Event& iEvent,
       trk2lost[itrk] = ilost;
       // reco::Track index -> Ptr<Packed>
       if (key.isNonnull()) {
-	size_t trkid = key.index();
-	edm::Ptr<pat::PackedCandidate> lost_ptr = edm::refToPtr(lostTrack);
-	trk2lostptr[trkid] = lost_ptr;
+        size_t trkid = key.index();
+        edm::Ptr<pat::PackedCandidate> lost_ptr = edm::refToPtr(lostTrack);
+        trk2lostptr[trkid] = lost_ptr;
       }
     }
   }
@@ -201,7 +201,6 @@ void LowPtGSFToPackedCandidateLinker::produce(edm::StreamID, edm::Event& iEvent,
   ele2lostptr_filler.insert(electrons, ele2lostptr.begin(), ele2lostptr.end());
   ele2lostptr_filler.fill();
   iEvent.put(std::move(assoc_ele2lostptr), "lostTracks");
-
 }
 
 void LowPtGSFToPackedCandidateLinker::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
