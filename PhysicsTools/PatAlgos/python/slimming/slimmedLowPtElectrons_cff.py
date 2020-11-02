@@ -6,8 +6,9 @@ from RecoEgamma.EgammaElectronProducers.lowPtGsfElectronID_cfi import lowPtGsfEl
 
 # Clone to run ID V2 on patLowPtElectrons
 patLowPtGsfElectronID = lowPtGsfElectronID.clone(
-    electrons='patLowPtElectrons',
-    rho='fixedGridRhoFastjetAll',
+    electrons=cms.InputTag('patLowPtElectrons'),
+    rho=cms.InputTag('fixedGridRhoFastjetAll'),
+    unbiased=cms.InputTag(''), # instead, use embedded value from userData('unbiased')
     ModelWeights=cms.vstring(['RecoEgamma/ElectronIdentification/data/LowPtElectrons/LowPtElectrons_ID_2020Sept15.root']),
     Version=cms.string('V1'),
 )
@@ -15,6 +16,11 @@ patLowPtGsfElectronID = lowPtGsfElectronID.clone(
 # Task
 slimmedLowPtElectronsTask = cms.Task(
     lowPtGsfLinks,
-    patLowPtGsfElectronID,
     slimmedLowPtElectrons,
 )
+
+# Modifiers for BParking
+from Configuration.Eras.Modifier_bParking_cff import bParking
+slimmedLowPtElectronsTask_ = slimmedLowPtElectronsTask.copy()
+slimmedLowPtElectronsTask_.add(patLowPtGsfElectronID)
+run2_miniAOD_UL.toReplaceWith(slimmedLowPtElectronsTask,slimmedLowPtElectronsTask_)
