@@ -85,8 +85,6 @@ void LowPtGSFToPackedCandidateLinker::produce(edm::StreamID, edm::Event& iEvent,
   //store index mapping in vectors for easy and fast access
   std::vector<size_t> trk2packed(ntracks, npacked);
   std::vector<size_t> trk2lost(ntracks, nlost);
-  //PackedCandidatePtrCollection trk2packedptr(ntracks, PackedCandidatePtr(packed,npacked));
-  //PackedCandidatePtrCollection trk2lostptr(ntracks, PackedCandidatePtr(lost_tracks,ntracks));
 
   //store auxiliary mappings for association
   std::vector<int> gsf2pack(ngsf, -1);
@@ -103,7 +101,6 @@ void LowPtGSFToPackedCandidateLinker::produce(edm::StreamID, edm::Event& iEvent,
     if (cand.charge() && packed_ref.isNonnull() && cand.trackRef().isNonnull() && cand.trackRef().id() == tracks.id()) {
       size_t trkid = cand.trackRef().index();
       trk2packed[trkid] = packed_ref.index();
-      //trk2packedptr[trkid] = edm::refToPtr(packed_ref); // Track.index() -> Ptr<Packed>
     }
   }
 
@@ -113,7 +110,6 @@ void LowPtGSFToPackedCandidateLinker::produce(edm::StreamID, edm::Event& iEvent,
     pat::PackedCandidateRef lostTrack = (*lost2trk_assoc)[key];
     if (lostTrack.isNonnull()) {
       trk2lost[itrk] = lostTrack.index();  // assumes that LostTracks are all made from the same track collection
-      //trk2lostptr[itrk] = edm::refToPtr(lostTrack); // Track.index() -> Ptr<Packed>
     }
   }
 

@@ -83,10 +83,11 @@ void LowPtGsfElectronSeedValueMapsProducer::produce(edm::Event& event, const edm
     for (unsigned int iname = 0; iname < names_.size(); ++iname) {
       output.push_back(std::vector<float>(gsfTracks->size(), -999.));
     }
-    for (unsigned int igsf = 0; igsf < gsfTracks->size(); igsf++) {
-      reco::GsfTrackRef gsf(gsfTracks, igsf);
-      if (gsf.isNonnull() && gsf->extra().isNonnull() && gsf->extra()->seedRef().isNonnull()) {
-        reco::ElectronSeedRef seed = gsf->extra()->seedRef().castTo<reco::ElectronSeedRef>();
+    auto const& gsfTracksV = *gsfTracks;
+    for (unsigned int igsf = 0; igsf < gsfTracksV.size(); igsf++) {
+      const reco::GsfTrack& gsf = gsfTracksV[igsf];
+      if (gsf.extra().isNonnull() && gsf.extra()->seedRef().isNonnull()) {
+	reco::ElectronSeedRef seed = gsf.extra()->seedRef().castTo<reco::ElectronSeedRef>();
         if (seed.isNonnull() && seed->ctfTrack().isNonnull()) {
           const reco::PreIdRef preid = (*preIdsValueMap)[seed->ctfTrack()];
           if (preid.isNonnull()) {
@@ -121,9 +122,10 @@ void LowPtGsfElectronSeedValueMapsProducer::produce(edm::Event& event, const edm
 
       // Store BDT scores in vector
       std::vector<float> output(gsfElectrons->size(), -99.);
-      for (unsigned int iele = 0; iele < gsfElectrons->size(); iele++) {
-        reco::GsfElectronRef ele(gsfElectrons, iele);
-        reco::GsfTrackRef gsf = ele->gsfTrack();
+      auto const& gsfElectronsV = *gsfElectrons;
+      for (unsigned int iele = 0; iele < gsfElectronsV.size(); iele++) {
+        const reco::GsfElectron& ele = gsfElectronsV[iele];
+	reco::GsfTrackRef gsf = ele.gsfTrack();
         output[iele] = floatValueMap[gsf];
       }
       // Create and put ValueMap in Event
