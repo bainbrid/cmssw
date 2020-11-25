@@ -87,7 +87,7 @@ void LowPtGsfElectronSeedValueMapsProducer::produce(edm::Event& event, const edm
     for (unsigned int igsf = 0; igsf < gsfTracksV.size(); igsf++) {
       const reco::GsfTrack& gsf = gsfTracksV[igsf];
       if (gsf.extra().isNonnull() && gsf.extra()->seedRef().isNonnull()) {
-	reco::ElectronSeedRef seed = gsf.extra()->seedRef().castTo<reco::ElectronSeedRef>();
+        reco::ElectronSeedRef seed = gsf.extra()->seedRef().castTo<reco::ElectronSeedRef>();
         if (seed.isNonnull() && seed->ctfTrack().isNonnull()) {
           const reco::PreIdRef preid = (*preIdsValueMap)[seed->ctfTrack()];
           if (preid.isNonnull()) {
@@ -125,7 +125,7 @@ void LowPtGsfElectronSeedValueMapsProducer::produce(edm::Event& event, const edm
       auto const& gsfElectronsV = *gsfElectrons;
       for (unsigned int iele = 0; iele < gsfElectronsV.size(); iele++) {
         const reco::GsfElectron& ele = gsfElectronsV[iele];
-	reco::GsfTrackRef gsf = ele.gsfTrack();
+        reco::GsfTrackRef gsf = ele.gsfTrack();
         output[iele] = floatValueMap[gsf];
       }
       // Create and put ValueMap in Event
