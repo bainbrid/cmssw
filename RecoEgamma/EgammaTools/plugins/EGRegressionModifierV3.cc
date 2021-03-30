@@ -115,8 +115,8 @@ void EGRegressionModifierV3::modifyObject(reco::GsfElectron& ele) const
   // skip HGCAL for now
   if( superClus->seed()->seed().det() == DetId::Forward ) return;
 
-  // do not apply corrections in case of missing info (slimmed MiniAOD electrons)
-  //if(!superClus->clusters().isAvailable()) return;
+  // do not apply corrections to E/p in case of missing info (slimmed MiniAOD electrons)
+  bool setEovP = superClus->clusters().isAvailable();
 
   //check if fbrem is filled as its needed for E/p combination so abort if its set to the default value 
   //this will be the case for <5 (or current cuts) for miniAOD electrons
@@ -148,7 +148,6 @@ void EGRegressionModifierV3::modifyObject(reco::GsfElectron& ele) const
   const float corrEnergy = (rawEnergy + rawESEnergy)*ecalMeanCorr;
   const float corrEnergyErr = corrEnergy*ecalSigma;
 
-  bool setEovP = false;
   ele.setCorrectedEcalEnergy(corrEnergy, setEovP);
   ele.setCorrectedEcalEnergyError(corrEnergyErr);
 
