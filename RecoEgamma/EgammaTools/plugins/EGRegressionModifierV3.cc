@@ -106,6 +106,7 @@ void EGRegressionModifierV3::setEventContent(const edm::EventSetup& iSetup)
 
 void EGRegressionModifierV3::modifyObject(reco::GsfElectron& ele) const
 {
+
   //check if we have specified an electron regression correction and
   //return the object unmodified if so
   if(!eleRegs_) return;
@@ -118,10 +119,10 @@ void EGRegressionModifierV3::modifyObject(reco::GsfElectron& ele) const
   // do not apply corrections to E/p in case of missing info (slimmed MiniAOD electrons)
   bool setEovP = superClus->clusters().isAvailable();
 
-  //check if fbrem is filled as its needed for E/p combination so abort if its set to the default value 
+  //check if fbrem is filled as its needed for E/p combination (i.e. check if its set to the default value)
   //this will be the case for <5 (or current cuts) for miniAOD electrons
-  if(ele.fbrem()==reco::GsfElectron::ClassificationVariables::kDefaultValue) return;
-  
+  setEovP &= (ele.fbrem()==reco::GsfElectron::ClassificationVariables::kDefaultValue);
+
   auto regData = getRegData(ele);
   const float rawEnergy = superClus->rawEnergy(); 
   const float rawESEnergy = superClus->preshowerEnergy();
