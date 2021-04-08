@@ -179,8 +179,12 @@ bool GsfElectron::ecalDriven() const
 void GsfElectron::setCorrectedEcalEnergyError( float energyError )
  { corrections_.correctedEcalEnergyError = energyError ; }
 
+void GsfElectron::setCorrectedEcalEnergy( float newEnergy )
+{ setCorrectedEcalEnergy( newEnergy, true ); }
+
 void GsfElectron::setCorrectedEcalEnergy( float newEnergy, bool setEovP )
  {
+
   math::XYZTLorentzVectorD momentum = p4() ;
   momentum *= newEnergy/momentum.e() ;
   setP4(momentum) ;

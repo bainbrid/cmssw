@@ -835,7 +835,8 @@ class GsfElectron : public RecoCandidate
 
     // setters
     void setCorrectedEcalEnergyError( float newEnergyError ) ;
-    void setCorrectedEcalEnergy( float newEnergy , bool setEovP=true ) ;
+    void setCorrectedEcalEnergy( float newEnergy ) ;
+    void setCorrectedEcalEnergy( float newEnergy, bool setEovP ) ;
     void setTrackMomentumError( float trackMomentumError ) ;
     void setP4( P4Kind kind, const LorentzVector & p4, float p4Error, bool setCandidate ) ;
     using RecoCandidate::setP4 ;
