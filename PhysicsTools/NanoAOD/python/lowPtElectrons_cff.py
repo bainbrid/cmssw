@@ -26,6 +26,9 @@ lowPtElectronTable = cms.EDProducer(
     extension = cms.bool(False), # this is the main table for the electrons
     variables = cms.PSet(
         CandVars,
+        ID = Var("electronID('ID')",float,doc="ID, BDT (raw) score"),
+        unbiased = Var("electronID('unbiased')",float,doc="ElectronSeed, pT- and dxy- agnostic BDT (raw) score"),
+        ptbiased = Var("electronID('ptbiased')",float,doc="ElectronSeed, pT- and dxy- dependent BDT (raw) score"),
     ),
 )
 
