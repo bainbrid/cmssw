@@ -7,6 +7,7 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "PhysicsTools/PatUtils/interface/MiniIsolation.h"
 #include "DataFormats/Common/interface/View.h"
+#include "CommonTools/CandAlgos/interface/ModifyObjectValueBase.h"
 
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/Electron.h"
@@ -23,7 +24,8 @@ namespace pat {
           vertices_(consumes<std::vector<reco::Vertex>>(iConfig.getParameter<edm::InputTag>("vertices"))),
           beamLineToken_(consumes<reco::BeamSpot>(iConfig.getParameter<edm::InputTag>("beamspot"))),
           computeMiniIso_(iConfig.getParameter<bool>("computeMiniIso")),
-          fixDxySign_(iConfig.getParameter<bool>("fixDxySign")) {
+          fixDxySign_(iConfig.getParameter<bool>("fixDxySign")),
+          applyEreg_(iConfig.getParameter<bool>("applyEnergyRegression")) {
       //for mini-isolation calculation
       if (computeMiniIso_) {
         readMiniIsoParams(iConfig);
@@ -32,6 +34,13 @@ namespace pat {
       recomputeMuonBasicSelectors_ = false;
       if (typeid(T) == typeid(pat::Muon))
         recomputeMuonBasicSelectors_ = iConfig.getParameter<bool>("recomputeMuonBasicSelectors");
+      // Apply energy regression for electrons
+      if (applyEreg_) {
+        auto const &conf = iConfig.getParameterSet("regressionConfig");
+        auto const &name = conf.getParameter<std::string>("modifierName");
+        auto cc = consumesCollector();
+        regression_ = ModifyObjectValueFactory::get()->create(name, conf, cc);
+      }
       produces<std::vector<T>>();
     }
 
@@ -48,6 +57,11 @@ namespace pat {
       desc.add<bool>("fixDxySign", false)->setComment("Fix the IP sign");
       desc.addOptional<edm::InputTag>("pfCandsForMiniIso", edm::InputTag("packedPFCandidates"))
           ->setComment("PackedCandidate collection used for miniIso");
+      desc.add<bool>("applyEnergyRegression", false)->setComment("Apply energy regression to electrons");
+      edm::ParameterSetDescription psd;
+      psd.setUnknown();
+      desc.addOptional<edm::ParameterSetDescription>("regressionConfig", psd)
+          ->setComment("Configuration for electron energy regression");
       if (typeid(T) == typeid(pat::Muon)) {
         desc.add<bool>("recomputeMuonBasicSelectors", false)
             ->setComment("Recompute basic cut-based muon selector flags");
@@ -74,6 +88,8 @@ namespace pat {
 
     void recomputeMuonBasicSelectors(T &, const reco::Vertex &, const bool) const;
 
+    void applyEreg(T &) const;
+
   private:
     // configurables
     edm::EDGetTokenT<std::vector<T>> src_;
@@ -84,6 +100,8 @@ namespace pat {
     bool recomputeMuonBasicSelectors_;
     std::vector<double> miniIsoParams_[2];
     edm::EDGetTokenT<pat::PackedCandidateCollection> pcToken_;
+    const bool applyEreg_;
+    std::unique_ptr<ModifyObjectValueBase> regression_;
   };
 
   // must do the specialization within the namespace otherwise gcc complains
@@ -126,10 +144,19 @@ namespace pat {
     lep.setSelectors(muon::makeSelectorBitset(lep, &pv, do_hip_mitigation_2016));
   }
 
+  template <typename T>
+  void LeptonUpdater<T>::applyEreg(T &lep) const { /* do nothing for muons */
+  }
+
+  template <>
+  void LeptonUpdater<pat::Electron>::applyEreg(pat::Electron &ele) const {
+    regression_->modifyObject(ele);
+  }
+
 }  // namespace pat
 
 template <typename T>
-void pat::LeptonUpdater<T>::produce(edm::StreamID, edm::Event &iEvent, edm::EventSetup const &) const {
+void pat::LeptonUpdater<T>::produce(edm::StreamID, edm::Event &iEvent, edm::EventSetup const &setup) const {
   edm::Handle<std::vector<T>> src;
   iEvent.getByToken(src_, src);
 
@@ -152,6 +179,11 @@ void pat::LeptonUpdater<T>::produce(edm::StreamID, edm::Event &iEvent, edm::Even
     edm::LogError("DataNotAvailable") << "No beam spot available  \n";
   }
 
+  if (applyEreg_) {
+    regression_->setEvent(iEvent);
+    regression_->setEventContent(setup);
+  }
+
   std::unique_ptr<std::vector<T>> out(new std::vector<T>(*src));
 
   const bool do_hip_mitigation_2016 =
@@ -160,6 +192,9 @@ void pat::LeptonUpdater<T>::produce(edm::StreamID, edm::Event &iEvent, edm::Even
   for (unsigned int i = 0, n = src->size(); i < n; ++i) {
     T &lep = (*out)[i];
     setDZ(lep, pv);
+    if (applyEreg_) {
+      applyEreg(lep);
+    }
     if (computeMiniIso_) {
       const auto &params = miniIsoParams(lep);
       pat::PFIsolation miniiso = pat::getMiniPFIsolation(pc.product(),

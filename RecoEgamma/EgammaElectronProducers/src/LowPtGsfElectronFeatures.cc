@@ -183,8 +183,9 @@ namespace lowptgsfeleid {
 
     // GSF tracks
     if (ele.core().isNonnull()) {
-      reco::GsfTrackRef gsf = ele.core()->gsfTrack();
-      if (gsf.isNonnull()) {
+      reco::GsfTrackRef gsf = ele.gsfTrack();
+      if (ele.core()->gsfTrack().isNonnull() ||  // if embedded
+          gsf.isNonnull()) {
         gsf_mode_p = gsf->pMode();
         eid_gsf_nhits = (float)gsf->found();
         eid_gsf_chi2red = gsf->normalizedChi2();
@@ -198,8 +199,9 @@ namespace lowptgsfeleid {
 
     // Super clusters
     if (ele.core().isNonnull()) {
-      reco::SuperClusterRef sc = ele.core()->superCluster();
-      if (sc.isNonnull()) {
+      reco::SuperClusterRef sc = ele.superCluster();
+      if (ele.core()->superCluster().isNonnull() ||  // if embedded
+          sc.isNonnull()) {
         eid_sc_E = sc->energy();
         eid_sc_eta = sc->eta();
         eid_sc_etaWidth = sc->etaWidth();
@@ -230,10 +232,12 @@ namespace lowptgsfeleid {
 
     // Clusters
     if (ele.core().isNonnull()) {
-      reco::GsfTrackRef gsf = ele.core()->gsfTrack();
-      if (gsf.isNonnull()) {
-        reco::SuperClusterRef sc = ele.core()->superCluster();
-        if (sc.isNonnull()) {
+      reco::GsfTrackRef gsf = ele.gsfTrack();
+      if (ele.core()->gsfTrack().isNonnull() ||  // if embedded
+          gsf.isNonnull()) {
+        reco::SuperClusterRef sc = ele.superCluster();
+        if (ele.core()->superCluster().isNonnull() ||  // if embedded
+            sc.isNonnull()) {
           // Propagate electron track to ECAL surface
           double mass2 = 0.000511 * 0.000511;
           float p2 = pow(gsf->p(), 2);
