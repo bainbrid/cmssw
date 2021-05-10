@@ -49,6 +49,7 @@ RecoEgammaFEVT = cms.PSet(
         'keep *_lowPtGsfToTrackLinks_*_*',
         'keep recoSuperClusters_lowPtGsfElectronSuperClusters_*_*',
         'keep floatedmValueMap_lowPtGsfElectronSeedValueMaps_*_*',
+        'keep floatedmValueMap_rekeyLowPtGsfElectronSeedValueMaps_*_*',
         'keep floatedmValueMap_lowPtGsfElectronID_*_*',
   )                                                                 
 )
@@ -114,6 +115,7 @@ RecoEgammaRECO = cms.PSet(
         'keep *_lowPtGsfToTrackLinks_*_*',
         'keep recoSuperClusters_lowPtGsfElectronSuperClusters_*_*',
         'keep floatedmValueMap_lowPtGsfElectronSeedValueMaps_*_*',
+        'keep floatedmValueMap_rekeyLowPtGsfElectronSeedValueMaps_*_*',
         'keep floatedmValueMap_lowPtGsfElectronID_*_*',
   )                                                                 
 )
@@ -168,14 +170,13 @@ RecoEgammaAOD = cms.PSet(
         'keep *_lowPtGsfToTrackLinks_*_*',
         'keep recoSuperClusters_lowPtGsfElectronSuperClusters_*_*',
         'keep floatedmValueMap_lowPtGsfElectronSeedValueMaps_*_*',
+        'keep floatedmValueMap_rekeyLowPtGsfElectronSeedValueMaps_*_*',
         'keep floatedmValueMap_lowPtGsfElectronID_*_*')
 )
 
 # Extra modules for bParking era
 from Configuration.Eras.Modifier_bParking_cff import bParking
-_bParking_extraCommands = ['keep recoGsfElectrons_lowPtGsfElectronsPreRegression_*_*',
-                           'keep floatedmValueMap_rekeyLowPtGsfElectronSeedValueMaps_*_*',
-                           ]
+_bParking_extraCommands = ['keep recoGsfElectrons_lowPtGsfElectronsPreRegression_*_*']
 bParking.toModify(RecoEgammaFEVT, outputCommands = RecoEgammaFEVT.outputCommands + _bParking_extraCommands)
 bParking.toModify(RecoEgammaRECO, outputCommands = RecoEgammaRECO.outputCommands + _bParking_extraCommands)
 bParking.toModify(RecoEgammaAOD, outputCommands = RecoEgammaAOD.outputCommands + _bParking_extraCommands)
@@ -188,7 +189,8 @@ _phase2_hgcal_RecoEgamma_tokeep = [ 'keep *_ecalDrivenGsfElectronCores_*_*',
                                     'keep *_photonCoreFromMultiCl_*_*',
                                     'keep *_photonsFromMultiCl_*_*']
 from Configuration.Eras.Modifier_phase2_hgcal_cff import phase2_hgcal
-phase2_hgcal.toModify( RecoEgammaFEVT, outputCommands = RecoEgammaFEVT.outputCommands + _phase2_hgcal_RecoEgamma_tokeep )
+phase2_hgcal.toModify( RecoEgammaFEVT, outputCommands = RecoEgammaFEVT.outputCommands + _phase2_hgcal_RecoEgamma_tokeep
+)
 phase2_hgcal.toModify( RecoEgammaRECO, outputCommands = RecoEgammaRECO.outputCommands + _phase2_hgcal_RecoEgamma_tokeep )
 phase2_hgcal.toModify( RecoEgammaAOD,  outputCommands = RecoEgammaAOD.outputCommands + _phase2_hgcal_RecoEgamma_tokeep )
 
