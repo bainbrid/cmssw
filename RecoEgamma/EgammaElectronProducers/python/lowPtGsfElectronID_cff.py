@@ -10,16 +10,6 @@ lowPtGsfElectronID = defaultLowPtGsfElectronID.clone(
     ModelThresholds = cms.vdouble([-10.])
     )
 
-from Configuration.Eras.Modifier_bParking_cff import bParking
-bParking.toModify(
-    lowPtGsfElectronID,
-    rho = "fixedGridRhoFastjetAll",
-    ModelWeights = ["RecoEgamma/ElectronIdentification/data/LowPtElectrons/LowPtElectrons_ID_2020Nov28.root"],
-    ModelThresholds = [-99.],
-    Version = "V1",
-)
-
-# Order is important (run2_miniAOD_UL overrides bParking in the case of re-MINIAOD)
 from Configuration.ProcessModifiers.run2_miniAOD_UL_cff import run2_miniAOD_UL
 run2_miniAOD_UL.toModify(
     lowPtGsfElectronID,
@@ -29,12 +19,9 @@ run2_miniAOD_UL.toModify(
     Version = "V1",
 )
 
-# Order is important (run2_miniAOD_devel overrides run2_miniAOD_UL in the case of re-MINIAOD)
+from Configuration.Eras.Modifier_bParking_cff import bParking
 from Configuration.Eras.Modifier_run2_miniAOD_devel_cff import run2_miniAOD_devel
-run2_miniAOD_devel.toModify(
+(bParking | run2_miniAOD_devel).toModify(
     lowPtGsfElectronID,
-    rho = "fixedGridRhoFastjetAll",
     ModelWeights = ["RecoEgamma/ElectronIdentification/data/LowPtElectrons/LowPtElectrons_ID_2020Nov28.root"],
-    ModelThresholds = [-99.],
-    Version = "V1",
 )

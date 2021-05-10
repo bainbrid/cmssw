@@ -67,26 +67,25 @@ from Configuration.Eras.Modifier_run2_miniAOD_94XFall17_cff import run2_miniAOD_
                                                            genParticleMatch = "electronMatch"
                                                            )
 
-# Schedule rekeying of seed BDT ValueMaps by reco::GsfElectron for run2_miniAOD_UL and bParking
-from Configuration.ProcessModifiers.run2_miniAOD_UL_cff import run2_miniAOD_UL
+# For bParking and/or run2_miniAOD_UL ...
 from Configuration.Eras.Modifier_bParking_cff import bParking
-from RecoEgamma.EgammaElectronProducers.lowPtGsfElectronSeedValueMaps_cff import rekeyLowPtGsfElectronSeedValueMaps
-from RecoEgamma.EgammaElectronProducers.lowPtGsfElectronID_cff import lowPtGsfElectronID
-_makePatLowPtElectronsTask = makePatLowPtElectronsTask.copy()
-_makePatLowPtElectronsTask.add(rekeyLowPtGsfElectronSeedValueMaps)
-_makePatLowPtElectronsTask.add(lowPtGsfElectronID)
-(bParking | run2_miniAOD_UL).toReplaceWith(makePatLowPtElectronsTask,_makePatLowPtElectronsTask)
-
-# For run2_miniAOD_devel ...
-# (1) apply energy regression
-# (2) rekey seed BDT ValueMaps by reco::GsfElectron
-# (3) rerun ID
+from Configuration.ProcessModifiers.run2_miniAOD_UL_cff import run2_miniAOD_UL
 from Configuration.Eras.Modifier_run2_miniAOD_devel_cff import run2_miniAOD_devel
-from RecoEgamma.EgammaElectronProducers.lowPtGsfElectrons_cff import lowPtGsfElectrons
-from RecoEgamma.EgammaElectronProducers.lowPtGsfElectronSeedValueMaps_cff import rekeyLowPtGsfElectronSeedValueMaps
-from RecoEgamma.EgammaElectronProducers.lowPtGsfElectronID_cff import lowPtGsfElectronID
 _makePatLowPtElectronsTask = makePatLowPtElectronsTask.copy()
-_makePatLowPtElectronsTask.add(lowPtGsfElectrons)
+
+# (1) rekey seed BDT ValueMaps by reco::GsfElectron
+from RecoEgamma.EgammaElectronProducers.lowPtGsfElectronSeedValueMaps_cff import rekeyLowPtGsfElectronSeedValueMaps
 _makePatLowPtElectronsTask.add(rekeyLowPtGsfElectronSeedValueMaps)
+(bParking | run2_miniAOD_UL).toReplaceWith(makePatLowPtElectronsTask,_makePatLowPtElectronsTask)
+(bParking | ~run2_miniAOD_UL).toReplaceWith(makePatLowPtElectronsTask,_makePatLowPtElectronsTask)
+
+# (2) rerun ID
+from RecoEgamma.EgammaElectronProducers.lowPtGsfElectronID_cfi import lowPtGsfElectronID
 _makePatLowPtElectronsTask.add(lowPtGsfElectronID)
-run2_miniAOD_devel.toReplaceWith(makePatLowPtElectronsTask,_makePatLowPtElectronsTask)
+(~bParking | run2_miniAOD_UL).toReplaceWith(makePatLowPtElectronsTask,_makePatLowPtElectronsTask) # no-change rule
+(~bParking | run2_miniAOD_devel).toReplaceWith(makePatLowPtElectronsTask,_makePatLowPtElectronsTask)
+
+# (3) apply energy regression
+from RecoEgamma.EgammaElectronProducers.lowPtGsfElectrons_cfi import lowPtGsfElectrons
+_makePatLowPtElectronsTask.add(lowPtGsfElectrons)
+(~bParking & run2_miniAOD_devel).toReplaceWith(makePatLowPtElectronsTask,_makePatLowPtElectronsTask)
