@@ -29,11 +29,10 @@ using reco::GsfElectronCollection;
 LowPtGsfElectronFinalizer::LowPtGsfElectronFinalizer(const edm::ParameterSet& cfg)
     : previousGsfElectrons_{consumes<GsfElectronCollection>(cfg.getParameter<InputTag>("previousGsfElectronsTag"))},
       putToken_{produces<GsfElectronCollection>()} {
-  const edm::ParameterSet& iconf = cfg.getParameterSet("regressionConfig");
-  const std::string& mname = iconf.getParameter<std::string>("modifierName");
-  edm::ConsumesCollector&& cc = consumesCollector();
-  ModifyObjectValueBase* plugin = ModifyObjectValueFactory::get()->create(mname, iconf, cc);
-  regression_.reset(plugin);
+  auto const& iconf = cfg.getParameterSet("regressionConfig");
+  auto const& mname = iconf.getParameter<std::string>("modifierName");
+  auto cc = consumesCollector();
+  regression_.reset(ModifyObjectValueFactory::get()->create(mname, iconf, cc));
 }
 
 void LowPtGsfElectronFinalizer::produce(edm::Event& event, const edm::EventSetup& setup) {
