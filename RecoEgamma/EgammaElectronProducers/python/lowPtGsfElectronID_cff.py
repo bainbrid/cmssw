@@ -23,5 +23,8 @@ from Configuration.Eras.Modifier_bParking_cff import bParking
 from Configuration.Eras.Modifier_run2_miniAOD_devel_cff import run2_miniAOD_devel
 (bParking | run2_miniAOD_devel).toModify(
     lowPtGsfElectronID,
+    rho = "fixedGridRhoFastjetAll",
     ModelWeights = ["RecoEgamma/ElectronIdentification/data/LowPtElectrons/LowPtElectrons_ID_2020Nov28.root"],
+    ModelThresholds = [-99.],
+    Version = "V1",
 )
