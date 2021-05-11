@@ -80,12 +80,12 @@ _makePatLowPtElectronsTask.add(rekeyLowPtGsfElectronSeedValueMaps)
 (bParking | ~run2_miniAOD_UL).toReplaceWith(makePatLowPtElectronsTask,_makePatLowPtElectronsTask)
 
 # (2) rerun ID
-from RecoEgamma.EgammaElectronProducers.lowPtGsfElectronID_cfi import lowPtGsfElectronID
+from RecoEgamma.EgammaElectronProducers.lowPtGsfElectronID_cff import lowPtGsfElectronID
 _makePatLowPtElectronsTask.add(lowPtGsfElectronID)
 (~bParking | run2_miniAOD_UL).toReplaceWith(makePatLowPtElectronsTask,_makePatLowPtElectronsTask) # no-change rule
 (~bParking | run2_miniAOD_devel).toReplaceWith(makePatLowPtElectronsTask,_makePatLowPtElectronsTask)
 
 # (3) apply energy regression
-from RecoEgamma.EgammaElectronProducers.lowPtGsfElectrons_cfi import lowPtGsfElectrons
+from RecoEgamma.EgammaElectronProducers.lowPtGsfElectrons_cff import lowPtGsfElectrons
 _makePatLowPtElectronsTask.add(lowPtGsfElectrons)
 (~bParking & run2_miniAOD_devel).toReplaceWith(makePatLowPtElectronsTask,_makePatLowPtElectronsTask)
