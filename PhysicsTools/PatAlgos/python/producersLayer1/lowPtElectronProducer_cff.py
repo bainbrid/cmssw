@@ -71,20 +71,19 @@ from Configuration.Eras.Modifier_run2_miniAOD_94XFall17_cff import run2_miniAOD_
 from Configuration.ProcessModifiers.run2_miniAOD_UL_cff import run2_miniAOD_UL
 from Configuration.Eras.Modifier_run2_miniAOD_devel_cff import run2_miniAOD_devel
 from Configuration.Eras.Modifier_bParking_cff import bParking
+
 from RecoEgamma.EgammaElectronProducers.lowPtGsfElectronSeedValueMaps_cff import rekeyLowPtGsfElectronSeedValueMaps
 from RecoEgamma.EgammaElectronProducers.lowPtGsfElectronID_cff import lowPtGsfElectronID
 from RecoEgamma.EgammaElectronProducers.lowPtGsfElectrons_cff import lowPtGsfElectrons
+
 _makePatLowPtElectronsTask = makePatLowPtElectronsTask.copy()
 _makePatLowPtElectronsTask2 = makePatLowPtElectronsTask.copy()
-_makePatLowPtElectronsTask3 = makePatLowPtElectronsTask.copy()
+
 _makePatLowPtElectronsTask.add(rekeyLowPtGsfElectronSeedValueMaps)
-(bParking & ~run2_miniAOD_UL).toReplaceWith(makePatLowPtElectronsTask,_makePatLowPtElectronsTask)
-(bParking & run2_miniAOD_UL).toReplaceWith(makePatLowPtElectronsTask,_makePatLowPtElectronsTask)
-(bParking & run2_miniAOD_devel).toReplaceWith(makePatLowPtElectronsTask,_makePatLowPtElectronsTask3)
+_makePatLowPtElectronsTask.add(lowPtGsfElectronID)
+(~bParking & run2_miniAOD_UL).toReplaceWith(makePatLowPtElectronsTask,_makePatLowPtElectronsTask) # no-change rule
+
 _makePatLowPtElectronsTask2.add(rekeyLowPtGsfElectronSeedValueMaps)
 _makePatLowPtElectronsTask2.add(lowPtGsfElectronID)
-(~bParking & run2_miniAOD_UL).toReplaceWith(makePatLowPtElectronsTask,_makePatLowPtElectronsTask2)
-_makePatLowPtElectronsTask3.add(rekeyLowPtGsfElectronSeedValueMaps)
-_makePatLowPtElectronsTask3.add(lowPtGsfElectronID)
-_makePatLowPtElectronsTask3.add(lowPtGsfElectrons)
-(~bParking & run2_miniAOD_devel).toReplaceWith(makePatLowPtElectronsTask,_makePatLowPtElectronsTask3)
+_makePatLowPtElectronsTask2.add(lowPtGsfElectrons)
+(~bParking & run2_miniAOD_devel).toReplaceWith(makePatLowPtElectronsTask,_makePatLowPtElectronsTask2)
