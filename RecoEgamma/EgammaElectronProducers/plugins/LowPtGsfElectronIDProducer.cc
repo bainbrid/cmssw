@@ -37,9 +37,11 @@ private:
   double eval(
       const std::string& name, const edm::Ptr<reco::GsfElectron>&, double rho, float unbiased, float field_z) const;
 
-  const edm::EDGetTokenT<edm::View<reco::GsfElectron> > electrons_;
+  const bool usePAT_;
+  edm::EDGetTokenT<edm::View<reco::GsfElectron> > electrons_;
+  edm::EDGetTokenT<edm::View<pat::Electron> > patElectrons_;
   const edm::EDGetTokenT<double> rho_;
-  const edm::EDGetTokenT<edm::ValueMap<float> > unbiased_;
+  edm::EDGetTokenT<edm::ValueMap<float> > unbiased_;
   const std::vector<std::string> names_;
   const bool passThrough_;
   const double minPtThreshold_;
@@ -52,15 +54,23 @@ private:
 ////////////////////////////////////////////////////////////////////////////////
 //
 LowPtGsfElectronIDProducer::LowPtGsfElectronIDProducer(const edm::ParameterSet& conf)
-    : electrons_(consumes<edm::View<reco::GsfElectron> >(conf.getParameter<edm::InputTag>("electrons"))),
+    : usePAT_(conf.getParameter<bool>("UsePAT")),
+      electrons_(),
+      patElectrons_(),
       rho_(consumes<double>(conf.getParameter<edm::InputTag>("rho"))),
-      unbiased_(consumes<edm::ValueMap<float> >(conf.getParameter<edm::InputTag>("unbiased"))),
+      unbiased_(),
       names_(conf.getParameter<std::vector<std::string> >("ModelNames")),
       passThrough_(conf.getParameter<bool>("PassThrough")),
       minPtThreshold_(conf.getParameter<double>("MinPtThreshold")),
       maxPtThreshold_(conf.getParameter<double>("MaxPtThreshold")),
       thresholds_(conf.getParameter<std::vector<double> >("ModelThresholds")),
       version_(conf.getParameter<std::string>("Version")) {
+  if (usePAT_) {
+    electrons_ = consumes<edm::View<reco::GsfElectron> >(conf.getParameter<edm::InputTag>("electrons"));
+  } else {
+    patElectrons_ = consumes<edm::View<pat:Electron> >(conf.getParameter<edm::InputTag>("electrons"));
+    unbiased_ = consumes<edm::ValueMap<float> >(conf.getParameter<edm::InputTag>("unbiased"));
+  }
   for (auto& weights : conf.getParameter<std::vector<std::string> >("ModelWeights")) {
     models_.push_back(createGBRForest(edm::FileInPath(weights)));
   }
@@ -97,18 +107,28 @@ void LowPtGsfElectronIDProducer::produce(edm::StreamID, edm::Event& event, const
     throw cms::Exception("InvalidHandle", os.str());
   }
 
-  // Retrieve GsfElectrons from Event
+  // Retrieve pat::Electrons or reco::GsfElectrons from Event
+  edm::Handle<edm::View<pat::Electron> > patElectrons;
   edm::Handle<edm::View<reco::GsfElectron> > electrons;
-  event.getByToken(electrons_, electrons);
-  if (!electrons.isValid()) {
-    std::ostringstream os;
-    os << "Problem accessing low-pT electrons collection" << std::endl;
-    throw cms::Exception("InvalidHandle", os.str());
+  if (usePAT_) {
+    event.getByToken(electrons_, electrons);
+    if (!electrons.isValid()) {
+      std::ostringstream os;
+      os << "Problem accessing low-pT electrons collection" << std::endl;
+      throw cms::Exception("InvalidHandle", os.str());
+    }
+  } else {
+    event.getByToken(electrons_, electrons);
+    if (!electrons.isValid()) {
+      std::ostringstream os;
+      os << "Problem accessing low-pT electrons collection" << std::endl;
+      throw cms::Exception("InvalidHandle", os.str());
+    }
   }
 
   // ElectronSeed unbiased BDT
   edm::Handle<edm::ValueMap<float> > unbiasedH;
-  event.getByToken(unbiased_, unbiasedH);
+  if (!unbiased_.isUninitialized()) { event.getByToken(unbiased_, unbiasedH); }
 
   // Iterate through Electrons, evaluate BDT, and store result
   std::vector<std::vector<float> > output;
@@ -118,14 +138,24 @@ void LowPtGsfElectronIDProducer::produce(edm::StreamID, edm::Event& event, const
   for (unsigned int iele = 0; iele < electrons->size(); iele++) {
     edm::Ptr<reco::GsfElectron> ele(electrons, iele);
 
-    if (ele->core().isNull()) {
-      continue;
+    float unbiased = 0.;
+    edm::Ref<reco::GsfElectron> ref(electrons, iele);
+    edm::Ref<pat::Electron> pat = ref.castTo< edm::Ref<pat::ElectronCollection> >();
+    if (pat.isNonnull()) {
+      if (!pat.isElectronIDAvailable("unbiased")) {
+	continue;
+      }
+      unbiased = pat.electronID("unbiased");
+    } else {
+      if (ele->core().isNull()) {
+	continue;
+      }
+      const auto& gsf = ele->core()->gsfTrack();  // reco::GsfTrackRef
+      if (gsf.isNull()) {
+	continue;
+      }
+      unbiased = (*unbiasedH)[gsf];
     }
-    const auto& gsf = ele->core()->gsfTrack();  // reco::GsfTrackRef
-    if (gsf.isNull()) {
-      continue;
-    }
-    float unbiased = (*unbiasedH)[gsf];
 
     //if ( !passThrough_ && ( ele->pt() < minPtThreshold_ ) ) { continue; }
     for (unsigned int iname = 0; iname < names_.size(); ++iname) {
@@ -167,8 +197,9 @@ double LowPtGsfElectronIDProducer::eval(
 //
 void LowPtGsfElectronIDProducer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription desc;
+  desc.add<bool>("UsePAT", false);
   desc.add<edm::InputTag>("electrons", edm::InputTag("lowPtGsfElectrons"));
-  desc.add<edm::InputTag>("unbiased", edm::InputTag("lowPtGsfElectronSeedValueMaps:unbiased"));
+  desc.addOptional<edm::InputTag>("unbiased", edm::InputTag("lowPtGsfElectronSeedValueMaps:unbiased"));
   desc.add<edm::InputTag>("rho", edm::InputTag("fixedGridRhoFastjetAll"));
   desc.add<std::vector<std::string> >("ModelNames", {""});
   desc.add<std::vector<std::string> >(
