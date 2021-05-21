@@ -60,21 +60,16 @@ updatedLowPtElectrons = cms.EDProducer(
     regressionConfig = _lowPtRegressionModifier,
 )
 
-#lowPtPATElectronID = cms.EDProducer(
-#    "LowPtGsfElectronIDProducer",
-#    electrons = cms.InputTag("updatedLowPtElectrons"),
-#    unbiased = cms.InputTag(""),
-#    rho = cms.InputTag("fixedGridRhoFastjetAll"),
-#    ModelNames = cms.vstring(['']),
-#    ModelWeights = cms.vstring([
-#        'RecoEgamma/ElectronIdentification/data/LowPtElectrons/LowPtElectrons_ID_2020Nov28.root',
-#    ]),
-#    ModelThresholds = cms.vdouble([-99.]),
-#    PassThrough = cms.bool(False),
-#    MinPtThreshold = cms.double(0.5),
-#    MaxPtThreshold = cms.double(15.),
-#    Version = cms.string('V1'),
-#)
+from RecoEgamma.EgammaElectronProducers.lowPtGsfElectronID_cfi import lowPtGsfElectronID
+
+lowPtPATElectronID = lowPtGsfElectronID.clone(
+    usePAT = True,
+    electrons = "updatedLowPtElectrons",
+    unbiased = "",
+    ModelWeights = [
+        'RecoEgamma/ElectronIdentification/data/LowPtElectrons/LowPtElectrons_ID_2020Nov28.root',
+    ],
+)
 
 isoForLowPtEle = cms.EDProducer(
     "EleIsoValueMapProducer",
@@ -90,7 +85,7 @@ updatedLowPtElectronsWithUserData = cms.EDProducer(
     "PATElectronUserDataEmbedder",
     src = cms.InputTag("updatedLowPtElectrons"),
     userFloats = cms.PSet(
-        #ID = cms.InputTag("lowPtPATElectronID"),
+        ID = cms.InputTag("lowPtPATElectronID"),
         miniIsoChg = cms.InputTag("isoForLowPtEle:miniIsoChg"),
         miniIsoAll = cms.InputTag("isoForLowPtEle:miniIsoAll"),
     ),
@@ -102,7 +97,7 @@ updatedLowPtElectronsWithUserData = cms.EDProducer(
 finalLowPtElectrons = cms.EDFilter(
     "PATElectronRefSelector",
     src = cms.InputTag("updatedLowPtElectronsWithUserData"),
-    cut = cms.string("pt > 1. && electronID('ID') > -0.25"),
+    cut = cms.string("pt > 1. && userFloat('ID') > -0.25"),
 )
 
 ################################################################################
@@ -121,16 +116,11 @@ lowPtElectronTable = cms.EDProducer(
         # Basic variables
         CandVars,
         # BDT scores and WPs
-        ID = Var("electronID('ID')",float,doc="ID, BDT (raw) score"),
+        embeddedID = Var("electronID('ID')",float,doc="ID, BDT (raw) score"),
+        ID = Var("userFloat('ID')",float,doc="New ID, BDT (raw) score"),
         unbiased = Var("electronID('unbiased')",float,doc="ElectronSeed, pT- and dxy- agnostic BDT (raw) score"),
         ptbiased = Var("electronID('ptbiased')",float,doc="ElectronSeed, pT- and dxy- dependent BDT (raw) score"),
         # Isolation
-        miniRelIso_chg = Var("miniPFIsolation().chargedHadronIso()/pt",float,
-                             doc="mini PF rel. iso. (charged) from miniPFIsolation()"),
-        miniRelIso_all = Var("(miniPFIsolation().chargedHadronIso()"+\
-                             "+miniPFIsolation().neutralHadronIso()"+\
-                             "+miniPFIsolation().photonIso())/pt",float,
-                             doc="mini PF rel. iso. (total) from miniPFIsolation()"),
         miniPFRelIso_chg = Var("userFloat('miniIsoChg')/pt",float,
                                doc="mini PF rel. iso., charged component"),
         miniPFRelIso_all = Var("userFloat('miniIsoAll')/pt",float,
@@ -191,7 +181,7 @@ lowPtElectronMCTable = cms.EDProducer(
 ################################################################################
 
 lowPtElectronSequence = cms.Sequence(updatedLowPtElectrons
-                                     #+lowPtPATElectronID
+                                     +lowPtPATElectronID
                                      +isoForLowPtEle
                                      +updatedLowPtElectronsWithUserData
                                      +finalLowPtElectrons)
