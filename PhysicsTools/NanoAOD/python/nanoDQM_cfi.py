@@ -128,12 +128,11 @@ nanoDQM = DQMEDAnalyzer("NanoAODDQM",
                 Plot1D('phi', 'phi', 20, -3.14159, 3.14159, 'phi'),
                 Plot1D('pt', 'pt', 40, 0., 20., 'pt (corrected)'),
                 # BDT scores and WPs
+                Plot1D('embeddedID', 'embeddedID', 40, -10., 10., 'Embedded ID, BDT (raw) score'),
                 Plot1D('ID', 'ID', 40, -10., 10., 'ID, BDT (raw) score'),
                 Plot1D('unbiased', 'unbiased', 40, -10., 10., 'ElectronSeed, pT- and dxy- agnostic BDT (raw) score'),
                 Plot1D('ptbiased', 'ptbiased', 40, -10., 10., 'ElectronSeed, pT- and dxy- dependent BDT (raw) score'),
                 # Isolation
-                Plot1D('miniRelIso_chg', 'miniPFRelIso_chg', 20, 0, 2, 'mini PF rel. iso. (total) from miniPFIsolation()'),
-                Plot1D('miniRelIso_all', 'miniPFRelIso_all', 20, 0, 2, 'mini PF rel. iso. (charged) from miniPFIsolation()'),
                 Plot1D('miniPFRelIso_chg', 'miniPFRelIso_chg', 20, 0, 2, 'mini PF relative isolation, charged component'),
                 Plot1D('miniPFRelIso_all', 'miniPFRelIso_all', 20, 0, 2, 'mini PF relative isolation, total (with scaled rho*EA PU corrections)'),
                 # Misc
