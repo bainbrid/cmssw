@@ -93,7 +93,6 @@ LowPtGsfElectronIDProducer::LowPtGsfElectronIDProducer(const edm::ParameterSet& 
 ////////////////////////////////////////////////////////////////////////////////
 //
 void LowPtGsfElectronIDProducer::produce(edm::StreamID, edm::Event& event, const edm::EventSetup& setup) const {
-
   // Get z-component of B field
   edm::ESHandle<MagneticField> field;
   setup.get<IdealMagneticFieldRecord>().get(field);
@@ -129,7 +128,9 @@ void LowPtGsfElectronIDProducer::produce(edm::StreamID, edm::Event& event, const
 
   // ElectronSeed unbiased BDT
   edm::Handle<edm::ValueMap<float> > unbiasedH;
-  if (!unbiased_.isUninitialized()) { event.getByToken(unbiased_, unbiasedH); }
+  if (!unbiased_.isUninitialized()) {
+    event.getByToken(unbiased_, unbiasedH);
+  }
 
   // Iterate through Electrons, evaluate BDT, and store result
   std::vector<std::vector<float> > output;
@@ -139,13 +140,11 @@ void LowPtGsfElectronIDProducer::produce(edm::StreamID, edm::Event& event, const
     }
     for (unsigned int iele = 0; iele < patElectrons->size(); iele++) {
       edm::Ptr<pat::Electron> ele(patElectrons, iele);
-      if (!ele->isElectronIDAvailable("unbiased")) { continue; }
+      if (!ele->isElectronIDAvailable("unbiased")) {
+        continue;
+      }
       for (unsigned int iname = 0; iname < names_.size(); ++iname) {
-	output[iname][iele] = eval(names_[iname],
-				   ele,
-				   *rho,
-				   ele->electronID("unbiased"),
-				   zfield.z());
+        output[iname][iele] = eval(names_[iname], ele, *rho, ele->electronID("unbiased"), zfield.z());
       }
     }
   } else {
@@ -156,17 +155,17 @@ void LowPtGsfElectronIDProducer::produce(edm::StreamID, edm::Event& event, const
       edm::Ptr<reco::GsfElectron> ele(electrons, iele);
 
       if (ele->core().isNull()) {
-	continue;
+        continue;
       }
       const auto& gsf = ele->core()->gsfTrack();  // reco::GsfTrackRef
       if (gsf.isNull()) {
-	continue;
+        continue;
       }
       float unbiased = (*unbiasedH)[gsf];
 
       //if ( !passThrough_ && ( ele->pt() < minPtThreshold_ ) ) { continue; }
       for (unsigned int iname = 0; iname < names_.size(); ++iname) {
-	output[iname][iele] = eval(names_[iname], ele, *rho, unbiased, zfield.z());
+        output[iname][iele] = eval(names_[iname], ele, *rho, unbiased, zfield.z());
       }
     }
   }
@@ -175,12 +174,14 @@ void LowPtGsfElectronIDProducer::produce(edm::StreamID, edm::Event& event, const
   for (unsigned int iname = 0; iname < names_.size(); ++iname) {
     auto ptr = std::make_unique<edm::ValueMap<float> >(edm::ValueMap<float>());
     edm::ValueMap<float>::Filler filler(*ptr);
-    if (usePAT_) { filler.insert(patElectrons, output[iname].begin(), output[iname].end()); }
-    else { filler.insert(electrons, output[iname].begin(), output[iname].end()); }
+    if (usePAT_) {
+      filler.insert(patElectrons, output[iname].begin(), output[iname].end());
+    } else {
+      filler.insert(electrons, output[iname].begin(), output[iname].end());
+    }
     filler.fill();
     event.put(std::move(ptr), names_[iname]);
   }
-
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////

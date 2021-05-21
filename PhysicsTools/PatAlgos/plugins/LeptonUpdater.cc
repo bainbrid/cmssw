@@ -36,10 +36,10 @@ namespace pat {
         recomputeMuonBasicSelectors_ = iConfig.getParameter<bool>("recomputeMuonBasicSelectors");
       // Apply energy regression for electrons
       if (applyEreg_) {
-	auto const& conf = iConfig.getParameterSet("regressionConfig");
-	auto const& name = conf.getParameter<std::string>("modifierName");
-	auto cc = consumesCollector();
-	regression_ = ModifyObjectValueFactory::get()->create(name, conf, cc);
+        auto const &conf = iConfig.getParameterSet("regressionConfig");
+        auto const &name = conf.getParameter<std::string>("modifierName");
+        auto cc = consumesCollector();
+        regression_ = ModifyObjectValueFactory::get()->create(name, conf, cc);
       }
       produces<std::vector<T>>();
     }
@@ -57,12 +57,11 @@ namespace pat {
       desc.add<bool>("fixDxySign", false)->setComment("Fix the IP sign");
       desc.addOptional<edm::InputTag>("pfCandsForMiniIso", edm::InputTag("packedPFCandidates"))
           ->setComment("PackedCandidate collection used for miniIso");
-      desc.add<bool>("applyEnergyRegression", false)
-	->setComment("Apply energy regression to electrons");
+      desc.add<bool>("applyEnergyRegression", false)->setComment("Apply energy regression to electrons");
       edm::ParameterSetDescription psd;
       psd.setUnknown();
       desc.addOptional<edm::ParameterSetDescription>("regressionConfig", psd)
-	->setComment("Configuration for electron energy regression");
+          ->setComment("Configuration for electron energy regression");
       if (typeid(T) == typeid(pat::Muon)) {
         desc.add<bool>("recomputeMuonBasicSelectors", false)
             ->setComment("Recompute basic cut-based muon selector flags");
@@ -146,7 +145,8 @@ namespace pat {
   }
 
   template <typename T>
-  void LeptonUpdater<T>::applyEreg(T &lep) const { /* do nothing for muons */ }
+  void LeptonUpdater<T>::applyEreg(T &lep) const { /* do nothing for muons */
+  }
 
   template <>
   void LeptonUpdater<pat::Electron>::applyEreg(pat::Electron &ele) const {
@@ -156,7 +156,7 @@ namespace pat {
 }  // namespace pat
 
 template <typename T>
-void pat::LeptonUpdater<T>::produce(edm::StreamID, edm::Event &iEvent, edm::EventSetup const & setup) const {
+void pat::LeptonUpdater<T>::produce(edm::StreamID, edm::Event &iEvent, edm::EventSetup const &setup) const {
   edm::Handle<std::vector<T>> src;
   iEvent.getByToken(src_, src);
 
@@ -192,7 +192,9 @@ void pat::LeptonUpdater<T>::produce(edm::StreamID, edm::Event &iEvent, edm::Even
   for (unsigned int i = 0, n = src->size(); i < n; ++i) {
     T &lep = (*out)[i];
     setDZ(lep, pv);
-    if (applyEreg_) { applyEreg(lep); }
+    if (applyEreg_) {
+      applyEreg(lep);
+    }
     if (computeMiniIso_) {
       const auto &params = miniIsoParams(lep);
       pat::PFIsolation miniiso = pat::getMiniPFIsolation(pc.product(),
