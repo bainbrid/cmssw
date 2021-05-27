@@ -11,35 +11,34 @@
 #include "DataFormats/TrackReco/interface/Track.h"
 
 class LowPtConversion {
+public:
+  LowPtConversion() { ; }
+  ~LowPtConversion() { ; }
 
- public:
+  void reset() {
+    LowPtConversion dummy;
+    *this = dummy;
+  }
 
-  LowPtConversion() {;}
-  ~LowPtConversion() {;}
+  bool wpOpen();   // Matched to any conversion (without selections)
+  bool wpLoose();  // Nancy's baseline selections for conversions
+  bool wpTight();  // Nancy's selection for analysis of conversions
 
-  void reset() { LowPtConversion dummy; *this = dummy; }
-
-  bool wpOpen();  // Matched to any conversion (without selections)
-  bool wpLoose(); // Nancy's baseline selections for conversions
-  bool wpTight(); // Nancy's selection for analysis of conversions
-
-  void addUserVars(pat::Electron& ele); // adds minimal set of flags to electron userData
-  void addExtraUserVars(pat::Electron& ele); // adds all variables to electron userData
-
-  static bool match(const edm::Handle<reco::BeamSpot>& beamSpot,
-		    const edm::Handle<edm::View<reco::Conversion> >& conversions,
-		    const pat::Electron& ele);
+  void addUserVars(pat::Electron& ele);       // adds minimal set of flags to electron userData
+  void addExtraUserVars(pat::Electron& ele);  // adds all variables to electron userData
 
   static bool match(const edm::Handle<reco::BeamSpot>& beamSpot,
-		    const edm::Handle<edm::View<reco::Conversion> >& conversions,
-		    const pat::Electron& ele,
-		    LowPtConversion& info);
+                    const edm::Handle<edm::View<reco::Conversion> >& conversions,
+                    const pat::Electron& ele);
 
-  static float mee(float ipx1, float ipy1, float ipz1,
-		   float ipx2, float ipy2, float ipz2);
+  static bool match(const edm::Handle<reco::BeamSpot>& beamSpot,
+                    const edm::Handle<edm::View<reco::Conversion> >& conversions,
+                    const pat::Electron& ele,
+                    LowPtConversion& info);
+
+  static float mee(float ipx1, float ipy1, float ipz1, float ipx2, float ipy2, float ipz2);
 
 public:
-
   // quality
   bool valid = false;
   float chi2prob = -1.;
@@ -76,7 +75,6 @@ public:
   bool matched = false;
   edm::RefToBase<reco::Track> matched_lead;
   edm::RefToBase<reco::Track> matched_trail;
-
 };
 
-#endif // LowPtConversion_h
+#endif  // LowPtConversion_h
