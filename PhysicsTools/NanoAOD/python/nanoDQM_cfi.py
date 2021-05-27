@@ -135,8 +135,10 @@ nanoDQM = DQMEDAnalyzer("NanoAODDQM",
                 # Isolation
                 Plot1D('miniPFRelIso_chg', 'miniPFRelIso_chg', 20, 0, 2, 'mini PF relative isolation, charged component'),
                 Plot1D('miniPFRelIso_all', 'miniPFRelIso_all', 20, 0, 2, 'mini PF relative isolation, total (with scaled rho*EA PU corrections)'),
-                # Misc
+                # Conversions
                 Plot1D('convVeto', 'convVeto', 2, -0.5, 1.5, 'pass conversion veto'),
+                Plot1D('convWP', 'convWP', 8, -0.5, 7.5, 'conversion flag bit map: 1=Veto, 2=Loose, 3=Tight'),
+                # Tracking
                 Plot1D('lostHits', 'lostHits', 4, -0.5, 3.5, 'number of missing inner hits'),
                 # Cluster-related
                 Plot1D('energyErr', 'energyErr', 40, 0., 20., 'energy error of the cluster from regression'),
