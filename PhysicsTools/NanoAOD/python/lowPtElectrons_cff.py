@@ -45,23 +45,30 @@ _lowPtRegressionModifier = regressionModifier106XUL.clone(
     ),
 )
 
-import PhysicsTools.PatAlgos.producersLayer1.electronProducer_cfi
+from RecoEgamma.EgammaTools.lowPtElectronModifier_cfi import lowPtElectronModifier
+modifiedLowPtElectrons = cms.EDProducer(
+    "ModifiedElectronProducer",
+    src = cms.InputTag("slimmedLowPtElectrons"),
+    modifierConfig = cms.PSet(
+        modifications = cms.VPSet(lowPtElectronModifier)
+    )
+)
 
+import PhysicsTools.PatAlgos.producersLayer1.electronProducer_cfi
 updatedLowPtElectrons = cms.EDProducer(
     "PATElectronUpdater",
-    src = cms.InputTag("slimmedLowPtElectrons"),
+    src = cms.InputTag("modifiedLowPtElectrons"),
     vertices = cms.InputTag("offlineSlimmedPrimaryVertices"),
-    computeMiniIso = cms.bool(True),
-    fixDxySign = cms.bool(True),
-    pfCandsForMiniIso = cms.InputTag("packedPFCandidates"),
-    miniIsoParamsB = PhysicsTools.PatAlgos.producersLayer1.electronProducer_cfi.patElectrons.miniIsoParamsB,
-    miniIsoParamsE = PhysicsTools.PatAlgos.producersLayer1.electronProducer_cfi.patElectrons.miniIsoParamsE,
+    computeMiniIso = cms.bool(False),
+    fixDxySign = cms.bool(False),
+    pfCandsForMiniIso = cms.InputTag(""),
+    miniIsoParamsB = cms.vdouble(),
+    miniIsoParamsE = cms.vdouble(),
     applyEnergyRegression = cms.bool(True),
     regressionConfig = _lowPtRegressionModifier,
 )
 
 from RecoEgamma.EgammaElectronProducers.lowPtGsfElectronID_cfi import lowPtGsfElectronID
-
 lowPtPATElectronID = lowPtGsfElectronID.clone(
     usePAT = True,
     electrons = "updatedLowPtElectrons",
@@ -122,11 +129,14 @@ lowPtElectronTable = cms.EDProducer(
         ptbiased = Var("electronID('ptbiased')",float,doc="ElectronSeed, pT- and dxy- dependent BDT (raw) score"),
         # Isolation
         miniPFRelIso_chg = Var("userFloat('miniIsoChg')/pt",float,
-                               doc="mini PF rel. iso., charged component"),
+                               doc="mini PF relative isolation, charged component"),
         miniPFRelIso_all = Var("userFloat('miniIsoAll')/pt",float,
-                               doc="mini PF rel. iso., total (with scaled rho*EA PU corrections)"),
-        # Misc
+                               doc="mini PF relative isolation, total (with scaled rho*EA PU corrections)"),
+        # Conversions
         convVeto = Var("passConversionVeto()",bool,doc="pass conversion veto"),
+        convWP = Var("userInt('convOpen')*1 + userInt('convLoose')*2 + userInt('convTight')*4",
+                     int,doc="conversion flag bit map: 1=Veto, 2=Loose, 3=Tight"),
+        # Tracking
         lostHits = Var("gsfTrack.hitPattern.numberOfLostHits('MISSING_INNER_HITS')","uint8",doc="number of missing inner hits"),
         # Cluster-related
         energyErr = Var("p4Error('P4_COMBINATION')",float,doc="energy error of the cluster-track combination",precision=6),
@@ -180,7 +190,8 @@ lowPtElectronMCTable = cms.EDProducer(
 # Sequences
 ################################################################################
 
-lowPtElectronSequence = cms.Sequence(updatedLowPtElectrons
+lowPtElectronSequence = cms.Sequence(modifiedLowPtElectrons
+                                     +updatedLowPtElectrons
                                      +lowPtPATElectronID
                                      +isoForLowPtEle
                                      +updatedLowPtElectronsWithUserData
