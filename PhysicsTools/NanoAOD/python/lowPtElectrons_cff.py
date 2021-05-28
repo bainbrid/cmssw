@@ -163,9 +163,40 @@ lowPtElectronTable = cms.EDProducer(
 # electronTable (MC)
 ################################################################################
 
+from PhysicsTools.NanoAOD.particlelevel_cff import particleLevel
+particleLevelForMatchingLowPt = particleLevel.clone(
+    lepMinPt = cms.double(1.),
+    phoMinPt = cms.double(1),
+)
+
+tautaggerForMatchingLowPt = cms.EDProducer(
+    "GenJetTauTaggerProducer",
+    src = cms.InputTag('particleLevelForMatchingLowPt:leptons')
+)
+
+matchingLowPtElecPhoton = cms.EDProducer(
+    "GenJetGenPartMerger",
+    srcJet =cms.InputTag("particleLevelForMatchingLowPt:leptons"),
+    srcPart=cms.InputTag("particleLevelForMatchingLowPt:photons"),
+    hasTauAnc=cms.InputTag("tautaggerForMatchingLowPt"),
+)
+
+lowPtElectronsMCMatchForTableAlt = cms.EDProducer(
+    "GenJetMatcherDRPtByDR",                # cut on deltaR, deltaPt/Pt; pick best by deltaR
+    src         = lowPtElectronTable.src,   # final reco collection
+    matched     = cms.InputTag("matchingLowPtElecPhoton:merged"), # final mc-truth particle collection
+    mcPdgId     = cms.vint32(11,22),        # one or more PDG ID (11 = el, 22 = pho); absolute values (see below)
+    checkCharge = cms.bool(False),          # True = require RECO and MC objects to have the same charge
+    mcStatus    = cms.vint32(),
+    maxDeltaR   = cms.double(0.3),          # Minimum deltaR for the match
+    maxDPtRel   = cms.double(0.5),          # Minimum deltaPt/Pt for the match
+    resolveAmbiguities    = cms.bool(True), # Forbid two RECO objects to match to the same GEN object
+    resolveByMatchQuality = cms.bool(True), # False = just match input in order; True = pick lowest deltaR pair first
+) 
+
 lowPtElectronsMCMatchForTable = cms.EDProducer(
-    "MCMatcher",                                     # cut on deltaR, deltaPt/Pt; pick best by deltaR
-    src         = lowPtElectronTable.src,            # final reco collection
+    "MCMatcher",                            # cut on deltaR, deltaPt/Pt; pick best by deltaR
+    src         = lowPtElectronTable.src,   # final reco collection
     matched     = cms.InputTag("finalGenParticles"), # final mc-truth particle collection
     mcPdgId     = cms.vint32(11),           # one or more PDG ID (11 = ele); absolute values (see below)
     checkCharge = cms.bool(False),          # True = require RECO and MC objects to have the same charge
@@ -176,14 +207,18 @@ lowPtElectronsMCMatchForTable = cms.EDProducer(
     resolveByMatchQuality = cms.bool(True), # False = just match input in order; True = pick lowest deltaR pair first
 )
 
+from PhysicsTools.NanoAOD.electrons_cff import electronMCTable
 lowPtElectronMCTable = cms.EDProducer(
     "CandMCMatchTableProducer",
-    src     = lowPtElectronTable.src,
-    mcMap   = cms.InputTag("lowPtElectronsMCMatchForTable"),
+    src = lowPtElectronTable.src,
+    mcMapDressedLep = cms.InputTag("lowPtElectronsMCMatchForTableAlt"),
+    mcMap = cms.InputTag("lowPtElectronsMCMatchForTable"),
+    mapTauAnc = cms.InputTag("matchingLowPtElecPhoton:hasTauAnc"),
     objName = lowPtElectronTable.name,
-    objType = lowPtElectronTable.name,
+    objType = electronMCTable.objType,
     branchName = cms.string("genPart"),
-    docString = cms.string("MC matching to status==1 electrons"),
+    docString = cms.string("MC matching to status==1 electrons or photons"),
+    genparticles = cms.InputTag("finalGenParticles"), 
 )
 
 ################################################################################
@@ -197,5 +232,21 @@ lowPtElectronSequence = cms.Sequence(modifiedLowPtElectrons
                                      +updatedLowPtElectronsWithUserData
                                      +finalLowPtElectrons)
 lowPtElectronTables = cms.Sequence(lowPtElectronTable)
-lowPtElectronMC = cms.Sequence(lowPtElectronsMCMatchForTable
-                               +lowPtElectronMCTable)
+lowPtElectronMC = cms.Sequence(
+    particleLevelForMatchingLowPt
+    +tautaggerForMatchingLowPt
+    +matchingLowPtElecPhoton
+    +lowPtElectronsMCMatchForTable
+    +lowPtElectronsMCMatchForTableAlt
+    +lowPtElectronMCTable)
+
+################################################################################
+# Modifiers
+################################################################################
+
+from Configuration.Eras.Modifier_run2_nanoAOD_94XMiniAODv1_cff import run2_nanoAOD_94XMiniAODv1
+from Configuration.Eras.Modifier_run2_nanoAOD_94XMiniAODv2_cff import run2_nanoAOD_94XMiniAODv2
+from Configuration.Eras.Modifier_run2_nanoAOD_106Xv1_cff import run2_nanoAOD_106Xv1
+(run2_nanoAOD_94XMiniAODv1 | run2_nanoAOD_94XMiniAODv2 | run2_nanoAOD_106Xv1).toReplaceWith(lowPtElectronSequence,cms.Sequence())
+(run2_nanoAOD_94XMiniAODv1 | run2_nanoAOD_94XMiniAODv2 | run2_nanoAOD_106Xv1).toReplaceWith(lowPtElectronTables,cms.Sequence())
+(run2_nanoAOD_94XMiniAODv1 | run2_nanoAOD_94XMiniAODv2 | run2_nanoAOD_106Xv1).toReplaceWith(lowPtElectronMC,cms.Sequence())
