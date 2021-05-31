@@ -122,7 +122,7 @@ from Configuration.ProcessModifiers.run2_miniAOD_UL_cff import run2_miniAOD_UL
 from Configuration.Eras.Modifier_run2_miniAOD_devel_cff import run2_miniAOD_devel
 _lowPt_extraCommands = ['keep *_slimmedLowPtElectrons_*_*',
                         'keep *_gsfTracksOpenConversions_*_*',]
-(bParking | run2_miniAOD_UL | run2_miniAOD_devel).toModify(
+(bParking | run2_miniAOD_UL).toModify(
     MicroEventContent,
     outputCommands = MicroEventContent.outputCommands + _lowPt_extraCommands
 )
