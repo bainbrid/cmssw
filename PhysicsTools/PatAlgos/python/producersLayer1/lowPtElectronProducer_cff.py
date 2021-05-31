@@ -77,14 +77,8 @@ from RecoEgamma.EgammaElectronProducers.lowPtGsfElectronID_cff import lowPtGsfEl
 from RecoEgamma.EgammaElectronProducers.lowPtGsfElectrons_cff import lowPtGsfElectrons
 
 _makePatLowPtElectronsTask = makePatLowPtElectronsTask.copy()
-_makePatLowPtElectronsTask2 = makePatLowPtElectronsTask.copy()
-
 _makePatLowPtElectronsTask.add(rekeyLowPtGsfElectronSeedValueMaps)
 _makePatLowPtElectronsTask.add(lowPtGsfElectronID)
-(~bParking & run2_miniAOD_UL).toReplaceWith(makePatLowPtElectronsTask,_makePatLowPtElectronsTask) # no-change rule
-
-_makePatLowPtElectronsTask2.add(rekeyLowPtGsfElectronSeedValueMaps)
-_makePatLowPtElectronsTask2.add(lowPtGsfElectronID)
-_makePatLowPtElectronsTask2.add(lowPtGsfElectrons)
-(~bParking & run2_miniAOD_devel).toReplaceWith(makePatLowPtElectronsTask,_makePatLowPtElectronsTask2)
-(bParking & run2_miniAOD_UL).toReplaceWith(makePatLowPtElectronsTask,_makePatLowPtElectronsTask2)
+run2_miniAOD_UL.toReplaceWith(makePatLowPtElectronsTask,_makePatLowPtElectronsTask)
+( (bParking & run2_miniAOD_UL) | (~bParking & run2_miniAOD_devel) ).toModify(
+    makePatLowPtElectronsTask, func = lambda t: t.add(lowPtGsfElectrons))
