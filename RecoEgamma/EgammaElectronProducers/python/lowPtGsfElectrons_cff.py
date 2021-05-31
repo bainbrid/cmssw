@@ -51,10 +51,5 @@ _lowPtGsfElectrons = lowPtGsfElectronFinalizer.clone(
     regressionConfig = _lowPtRegressionModifier,
 )
 
-from Configuration.Eras.Modifier_bParking_cff import bParking
-bParking.toModify(_lowPtGsfElectrons, 
-                  previousGsfElectronsTag = "lowPtGsfElectronsPreRegression",
-)
-
-from Configuration.Eras.Modifier_run2_miniAOD_devel_cff import run2_miniAOD_devel
-(bParking | run2_miniAOD_devel).toReplaceWith(lowPtGsfElectrons,_lowPtGsfElectrons)
+from Configuration.ProcessModifiers.run2_miniAOD_UL_cff import run2_miniAOD_UL
+run2_miniAOD_UL.toReplaceWith(lowPtGsfElectrons,_lowPtGsfElectrons)
