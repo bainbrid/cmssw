@@ -35,7 +35,7 @@ public:
   static void fillDescriptions(edm::ConfigurationDescriptions&);
 
 private:
-  double eval(const std::string& name, const reco::GsfElectronRef&, double rho, float unbiased, float field_z) const;
+  double eval(const std::string& name, const edm::Ptr<reco::GsfElectron>&, double rho, float unbiased, float field_z) const;
 
   const bool usePAT_;
   edm::EDGetTokenT<reco::GsfElectronCollection> electrons_;
@@ -173,14 +173,14 @@ void LowPtGsfElectronIDProducer::produce(edm::StreamID, edm::Event& event, const
 //////////////////////////////////////////////////////////////////////////////////////////
 //
 double LowPtGsfElectronIDProducer::eval(
-    const std::string& name, const reco::GsfElectronRef& ele, double rho, float unbiased, float field_z) const {
+  const std::string& name, const edm::Ptr<reco::GsfElectron>& ele, double rho, float unbiased, float field_z) const {
   auto iter = std::find(names_.begin(), names_.end(), name);
   if (iter != names_.end()) {
     int index = std::distance(names_.begin(), iter);
     std::vector<float> inputs;
     if (version_.empty()) {  // Original XML model
       lowptgsfeleid::Features features;
-      features.set(ele, rho);
+      features.set(*ele, rho);
       inputs = features.get();
     } else if (version_ == "V0") {
       inputs = lowptgsfeleid::features_V0(*ele, rho, unbiased);
