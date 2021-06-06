@@ -1,7 +1,5 @@
 import FWCore.ParameterSet.Config as cms
 
-from RecoEgamma.EgammaTools.lowPtElectronModifier_cfi import lowPtElectronModifier
-
 slimmedLowPtElectrons = cms.EDProducer("PATElectronSlimmer",
    src = cms.InputTag("selectedPatLowPtElectrons"),                                  
    dropSuperCluster = cms.string("0"), # you can put a cut to slim selectively, e.g. pt < 10
@@ -41,8 +39,14 @@ slimmedLowPtElectrons = cms.EDProducer("PATElectronSlimmer",
                 modifierName = cms.string('EGExtraInfoModifierFromPackedCandPtrValueMaps'),
                 photon_config = cms.PSet()
             ),
-            lowPtElectronModifier,
         )
    )
 )
 
+from RecoEgamma.EgammaTools.lowPtElectronModifier_cfi import lowPtElectronModifier
+from Configuration.Eras.Modifier_run2_miniAOD_devel_cff import run2_miniAOD_devel
+from Configuration.Eras.Modifier_bParking_cff import bParking
+(~bParking & run2_miniAOD_devel).toModify(
+    slimmedLowPtElectrons,
+    modifierConfig.modifications += lowPtElectronModifier
+)
