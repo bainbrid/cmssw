@@ -7,6 +7,3 @@ lowPtGsfElectronCores = defaultLowPtGsfElectronCores.clone(
     gsfTracks = cms.InputTag("lowPtGsfEleGsfTracks"),
     ctfTracks = cms.InputTag("generalTracks"),
     )
-
-from Configuration.Eras.Modifier_fastSim_cff import fastSim
-fastSim.toModify(lowPtGsfElectronCores,ctfTracks = cms.InputTag("generalTracksBeforeMixing"))
