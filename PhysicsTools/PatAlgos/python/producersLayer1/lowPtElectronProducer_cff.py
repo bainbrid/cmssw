@@ -67,7 +67,7 @@ from Configuration.Eras.Modifier_run2_miniAOD_94XFall17_cff import run2_miniAOD_
                                                            genParticleMatch = "electronMatch"
                                                            )
 
-# Schedule rekeying of seed BDT ValueMaps by reco::GsfElectron for run2_miniAOD_UL and bParking
+# Schedule various additional modules depending on modifier combinations of run2_miniAOD_UL, bParking, and fastSim
 from Configuration.ProcessModifiers.run2_miniAOD_UL_cff import run2_miniAOD_UL
 from Configuration.Eras.Modifier_run2_miniAOD_devel_cff import run2_miniAOD_devel
 from Configuration.Eras.Modifier_bParking_cff import bParking
@@ -78,7 +78,8 @@ from RecoEgamma.EgammaElectronProducers.lowPtGsfElectrons_cff import lowPtGsfEle
 
 _makePatLowPtElectronsTask = makePatLowPtElectronsTask.copy()
 _makePatLowPtElectronsTask.add(rekeyLowPtGsfElectronSeedValueMaps)
-_makePatLowPtElectronsTask.add(lowPtGsfElectronID)
 (bParking | run2_miniAOD_UL).toReplaceWith(makePatLowPtElectronsTask,_makePatLowPtElectronsTask)
+( bParking | (run2_miniAOD_UL & ~fastSim) ).toModify(
+    makePatLowPtElectronsTask, func = lambda t: t.add(lowPtGsfElectronID))
 ( (bParking & run2_miniAOD_UL) | (~bParking & run2_miniAOD_devel) ).toModify(
     makePatLowPtElectronsTask, func = lambda t: t.add(lowPtGsfElectrons))
