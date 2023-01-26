@@ -1,6 +1,6 @@
 import FWCore.ParameterSet.Config as cms
 
-def customiseEGammaEventContent(process):
+def customiseEGammaEventContent(process,egammaEvtContent=None,extend=True):
     """
     this loads the hltEgammaHLTExtra module and adds it to all
     EndPaths containing a PoolOutputModule and adds the Egamma event 
@@ -8,38 +8,39 @@ def customiseEGammaEventContent(process):
     if no suitable output module exists, it adds one
     """
     process.load("RecoEgamma.EgammaHLTProducers.hltEgammaHLTExtra_cfi")
-    egammaEvtContent = [
-        'keep *_hltGtStage2ObjectMap_*_*',
-        'keep edmTriggerResults_*_*_*',
-        'keep triggerTriggerEvent_*_*_*',
-        'keep recoRecoEcalCandidates*_*_*_*',
-        'keep recoSuperClusters_*_*_*',
-        'keep recoCaloClusters_*_*_*',
-        'keep *_genParticles_*_*',
-        'keep *_addPileupInfo_*_*',
-        'keep *_externalLHEProducer_*_*',
-        'keep *_generator_*_*',
-        'keep *_hltEgammaGsfTracks*_*_*',
-        'keep recoElectronSeeds_*_*_*',
-        'keep *_hltEgammaHLTExtra_*_*',
-        'keep *_hltNrInputEvents_*_*',
-        'keep *_hltGtStage2Digis_*_*'
-    ]
+    if egammaEvtContent == None:
+        egammaEvtContent = [
+            'keep *_hltGtStage2ObjectMap_*_*',
+            'keep edmTriggerResults_*_*_*',
+            'keep triggerTriggerEvent_*_*_*',
+            'keep recoRecoEcalCandidates*_*_*_*',
+            'keep recoSuperClusters_*_*_*',
+            'keep recoCaloClusters_*_*_*',
+            'keep *_genParticles_*_*',
+            'keep *_addPileupInfo_*_*',
+            'keep *_externalLHEProducer_*_*',
+            'keep *_generator_*_*',
+            'keep *_hltEgammaGsfTracks*_*_*',
+            'keep recoElectronSeeds_*_*_*',
+            'keep *_hltEgammaHLTExtra_*_*',
+            'keep *_hltNrInputEvents_*_*',
+            'keep *_hltGtStage2Digis_*_*'
+        ]
     addedEvtContent = False
     for outmodname in process.outputModules_():
         outmod = process.outputModules_()[outmodname]
         if outmod.type_()=='PoolOutputModule':
-            outmod.outputCommands.extend(egammaEvtContent)
+            if extend == True: outmod.outputCommands.extend(egammaEvtContent)
+            else: outmod.outputCommands = egammaEvtContent
             addedEvtContent = True
-
-            
 
     if not addedEvtContent:
          process.egOutMod = cms.OutputModule( "PoolOutputModule",
                                               fileName = cms.untracked.string( "output.root" ),
-                                              outputCommands = cms.untracked.vstring('drop *')                                              
+                                              outputCommands = cms.untracked.vstring('drop *')
                                            )   
-         process.egOutMod.outputCommands.extend(egammaEvtContent)
+         if extend == True: process.egOutMod.outputCommands.extend(egammaEvtContent)
+         else: process.egOutMod.outputCommands = egammaEvtContent
          process.hltEgHLTOut = cms.FinalPath(process.egOutMod)
          if hasattr(process,"schedule") and process.schedule:
              process.schedule.append(process.hltEgHLTOut)
@@ -142,10 +143,44 @@ def customiseEGammaMenuBPark(process):
         if hasattr(process,attrToDel):
             delattr(process,attrToDel)
 
-    process = customiseEGammaEventContent(process)
-    
+    egammaEvtContent = [
+        'keep *',
+        'drop *_*_*_HLTX',
+        'keep edmTriggerResults_*_*_*',
+        'keep triggerTriggerEvent_*_*_*',
+        'keep GlobalAlgBlkBXVector_*_*_*',
+        'keep GlobalExtBlkBXVector_*_*_*',
+        'keep l1tEGammaBXVector_*_EGamma_*',
+        'keep l1tEtSumBXVector_*_EtSum_*',
+        'keep l1tJetBXVector_*_Jet_*',
+        'keep l1tMuonBXVector_*_Muon_*',
+        'keep l1tTauBXVector_*_Tau_*',
+        'keep *_hltGtStage2ObjectMap_*_*',
+        'keep edmTriggerResults_*_*_*',
+        'keep triggerTriggerEvent_*_*_*',
+        'keep recoRecoEcalCandidates*_*_*_*',
+        'keep recoSuperClusters_*_*_*',
+        'keep recoCaloClusters_*_*_*',
+        'keep *_genParticles_*_*',
+        'keep *_addPileupInfo_*_*',
+        'keep *_externalLHEProducer_*_*',
+        'keep *_generator_*_*',
+        'keep *_hltEgammaGsfTracks*_*_*',
+        'keep recoElectronSeeds_*_*_*',
+        'keep *_hltEgammaHLTExtra_*_*',
+        'keep *_hltNrInputEvents_*_*',
+        'keep *_hltGtStage2Digis_*_*',
+        'drop FEDRawDataCollection_*_*_*',
+        'drop edmHepMCProduct_generatorSmeared__SIM',
+        'drop CSCDetIdCSCStripDigiMuonDigiCollection_simMuonCSCDigis_MuonCSCStripDigi_HLT',
+        ]
+    process = customiseEGammaEventContent(process,egammaEvtContent=egammaEvtContent,extend=False)
 
-   
+    process.hltEG5EtUnseededFilter.etcutEB = 4.0
+    process.hltEG5EtUnseededFilter.etcutEE = 4.0
+    process.hltEG5L1SeededEtFilter.etcutEB = 4.0
+    process.hltEG5L1SeededEtFilter.etcutEE = 4.0
+
     process.hltEgammaHLTExtra.egCands.extend([
         cms.PSet(
             pixelSeeds = cms.InputTag("hltEgammaElectronPixelSeedsForBParking"),
