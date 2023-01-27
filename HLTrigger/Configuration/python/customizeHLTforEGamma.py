@@ -132,7 +132,27 @@ def customiseEGammaMenuDev(process):
    
     return process
 
-def customiseEGammaMenuBPark(process):
+def customiseEGammaMenuBParkStep2(process):
+    """
+    Customise the HLT for E/gamma menu development
+    It adds the E/gamma event content
+    """
+
+    egammaEvtContent = [
+        'keep *_rawDataCollector_*_*',
+        'keep *_genParticles_*_*',
+        'keep *_generatorSmeared_*_*',
+        'keep edmRandomEngineStates_*_*_*',
+        'keep *_*GenJets*_*_*',
+        'keep *_*addPileupInfo_*_*',
+        'keep *_simMuon*_*_*',
+        'keep *_simEcalTriggerPrimitiveDigis_*_*',
+        'keep *_simCsc*_*_*', 
+        ]
+    process = customiseEGammaEventContent(process,egammaEvtContent=egammaEvtContent,extend=True)
+    return process
+
+def customiseEGammaMenuBParkStep3(process):
     """
     Customise the HLT for E/gamma menu development
     It adds the E/gamma event content and deletes the DQM output
